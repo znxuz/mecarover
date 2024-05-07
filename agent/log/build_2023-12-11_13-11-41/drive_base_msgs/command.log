@@ -1,0 +1,4 @@
+Invoking command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/drive_base_msgs': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --build /home/fabian/Schreibtisch/Workspace/ros2/agent/build/drive_base_msgs -- -j3 -l3
+Invoked command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/drive_base_msgs' returned '0': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --build /home/fabian/Schreibtisch/Workspace/ros2/agent/build/drive_base_msgs -- -j3 -l3
+Invoking command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/drive_base_msgs': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --install /home/fabian/Schreibtisch/Workspace/ros2/agent/build/drive_base_msgs
+Invoked command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/drive_base_msgs' returned '0': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --install /home/fabian/Schreibtisch/Workspace/ros2/agent/build/drive_base_msgs

@@ -1,0 +1,320 @@
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <freertos/semphr.h>
+#include <freertos/queue.h> 
+
+//#include <Arduino.h> // for Serial.println(), C++ 
+#include <stdio.h> // for vsnprintf()
+#include <string.h> // strlen
+#include <cstdarg>  //  va_list, va_start, va_end 
+
+#include <lwip/tcp.h>
+#include <lwip/netdb.h>
+
+#include <WiFi.h>  // WiFi.isConnected
+
+//#include <ros.h>
+
+#include "mrtypes.h"
+
+#define MSGSIZE 100          // maximum size of a message
+#define MAXMSG 10            // max number of messages
+
+#define PORT 44227
+
+static mr_logprio_t log_level = log_debug;
+static mr_logprio_t screen_level = log_debug;
+static bool use_colors = false;
+
+static void logger_server_task(void * args); // server thread function
+static void tcp_server_task(void *args); // TCP server
+static TaskHandle_t logger_server = NULL;  // thread for writng messages to terminal and syslogd
+static TaskHandle_t tcp_server = NULL;  // thread for writng messages to terminal and syslogd
+static SemaphoreHandle_t msgmutex = NULL;
+static QueueHandle_t msgque = NULL;
+
+static int clientSocket = -1;
+
+//static ros::NodeHandle* nh = NULL;
+
+/* ROS
+#include <ros.h>
+ros::NodeHandle nh;
+
+void setup()
+{
+  nh.initNode();
+}
+
+void loop()
+{
+  //wait until you are actually connected
+  while (!nh.connected())
+  {
+    nh.spinOnce();
+  }
+ 
+  //Now you can send all of the statements you want
+  //to be logged at the appropriate verbosity level
+  nh.logdebug("Debug Statement");
+  nh.loginfo("Program info");
+  nh.logwarn("Warnings.");
+  nh.logerror("Errors..");
+  nh.logfatal("Fatalities!");
+
+*/
+
+typedef struct {
+  mr_logprio_t prio;
+  char msg[MSGSIZE];
+} mr_logger_msg;
+
+//void logger_set_rosnode(ros::NodeHandle* rn) {
+//  nh = rn;
+//}
+
+// int queue, syslog and server thread
+void logger_init() {
+
+  msgmutex = xSemaphoreCreateMutex();
+  if (msgmutex == NULL) {
+//    Serial.println("Error: mutex can not be craeted");
+    printf("Error: mutex can not be craeted\n");
+  }
+
+  msgque = xQueueCreate(MAXMSG,MSGSIZE);
+  if (msgque == NULL) {
+//    Serial.println("Error: queue can not be craeted");
+    printf("Error: queue can not be craeted\n");
+  }
+
+// create server thread
+  BaseType_t retval = xTaskCreate(logger_server_task, "Logger Server", 5000, NULL, 1, &logger_server);  
+  if (retval != pdPASS) {
+//    Serial.println("Error: logger_init(), xTaskCreate()");
+    printf("Error: logger_init(), xTaskCreate()\n");
+  }
+
+  log_message(log_info, "Starting Logger");
+
+// create server thread
+
+  retval = xTaskCreate(tcp_server_task, "TCP Server", 5000, NULL, 1, &tcp_server);  
+  if (retval != pdPASS) {
+//    Serial.println("Error: logger_init(), xTaskCreate()");
+    printf("Error: logger_init(), xTaskCreate()\n");
+  }
+
+  log_message(log_info, "Starting TCP server");
+
+}
+
+void logger_cleanup() {
+  log_message(log_info, "Stopping Logger");
+  vTaskDelete(logger_server);
+  vTaskDelete(tcp_server);
+  vQueueDelete(msgque);
+  vSemaphoreDelete(msgmutex);
+}
+
+void logger_set_log_level(mr_logprio_t prio) {
+  log_level = prio;
+}
+
+void logger_set_screen_level(mr_logprio_t prio) {
+  screen_level = prio;
+}
+
+void logger_use_colors(bool colors) {
+  use_colors = colors;
+}
+
+static void logger_server_task(void * args) {
+  mr_logger_msg msg;
+
+  while (true) {
+    // Get the next message
+    BaseType_t ret = xQueueReceive(msgque, &msg, portMAX_DELAY);
+
+    if (ret != pdTRUE) {
+//      Serial.println("Can not receive new log message");
+      printf("Can not receive new log message\n");
+      break;
+    }
+
+    if (msg.prio <= screen_level) {
+      if (msg.prio <= log_emerg) {
+        msg.prio = log_emerg;
+      }
+
+      // log message to ROS
+
+      // log message to serial port
+//      Serial.println(msg.msg);
+      printf("%s\n", msg.msg);
+//      Serial.flush();
+      fflush(stdout);
+    }
+
+    if ((msg.prio <= log_level) && (clientSocket >= 0)) {
+      int err = send(clientSocket, msg.msg, strlen(msg.msg), 0);
+      if (err >= 0) {
+        err = send(clientSocket, "\n", 1, 0);
+      }
+
+      if (err < 0) {
+        log_message(log_error, "Error occured during sending: errno %d", errno);
+        shutdown(clientSocket, SHUT_RDWR);
+        close(clientSocket);
+        clientSocket = -1;
+      }
+    }
+/*
+    if ((msg.prio <= log_level) && (nh != NULL)) {
+      if (msg.prio == log_debug) {
+        nh->logdebug(msg.msg);
+      } else if ((msg.prio == log_info) || (msg.prio == log_notice)) {
+        nh->loginfo(msg.msg);
+      } else if (msg.prio == log_warning) {
+        nh->logwarn(msg.msg);
+      } else if (msg.prio == log_error) {
+        nh->logerror(msg.msg);
+      } else {
+        nh->logfatal(msg.msg);
+      }
+    }
+*/
+  }
+}
+
+void log_message(mr_logprio_t prio, const char *format, ...) {
+  mr_logger_msg msg;
+
+  msg.prio = prio;
+  va_list arglist;
+
+  va_start(arglist, format);
+  int ret = vsnprintf(msg.msg, sizeof(msg.msg), format, arglist);
+  va_end(arglist);
+
+  // Abort if printf gave an error or no message is to be logged
+  if (ret <= 0) {
+    return;
+  }
+
+  // Terminate message if too long
+  if (ret >= 0 && (unsigned int) ret >= sizeof(msg.msg)) {
+    msg.msg[sizeof(msg.msg)-1] = '\0';
+  }
+
+  if (xSemaphoreTake(msgmutex, 1) == pdTRUE) {
+    if (msgque) {
+      xQueueSend(msgque, &msg, 0);
+    }
+    xSemaphoreGive(msgmutex); // unlock
+  }
+
+}
+
+static void tcp_server_task(void *arg)
+{
+  char rx_buffer[128];
+  char addr_str[128];
+  int addr_family;
+  int ip_protocol;
+
+  log_message(log_info, "TCP Server: waiting for WiFi");
+
+  while (!WiFi.isConnected()) {
+    vTaskDelay(100);
+  }
+
+  log_message(log_info, "TCP Server: WiFi connected");
+
+/* funktioniert nicht  
+  const int IPV4_GOTIP_BIT = BIT0;
+  const int IPV6_GOTIP_BIT = BIT1;
+  static EventGroupHandle_t wifi_event_group;
+  uint32_t bits = IPV4_GOTIP_BIT | IPV6_GOTIP_BIT;
+  wifi_event_group = xEventGroupCreate();
+  xEventGroupWaitBits(wifi_event_group, bits, false, true, portMAX_DELAY); 
+*/  
+  
+  struct sockaddr_in destAddr;
+  destAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+  destAddr.sin_family = AF_INET;
+  destAddr.sin_port = htons(PORT);
+  addr_family = AF_INET;
+  ip_protocol = IPPROTO_IP;
+  inet_ntoa_r(destAddr.sin_addr, addr_str, sizeof(addr_str) - 1);
+
+  int listen_sock = socket(addr_family, SOCK_STREAM, ip_protocol);
+  if (listen_sock < 0) {
+    log_message(log_error, "TCP Server: Unable to create socket: errno %d, shutting down TCP server", errno);
+    vTaskDelete(NULL);
+  }
+  log_message(log_info, "TCP Server: Socket created");
+
+  int err = bind(listen_sock, (struct sockaddr *)&destAddr, sizeof(destAddr));
+  if (err != 0) {
+    log_message(log_error, "TCP Server: Socket unable to bind: errno %d, shutting down TCP server", errno);
+    vTaskDelete(NULL);
+  }
+  log_message(log_info, "TCP Server: Socket binded");
+
+  err = listen(listen_sock, 1);
+  if (err != 0) {
+    log_message(log_error, "Error occured during listen: errno %d, shutting down TCP server", errno);
+    vTaskDelete(NULL);
+  }
+  log_message(log_info, "TCP Server: Socket listening");
+
+  struct sockaddr_in6 sourceAddr; // Large enough for both IPv4 or IPv6
+  uint addrLen = sizeof(sourceAddr);
+
+  while (true) {
+
+    clientSocket = accept(listen_sock, (struct sockaddr *)&sourceAddr, &addrLen);
+    if (clientSocket < 0) {
+      log_message(log_error, "TCP Server: Unable to accept connection: errno %d", errno);
+      break;
+    }
+
+    log_message(log_info, "TCP Server: Socket accepted");
+
+    while (true) {
+      int len = recv(clientSocket, rx_buffer, sizeof(rx_buffer) - 1, 0);
+      // Error occured during receiving
+      if (len < 0) {
+         log_message(log_error, "TCP Server: recv failed: errno %d", errno);
+         break;
+      }
+      // Connection closed
+      else if (len == 0) {
+        log_message(log_error, "TCP Server: Connection closed");
+        break;
+      }
+      // Data received
+      else {
+        // Get the sender's ip address as string
+        inet_ntoa_r(((struct sockaddr_in *)&sourceAddr)->sin_addr.s_addr, addr_str, sizeof(addr_str) - 1);
+
+        rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string
+        log_message(log_info, "TCP Server: Received %d bytes from %s:", len, addr_str);
+        log_message(log_info, "%s", rx_buffer);
+        if ((len == 1) && (rx_buffer[0] == 0x04)) {
+          break; // shut down connection
+        }
+
+      }
+    }// while(true) recv client socket
+
+    if (clientSocket != -1) {
+     log_message(log_error, "TCP Server: Shutting down socket and restarting...");
+     shutdown(clientSocket, 0);
+     close(clientSocket);
+     clientSocket = -1;
+    }
+  }// while(true) listen socket
+  vTaskDelete(NULL);
+}

@@ -1,0 +1,518 @@
+[7.281s] DEBUG:colcon:Command line arguments: ['/usr/bin/colcon', 'build']
+[7.281s] DEBUG:colcon:Parsed command line arguments: Namespace(allow_overriding=[], ament_cmake_args=None, base_paths=['.'], build_base='build', catkin_cmake_args=None, catkin_skip_building_tests=False, cmake_args=None, cmake_clean_cache=False, cmake_clean_first=False, cmake_force_configure=False, cmake_target=None, cmake_target_skip_unavailable=False, continue_on_error=False, event_handlers=None, executor='parallel', ignore_user_meta=False, install_base='install', log_base=None, log_level=None, main=<bound method BuildVerb.main of <colcon_core.verb.build.BuildVerb object at 0x7f44c5f1dc40>>, merge_install=False, metas=['./colcon.meta'], packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_end=None, packages_ignore=None, packages_ignore_regex=None, packages_select=None, packages_select_build_failed=False, packages_select_by_dep=None, packages_select_regex=None, packages_select_test_failures=False, packages_skip=None, packages_skip_build_finished=False, packages_skip_by_dep=None, packages_skip_regex=None, packages_skip_test_passed=False, packages_skip_up_to=None, packages_start=None, packages_up_to=None, packages_up_to_regex=None, parallel_workers=3, paths=None, symlink_install=False, test_result_base=None, verb_extension=<colcon_core.verb.build.BuildVerb object at 0x7f44c5f1dc40>, verb_name='build', verb_parser=<colcon_defaults.argument_parser.defaults.DefaultArgumentsDecorator object at 0x7f44c5f1d700>)
+[7.632s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[7.632s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[7.633s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[7.633s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[7.633s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) discover
+[7.633s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[7.633s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/home/fabian/Schreibtisch/Workspace/ros2/agent'
+[7.633s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ignore', 'ignore_ament_install']
+[7.633s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore'
+[7.634s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore_ament_install'
+[7.634s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_pkg']
+[7.634s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_pkg'
+[7.634s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_meta']
+[7.634s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_meta'
+[7.634s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ros']
+[7.634s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ros'
+[7.673s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['cmake', 'python']
+[7.673s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'cmake'
+[7.673s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python'
+[7.673s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['python_setup_py']
+[7.674s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python_setup_py'
+[7.674s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extensions ['ignore', 'ignore_ament_install']
+[7.674s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'ignore'
+[7.674s] Level 1:colcon.colcon_core.package_identification:_identify(build) ignored
+[7.675s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extensions ['ignore', 'ignore_ament_install']
+[7.675s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'ignore'
+[7.675s] Level 1:colcon.colcon_core.package_identification:_identify(install) ignored
+[7.676s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extensions ['ignore', 'ignore_ament_install']
+[7.676s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extension 'ignore'
+[7.676s] Level 1:colcon.colcon_core.package_identification:_identify(log) ignored
+[7.676s] Level 1:colcon.colcon_core.package_identification:_identify(robot_description) by extensions ['ignore', 'ignore_ament_install']
+[7.677s] Level 1:colcon.colcon_core.package_identification:_identify(robot_description) by extension 'ignore'
+[7.677s] Level 1:colcon.colcon_core.package_identification:_identify(robot_description) by extension 'ignore_ament_install'
+[7.677s] Level 1:colcon.colcon_core.package_identification:_identify(robot_description) by extensions ['colcon_pkg']
+[7.677s] Level 1:colcon.colcon_core.package_identification:_identify(robot_description) by extension 'colcon_pkg'
+[7.677s] Level 1:colcon.colcon_core.package_identification:_identify(robot_description) by extensions ['colcon_meta']
+[7.677s] Level 1:colcon.colcon_core.package_identification:_identify(robot_description) by extension 'colcon_meta'
+[7.677s] Level 1:colcon.colcon_core.package_identification:_identify(robot_description) by extensions ['ros']
+[7.677s] Level 1:colcon.colcon_core.package_identification:_identify(robot_description) by extension 'ros'
+[7.690s] DEBUG:colcon.colcon_core.package_identification:Package 'robot_description' with type 'ros.ament_cmake' and name 'robot_description'
+[7.690s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['ignore', 'ignore_ament_install']
+[7.691s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ignore'
+[7.691s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ignore_ament_install'
+[7.691s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['colcon_pkg']
+[7.691s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'colcon_pkg'
+[7.691s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['colcon_meta']
+[7.691s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'colcon_meta'
+[7.691s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['ros']
+[7.692s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ros'
+[7.692s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['cmake', 'python']
+[7.692s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'cmake'
+[7.692s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'python'
+[7.692s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['python_setup_py']
+[7.692s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'python_setup_py'
+[7.693s] Level 1:colcon.colcon_core.package_identification:_identify(src/micro_ros_setup) by extensions ['ignore', 'ignore_ament_install']
+[7.693s] Level 1:colcon.colcon_core.package_identification:_identify(src/micro_ros_setup) by extension 'ignore'
+[7.693s] Level 1:colcon.colcon_core.package_identification:_identify(src/micro_ros_setup) by extension 'ignore_ament_install'
+[7.693s] Level 1:colcon.colcon_core.package_identification:_identify(src/micro_ros_setup) by extensions ['colcon_pkg']
+[7.693s] Level 1:colcon.colcon_core.package_identification:_identify(src/micro_ros_setup) by extension 'colcon_pkg'
+[7.693s] Level 1:colcon.colcon_core.package_identification:_identify(src/micro_ros_setup) by extensions ['colcon_meta']
+[7.694s] Level 1:colcon.colcon_core.package_identification:_identify(src/micro_ros_setup) by extension 'colcon_meta'
+[7.694s] Level 1:colcon.colcon_core.package_identification:_identify(src/micro_ros_setup) by extensions ['ros']
+[7.694s] Level 1:colcon.colcon_core.package_identification:_identify(src/micro_ros_setup) by extension 'ros'
+[7.697s] DEBUG:colcon.colcon_core.package_identification:Package 'src/micro_ros_setup' with type 'ros.ament_cmake' and name 'micro_ros_setup'
+[7.697s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros) by extensions ['ignore', 'ignore_ament_install']
+[7.697s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros) by extension 'ignore'
+[7.697s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros) by extension 'ignore_ament_install'
+[7.698s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros) by extensions ['colcon_pkg']
+[7.698s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros) by extension 'colcon_pkg'
+[7.698s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros) by extensions ['colcon_meta']
+[7.698s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros) by extension 'colcon_meta'
+[7.698s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros) by extensions ['ros']
+[7.698s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros) by extension 'ros'
+[7.698s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros) by extensions ['cmake', 'python']
+[7.698s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros) by extension 'cmake'
+[7.698s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros) by extension 'python'
+[7.699s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros) by extensions ['python_setup_py']
+[7.699s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros) by extension 'python_setup_py'
+[7.699s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base) by extensions ['ignore', 'ignore_ament_install']
+[7.699s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base) by extension 'ignore'
+[7.699s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base) by extension 'ignore_ament_install'
+[7.700s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base) by extensions ['colcon_pkg']
+[7.700s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base) by extension 'colcon_pkg'
+[7.700s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base) by extensions ['colcon_meta']
+[7.700s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base) by extension 'colcon_meta'
+[7.700s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base) by extensions ['ros']
+[7.700s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base) by extension 'ros'
+[7.701s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base) by extensions ['cmake', 'python']
+[7.701s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base) by extension 'cmake'
+[7.701s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base) by extension 'python'
+[7.701s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base) by extensions ['python_setup_py']
+[7.701s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base) by extension 'python_setup_py'
+[7.701s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base/drive_base_msgs) by extensions ['ignore', 'ignore_ament_install']
+[7.702s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base/drive_base_msgs) by extension 'ignore'
+[7.702s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base/drive_base_msgs) by extension 'ignore_ament_install'
+[7.703s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base/drive_base_msgs) by extensions ['colcon_pkg']
+[7.703s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base/drive_base_msgs) by extension 'colcon_pkg'
+[7.703s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base/drive_base_msgs) by extensions ['colcon_meta']
+[7.703s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base/drive_base_msgs) by extension 'colcon_meta'
+[7.703s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base/drive_base_msgs) by extensions ['ros']
+[7.703s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/drive_base/drive_base_msgs) by extension 'ros'
+[7.705s] DEBUG:colcon.colcon_core.package_identification:Package 'src/uros/drive_base/drive_base_msgs' with type 'ros.ament_cmake' and name 'drive_base_msgs'
+[7.706s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent) by extensions ['ignore', 'ignore_ament_install']
+[7.706s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent) by extension 'ignore'
+[7.706s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent) by extension 'ignore_ament_install'
+[7.706s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent) by extensions ['colcon_pkg']
+[7.706s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent) by extension 'colcon_pkg'
+[7.707s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent) by extensions ['colcon_meta']
+[7.707s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent) by extension 'colcon_meta'
+[7.707s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent) by extensions ['ros']
+[7.707s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent) by extension 'ros'
+[7.707s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent) by extensions ['cmake', 'python']
+[7.707s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent) by extension 'cmake'
+[7.707s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent) by extension 'python'
+[7.707s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent) by extensions ['python_setup_py']
+[7.708s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent) by extension 'python_setup_py'
+[7.708s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/micro_ros_agent) by extensions ['ignore', 'ignore_ament_install']
+[7.708s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/micro_ros_agent) by extension 'ignore'
+[7.708s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/micro_ros_agent) by extension 'ignore_ament_install'
+[7.708s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/micro_ros_agent) by extensions ['colcon_pkg']
+[7.708s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/micro_ros_agent) by extension 'colcon_pkg'
+[7.709s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/micro_ros_agent) by extensions ['colcon_meta']
+[7.709s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/micro_ros_agent) by extension 'colcon_meta'
+[7.709s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/micro_ros_agent) by extensions ['ros']
+[7.709s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/micro_ros_agent) by extension 'ros'
+[7.714s] DEBUG:colcon.colcon_core.package_identification:Package 'src/uros/micro-ROS-Agent/micro_ros_agent' with type 'ros.ament_cmake' and name 'micro_ros_agent'
+[7.715s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap) by extensions ['ignore', 'ignore_ament_install']
+[7.715s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap) by extension 'ignore'
+[7.715s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap) by extension 'ignore_ament_install'
+[7.715s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap) by extensions ['colcon_pkg']
+[7.715s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap) by extension 'colcon_pkg'
+[7.715s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap) by extensions ['colcon_meta']
+[7.716s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap) by extension 'colcon_meta'
+[7.716s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap) by extensions ['ros']
+[7.716s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap) by extension 'ros'
+[7.716s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap) by extensions ['cmake', 'python']
+[7.716s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap) by extension 'cmake'
+[7.716s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap) by extension 'python'
+[7.717s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap) by extensions ['python_setup_py']
+[7.717s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap) by extension 'python_setup_py'
+[7.717s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/hooks) by extensions ['ignore', 'ignore_ament_install']
+[7.717s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/hooks) by extension 'ignore'
+[7.718s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/hooks) by extension 'ignore_ament_install'
+[7.718s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/hooks) by extensions ['colcon_pkg']
+[7.718s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/hooks) by extension 'colcon_pkg'
+[7.718s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/hooks) by extensions ['colcon_meta']
+[7.718s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/hooks) by extension 'colcon_meta'
+[7.718s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/hooks) by extensions ['ros']
+[7.718s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/hooks) by extension 'ros'
+[7.719s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/hooks) by extensions ['cmake', 'python']
+[7.719s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/hooks) by extension 'cmake'
+[7.719s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/hooks) by extension 'python'
+[7.719s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/hooks) by extensions ['python_setup_py']
+[7.719s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/hooks) by extension 'python_setup_py'
+[7.719s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/local) by extensions ['ignore', 'ignore_ament_install']
+[7.720s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/local) by extension 'ignore'
+[7.720s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/local) by extension 'ignore_ament_install'
+[7.720s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/local) by extensions ['colcon_pkg']
+[7.720s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/local) by extension 'colcon_pkg'
+[7.720s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/local) by extensions ['colcon_meta']
+[7.720s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/local) by extension 'colcon_meta'
+[7.720s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/local) by extensions ['ros']
+[7.721s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/local) by extension 'ros'
+[7.721s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/local) by extensions ['cmake', 'python']
+[7.721s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/local) by extension 'cmake'
+[7.721s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/local) by extension 'python'
+[7.721s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/local) by extensions ['python_setup_py']
+[7.721s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro-ROS-Agent/snap/local) by extension 'python_setup_py'
+[7.721s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro_ros_msgs) by extensions ['ignore', 'ignore_ament_install']
+[7.722s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro_ros_msgs) by extension 'ignore'
+[7.722s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro_ros_msgs) by extension 'ignore_ament_install'
+[7.722s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro_ros_msgs) by extensions ['colcon_pkg']
+[7.722s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro_ros_msgs) by extension 'colcon_pkg'
+[7.722s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro_ros_msgs) by extensions ['colcon_meta']
+[7.722s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro_ros_msgs) by extension 'colcon_meta'
+[7.722s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro_ros_msgs) by extensions ['ros']
+[7.723s] Level 1:colcon.colcon_core.package_identification:_identify(src/uros/micro_ros_msgs) by extension 'ros'
+[7.725s] DEBUG:colcon.colcon_core.package_identification:Package 'src/uros/micro_ros_msgs' with type 'ros.ament_cmake' and name 'micro_ros_msgs'
+[7.725s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults
+[7.725s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) discover
+[7.725s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) using defaults
+[7.725s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) discover
+[7.725s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) using defaults
+[8.442s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) check parameters
+[8.442s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) discover
+[8.700s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 290 installed packages in /opt/ros/foxy
+[8.706s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) using defaults
+[9.235s] Level 5:colcon.colcon_core.verb:set package 'drive_base_msgs' build argument 'cmake_args' from command line to 'None'
+[9.235s] Level 5:colcon.colcon_core.verb:set package 'drive_base_msgs' build argument 'cmake_target' from command line to 'None'
+[9.235s] Level 5:colcon.colcon_core.verb:set package 'drive_base_msgs' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[9.235s] Level 5:colcon.colcon_core.verb:set package 'drive_base_msgs' build argument 'cmake_clean_cache' from command line to 'False'
+[9.236s] Level 5:colcon.colcon_core.verb:set package 'drive_base_msgs' build argument 'cmake_clean_first' from command line to 'False'
+[9.236s] Level 5:colcon.colcon_core.verb:set package 'drive_base_msgs' build argument 'cmake_force_configure' from command line to 'False'
+[9.236s] Level 5:colcon.colcon_core.verb:set package 'drive_base_msgs' build argument 'ament_cmake_args' from command line to 'None'
+[9.236s] Level 5:colcon.colcon_core.verb:set package 'drive_base_msgs' build argument 'catkin_cmake_args' from command line to 'None'
+[9.236s] Level 5:colcon.colcon_core.verb:set package 'drive_base_msgs' build argument 'catkin_skip_building_tests' from command line to 'False'
+[9.236s] DEBUG:colcon.colcon_core.verb:Building package 'drive_base_msgs' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/drive_base_msgs', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs', 'merge_install': False, 'path': '/home/fabian/Schreibtisch/Workspace/ros2/agent/src/uros/drive_base/drive_base_msgs', 'symlink_install': False, 'test_result_base': None}
+[9.367s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_msgs' build argument 'cmake_args' from command line to 'None'
+[9.367s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_msgs' build argument 'cmake_target' from command line to 'None'
+[9.367s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_msgs' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[9.367s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_msgs' build argument 'cmake_clean_cache' from command line to 'False'
+[9.367s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_msgs' build argument 'cmake_clean_first' from command line to 'False'
+[9.368s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_msgs' build argument 'cmake_force_configure' from command line to 'False'
+[9.368s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_msgs' build argument 'ament_cmake_args' from command line to 'None'
+[9.368s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_msgs' build argument 'catkin_cmake_args' from command line to 'None'
+[9.368s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_msgs' build argument 'catkin_skip_building_tests' from command line to 'False'
+[9.368s] DEBUG:colcon.colcon_core.verb:Building package 'micro_ros_msgs' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_msgs', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs', 'merge_install': False, 'path': '/home/fabian/Schreibtisch/Workspace/ros2/agent/src/uros/micro_ros_msgs', 'symlink_install': False, 'test_result_base': None}
+[9.492s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_setup' build argument 'cmake_args' from command line to 'None'
+[9.492s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_setup' build argument 'cmake_target' from command line to 'None'
+[9.492s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_setup' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[9.492s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_setup' build argument 'cmake_clean_cache' from command line to 'False'
+[9.492s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_setup' build argument 'cmake_clean_first' from command line to 'False'
+[9.492s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_setup' build argument 'cmake_force_configure' from command line to 'False'
+[9.493s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_setup' build argument 'ament_cmake_args' from command line to 'None'
+[9.493s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_setup' build argument 'catkin_cmake_args' from command line to 'None'
+[9.493s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_setup' build argument 'catkin_skip_building_tests' from command line to 'False'
+[9.493s] DEBUG:colcon.colcon_core.verb:Building package 'micro_ros_setup' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_setup', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup', 'merge_install': False, 'path': '/home/fabian/Schreibtisch/Workspace/ros2/agent/src/micro_ros_setup', 'symlink_install': False, 'test_result_base': None}
+[9.653s] Level 5:colcon.colcon_core.verb:set package 'robot_description' build argument 'cmake_args' from command line to 'None'
+[9.654s] Level 5:colcon.colcon_core.verb:set package 'robot_description' build argument 'cmake_target' from command line to 'None'
+[9.654s] Level 5:colcon.colcon_core.verb:set package 'robot_description' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[9.654s] Level 5:colcon.colcon_core.verb:set package 'robot_description' build argument 'cmake_clean_cache' from command line to 'False'
+[9.654s] Level 5:colcon.colcon_core.verb:set package 'robot_description' build argument 'cmake_clean_first' from command line to 'False'
+[9.654s] Level 5:colcon.colcon_core.verb:set package 'robot_description' build argument 'cmake_force_configure' from command line to 'False'
+[9.654s] Level 5:colcon.colcon_core.verb:set package 'robot_description' build argument 'ament_cmake_args' from command line to 'None'
+[9.654s] Level 5:colcon.colcon_core.verb:set package 'robot_description' build argument 'catkin_cmake_args' from command line to 'None'
+[9.654s] Level 5:colcon.colcon_core.verb:set package 'robot_description' build argument 'catkin_skip_building_tests' from command line to 'False'
+[9.654s] DEBUG:colcon.colcon_core.verb:Building package 'robot_description' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/robot_description', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description', 'merge_install': False, 'path': '/home/fabian/Schreibtisch/Workspace/ros2/agent/robot_description', 'symlink_install': False, 'test_result_base': None}
+[9.785s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_agent' build argument 'cmake_args' from command line to 'None'
+[9.786s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_agent' build argument 'cmake_target' from command line to 'None'
+[9.786s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_agent' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[9.786s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_agent' build argument 'cmake_clean_cache' from command line to 'False'
+[9.786s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_agent' build argument 'cmake_clean_first' from command line to 'False'
+[9.786s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_agent' build argument 'cmake_force_configure' from command line to 'False'
+[9.786s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_agent' build argument 'ament_cmake_args' from command line to 'None'
+[9.786s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_agent' build argument 'catkin_cmake_args' from command line to 'None'
+[9.786s] Level 5:colcon.colcon_core.verb:set package 'micro_ros_agent' build argument 'catkin_skip_building_tests' from command line to 'False'
+[9.786s] DEBUG:colcon.colcon_core.verb:Building package 'micro_ros_agent' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_agent', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent', 'merge_install': False, 'path': '/home/fabian/Schreibtisch/Workspace/ros2/agent/src/uros/micro-ROS-Agent/micro_ros_agent', 'symlink_install': False, 'test_result_base': None}
+[9.925s] INFO:colcon.colcon_core.executor:Executing jobs using 'parallel' executor
+[10.061s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete
+[10.061s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/home/fabian/Schreibtisch/Workspace/ros2/agent/src/uros/micro_ros_msgs' with build type 'ament_cmake'
+[10.063s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/home/fabian/Schreibtisch/Workspace/ros2/agent/src/uros/micro_ros_msgs'
+[10.194s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_core.shell.bat': Not used on non-Windows systems
+[10.194s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[10.194s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[10.456s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/home/fabian/Schreibtisch/Workspace/ros2/agent/src/uros/drive_base/drive_base_msgs' with build type 'ament_cmake'
+[10.457s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/home/fabian/Schreibtisch/Workspace/ros2/agent/src/uros/drive_base/drive_base_msgs'
+[10.588s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[10.588s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[10.824s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/home/fabian/Schreibtisch/Workspace/ros2/agent/src/micro_ros_setup' with build type 'ament_cmake'
+[10.825s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/home/fabian/Schreibtisch/Workspace/ros2/agent/src/micro_ros_setup'
+[10.948s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[10.949s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[11.207s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_msgs': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --build /home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_msgs -- -j3 -l3
+[11.225s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/drive_base_msgs': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --build /home/fabian/Schreibtisch/Workspace/ros2/agent/build/drive_base_msgs -- -j3 -l3
+[11.238s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_setup': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --build /home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_setup -- -j3 -l3
+[11.515s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_setup' returned '0': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --build /home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_setup -- -j3 -l3
+[11.673s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_setup': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --install /home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_setup
+[11.814s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(micro_ros_setup)
+[11.867s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_setup' returned '0': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --install /home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_setup
+[12.058s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup' for CMake module files
+[12.059s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup' for CMake config files
+[12.062s] Level 1:colcon.colcon_core.shell:create_environment_hook('micro_ros_setup', 'cmake_prefix_path')
+[12.215s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/share/micro_ros_setup/hook/cmake_prefix_path.ps1'
+[12.219s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/share/micro_ros_setup/hook/cmake_prefix_path.dsv'
+[12.229s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/share/micro_ros_setup/hook/cmake_prefix_path.sh'
+[12.234s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/lib'
+[12.235s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/bin'
+[12.235s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/lib/pkgconfig/micro_ros_setup.pc'
+[12.235s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/lib/python3.8/site-packages'
+[12.236s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/bin'
+[12.490s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/share/micro_ros_setup/package.ps1'
+[12.493s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/share/micro_ros_setup/package.dsv'
+[12.495s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/share/micro_ros_setup/package.sh'
+[12.500s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/share/micro_ros_setup/package.bash'
+[12.504s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/share/micro_ros_setup/package.zsh'
+[12.508s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/share/colcon-core/packages/micro_ros_setup)
+[12.522s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/drive_base_msgs' returned '0': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --build /home/fabian/Schreibtisch/Workspace/ros2/agent/build/drive_base_msgs -- -j3 -l3
+[-2586.715s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_msgs' returned '0': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --build /home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_msgs -- -j3 -l3
+[12.785s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(micro_ros_setup)
+[12.899s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup' for CMake module files
+[12.901s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup' for CMake config files
+[12.903s] Level 1:colcon.colcon_core.shell:create_environment_hook('micro_ros_setup', 'cmake_prefix_path')
+[13.018s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/share/micro_ros_setup/hook/cmake_prefix_path.ps1'
+[13.019s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/share/micro_ros_setup/hook/cmake_prefix_path.dsv'
+[13.020s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/share/micro_ros_setup/hook/cmake_prefix_path.sh'
+[13.022s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/lib'
+[13.023s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/bin'
+[13.023s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/lib/pkgconfig/micro_ros_setup.pc'
+[13.024s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/lib/python3.8/site-packages'
+[13.024s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/bin'
+[13.137s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/share/micro_ros_setup/package.ps1'
+[13.139s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/share/micro_ros_setup/package.dsv'
+[13.140s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/share/micro_ros_setup/package.sh'
+[13.141s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/share/micro_ros_setup/package.bash'
+[13.142s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/share/micro_ros_setup/package.zsh'
+[13.143s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_setup/share/colcon-core/packages/micro_ros_setup)
+[13.146s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/home/fabian/Schreibtisch/Workspace/ros2/agent/robot_description' with build type 'ament_cmake'
+[13.146s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/home/fabian/Schreibtisch/Workspace/ros2/agent/robot_description'
+[13.262s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[13.263s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[13.510s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_msgs': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --install /home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_msgs
+[13.516s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/drive_base_msgs': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --install /home/fabian/Schreibtisch/Workspace/ros2/agent/build/drive_base_msgs
+[13.553s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/robot_description': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --build /home/fabian/Schreibtisch/Workspace/ros2/agent/build/robot_description -- -j3 -l3
+[13.752s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/robot_description' returned '0': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --build /home/fabian/Schreibtisch/Workspace/ros2/agent/build/robot_description -- -j3 -l3
+[13.855s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/robot_description': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --install /home/fabian/Schreibtisch/Workspace/ros2/agent/build/robot_description
+[13.860s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(drive_base_msgs)
+[13.862s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/drive_base_msgs' returned '0': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --install /home/fabian/Schreibtisch/Workspace/ros2/agent/build/drive_base_msgs
+[13.984s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs' for CMake module files
+[13.986s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs' for CMake config files
+[13.989s] Level 1:colcon.colcon_core.shell:create_environment_hook('drive_base_msgs', 'cmake_prefix_path')
+[14.128s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/hook/cmake_prefix_path.ps1'
+[14.130s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/hook/cmake_prefix_path.dsv'
+[14.131s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/hook/cmake_prefix_path.sh'
+[14.132s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/lib'
+[14.132s] Level 1:colcon.colcon_core.shell:create_environment_hook('drive_base_msgs', 'ld_library_path_lib')
+[14.244s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/hook/ld_library_path_lib.ps1'
+[14.245s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/hook/ld_library_path_lib.dsv'
+[14.246s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/hook/ld_library_path_lib.sh'
+[14.247s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/bin'
+[14.247s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/lib/pkgconfig/drive_base_msgs.pc'
+[14.248s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/lib/python3.8/site-packages'
+[14.248s] Level 1:colcon.colcon_core.shell:create_environment_hook('drive_base_msgs', 'pythonpath')
+[14.364s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/hook/pythonpath.ps1'
+[14.365s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/hook/pythonpath.dsv'
+[14.366s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/hook/pythonpath.sh'
+[14.368s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/bin'
+[14.482s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/package.ps1'
+[14.484s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/package.dsv'
+[14.485s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/package.sh'
+[14.487s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/package.bash'
+[14.488s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/package.zsh'
+[14.488s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/colcon-core/packages/drive_base_msgs)
+[14.511s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(robot_description)
+[14.532s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/robot_description' returned '0': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --install /home/fabian/Schreibtisch/Workspace/ros2/agent/build/robot_description
+[14.660s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description' for CMake module files
+[14.662s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description' for CMake config files
+[14.666s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_description', 'cmake_prefix_path')
+[14.796s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/share/robot_description/hook/cmake_prefix_path.ps1'
+[14.797s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/share/robot_description/hook/cmake_prefix_path.dsv'
+[14.798s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/share/robot_description/hook/cmake_prefix_path.sh'
+[14.800s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/bin'
+[14.800s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/lib/pkgconfig/robot_description.pc'
+[14.801s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/lib/python3.8/site-packages'
+[14.801s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/bin'
+[14.929s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/share/robot_description/package.ps1'
+[14.930s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/share/robot_description/package.dsv'
+[14.931s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/share/robot_description/package.sh'
+[14.932s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/share/robot_description/package.bash'
+[14.933s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/share/robot_description/package.zsh'
+[14.934s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/share/colcon-core/packages/robot_description)
+[14.957s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(micro_ros_msgs)
+[14.958s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_msgs' returned '0': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --install /home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_msgs
+[15.101s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs' for CMake module files
+[15.104s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs' for CMake config files
+[15.105s] Level 1:colcon.colcon_core.shell:create_environment_hook('micro_ros_msgs', 'cmake_prefix_path')
+[15.235s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/hook/cmake_prefix_path.ps1'
+[15.236s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/hook/cmake_prefix_path.dsv'
+[15.237s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/hook/cmake_prefix_path.sh'
+[15.239s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/lib'
+[15.239s] Level 1:colcon.colcon_core.shell:create_environment_hook('micro_ros_msgs', 'ld_library_path_lib')
+[15.357s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/hook/ld_library_path_lib.ps1'
+[15.358s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/hook/ld_library_path_lib.dsv'
+[15.359s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/hook/ld_library_path_lib.sh'
+[15.360s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/bin'
+[15.360s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/lib/pkgconfig/micro_ros_msgs.pc'
+[15.361s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/lib/python3.8/site-packages'
+[15.361s] Level 1:colcon.colcon_core.shell:create_environment_hook('micro_ros_msgs', 'pythonpath')
+[15.478s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/hook/pythonpath.ps1'
+[15.479s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/hook/pythonpath.dsv'
+[15.480s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/hook/pythonpath.sh'
+[15.481s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/bin'
+[15.594s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/package.ps1'
+[15.596s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/package.dsv'
+[15.597s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/package.sh'
+[15.598s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/package.bash'
+[15.598s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/package.zsh'
+[15.599s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/colcon-core/packages/micro_ros_msgs)
+[15.740s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(drive_base_msgs)
+[15.854s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs' for CMake module files
+[15.856s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs' for CMake config files
+[15.858s] Level 1:colcon.colcon_core.shell:create_environment_hook('drive_base_msgs', 'cmake_prefix_path')
+[15.967s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/hook/cmake_prefix_path.ps1'
+[15.969s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/hook/cmake_prefix_path.dsv'
+[15.970s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/hook/cmake_prefix_path.sh'
+[15.971s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/lib'
+[15.971s] Level 1:colcon.colcon_core.shell:create_environment_hook('drive_base_msgs', 'ld_library_path_lib')
+[16.086s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/hook/ld_library_path_lib.ps1'
+[16.087s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/hook/ld_library_path_lib.dsv'
+[16.088s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/hook/ld_library_path_lib.sh'
+[16.089s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/bin'
+[16.089s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/lib/pkgconfig/drive_base_msgs.pc'
+[16.090s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/lib/python3.8/site-packages'
+[16.090s] Level 1:colcon.colcon_core.shell:create_environment_hook('drive_base_msgs', 'pythonpath')
+[16.200s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/hook/pythonpath.ps1'
+[16.202s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/hook/pythonpath.dsv'
+[16.202s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/hook/pythonpath.sh'
+[16.204s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/bin'
+[16.324s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/package.ps1'
+[16.325s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/package.dsv'
+[16.327s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/package.sh'
+[16.329s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/package.bash'
+[16.330s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/drive_base_msgs/package.zsh'
+[16.331s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/fabian/Schreibtisch/Workspace/ros2/agent/install/drive_base_msgs/share/colcon-core/packages/drive_base_msgs)
+[16.466s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(robot_description)
+[16.599s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description' for CMake module files
+[16.601s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description' for CMake config files
+[16.601s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_description', 'cmake_prefix_path')
+[16.721s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/share/robot_description/hook/cmake_prefix_path.ps1'
+[16.722s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/share/robot_description/hook/cmake_prefix_path.dsv'
+[16.723s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/share/robot_description/hook/cmake_prefix_path.sh'
+[16.724s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/bin'
+[16.724s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/lib/pkgconfig/robot_description.pc'
+[16.725s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/lib/python3.8/site-packages'
+[16.725s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/bin'
+[16.847s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/share/robot_description/package.ps1'
+[16.848s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/share/robot_description/package.dsv'
+[16.849s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/share/robot_description/package.sh'
+[16.850s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/share/robot_description/package.bash'
+[16.851s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/share/robot_description/package.zsh'
+[16.852s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/fabian/Schreibtisch/Workspace/ros2/agent/install/robot_description/share/colcon-core/packages/robot_description)
+[16.979s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(micro_ros_msgs)
+[17.116s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs' for CMake module files
+[17.118s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs' for CMake config files
+[17.120s] Level 1:colcon.colcon_core.shell:create_environment_hook('micro_ros_msgs', 'cmake_prefix_path')
+[17.231s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/hook/cmake_prefix_path.ps1'
+[17.232s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/hook/cmake_prefix_path.dsv'
+[17.233s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/hook/cmake_prefix_path.sh'
+[17.235s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/lib'
+[17.235s] Level 1:colcon.colcon_core.shell:create_environment_hook('micro_ros_msgs', 'ld_library_path_lib')
+[17.349s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/hook/ld_library_path_lib.ps1'
+[17.350s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/hook/ld_library_path_lib.dsv'
+[17.351s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/hook/ld_library_path_lib.sh'
+[17.352s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/bin'
+[17.353s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/lib/pkgconfig/micro_ros_msgs.pc'
+[17.353s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/lib/python3.8/site-packages'
+[17.353s] Level 1:colcon.colcon_core.shell:create_environment_hook('micro_ros_msgs', 'pythonpath')
+[17.465s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/hook/pythonpath.ps1'
+[17.466s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/hook/pythonpath.dsv'
+[17.466s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/hook/pythonpath.sh'
+[17.468s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/bin'
+[17.581s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/package.ps1'
+[17.582s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/package.dsv'
+[17.584s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/package.sh'
+[17.585s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/package.bash'
+[17.586s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/micro_ros_msgs/package.zsh'
+[17.587s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/share/colcon-core/packages/micro_ros_msgs)
+[17.588s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/home/fabian/Schreibtisch/Workspace/ros2/agent/src/uros/micro-ROS-Agent/micro_ros_agent' with build type 'ament_cmake'
+[17.588s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/home/fabian/Schreibtisch/Workspace/ros2/agent/src/uros/micro-ROS-Agent/micro_ros_agent'
+[17.699s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[17.699s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[17.958s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_agent': AMENT_PREFIX_PATH=/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs:/opt/ros/foxy LD_LIBRARY_PATH=/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_agent -- -j3 -l3
+[18.157s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_agent' returned '0': AMENT_PREFIX_PATH=/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs:/opt/ros/foxy LD_LIBRARY_PATH=/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_agent -- -j3 -l3
+[18.229s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_agent': AMENT_PREFIX_PATH=/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs:/opt/ros/foxy LD_LIBRARY_PATH=/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/cmake --install /home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_agent
+[18.269s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(micro_ros_agent)
+[18.270s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_agent' returned '0': AMENT_PREFIX_PATH=/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs:/opt/ros/foxy LD_LIBRARY_PATH=/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_msgs/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/cmake --install /home/fabian/Schreibtisch/Workspace/ros2/agent/build/micro_ros_agent
+[18.383s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent' for CMake module files
+[18.385s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent' for CMake config files
+[18.388s] Level 1:colcon.colcon_core.shell:create_environment_hook('micro_ros_agent', 'cmake_prefix_path')
+[18.500s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/hook/cmake_prefix_path.ps1'
+[18.501s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/hook/cmake_prefix_path.dsv'
+[18.502s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/hook/cmake_prefix_path.sh'
+[18.503s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/lib'
+[18.503s] Level 1:colcon.colcon_core.shell:create_environment_hook('micro_ros_agent', 'ld_library_path_lib')
+[18.613s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/hook/ld_library_path_lib.ps1'
+[18.614s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/hook/ld_library_path_lib.dsv'
+[18.615s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/hook/ld_library_path_lib.sh'
+[18.616s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/bin'
+[18.616s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/lib/pkgconfig/micro_ros_agent.pc'
+[18.617s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/lib/python3.8/site-packages'
+[18.617s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/bin'
+[18.726s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/package.ps1'
+[18.728s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/package.dsv'
+[18.729s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/package.sh'
+[18.730s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/package.bash'
+[18.731s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/package.zsh'
+[18.732s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/colcon-core/packages/micro_ros_agent)
+[18.907s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(micro_ros_agent)
+[19.018s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent' for CMake module files
+[19.020s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent' for CMake config files
+[19.023s] Level 1:colcon.colcon_core.shell:create_environment_hook('micro_ros_agent', 'cmake_prefix_path')
+[19.135s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/hook/cmake_prefix_path.ps1'
+[19.136s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/hook/cmake_prefix_path.dsv'
+[19.137s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/hook/cmake_prefix_path.sh'
+[19.138s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/lib'
+[19.139s] Level 1:colcon.colcon_core.shell:create_environment_hook('micro_ros_agent', 'ld_library_path_lib')
+[19.247s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/hook/ld_library_path_lib.ps1'
+[19.248s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/hook/ld_library_path_lib.dsv'
+[19.249s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/hook/ld_library_path_lib.sh'
+[19.249s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/bin'
+[19.250s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/lib/pkgconfig/micro_ros_agent.pc'
+[19.250s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/lib/python3.8/site-packages'
+[19.251s] Level 1:colcon.colcon_core.environment:checking '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/bin'
+[19.368s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/package.ps1'
+[19.370s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/package.dsv'
+[19.371s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/package.sh'
+[19.373s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/package.bash'
+[19.374s] INFO:colcon.colcon_core.shell:Creating package script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/micro_ros_agent/package.zsh'
+[19.375s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/fabian/Schreibtisch/Workspace/ros2/agent/install/micro_ros_agent/share/colcon-core/packages/micro_ros_agent)
+[19.376s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:closing loop
+[19.377s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:loop closed
+[19.377s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete finished with '0'
+[19.377s] DEBUG:colcon.colcon_core.event_reactor:joining thread
+[19.529s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.terminal_notifier': Not used on non-Darwin systems
+[19.529s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.win32': Not used on non-Windows systems
+[19.530s] INFO:colcon.colcon_notification.desktop_notification:Sending desktop notification using 'notify2'
+[19.574s] DEBUG:colcon.colcon_core.event_reactor:joined thread
+[19.689s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/local_setup.ps1'
+[19.693s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/_local_setup_util_ps1.py'
+[19.698s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/setup.ps1'
+[19.816s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/local_setup.sh'
+[19.818s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/_local_setup_util_sh.py'
+[19.819s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/setup.sh'
+[19.938s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/local_setup.bash'
+[19.940s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/setup.bash'
+[20.048s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/local_setup.zsh'
+[20.051s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/fabian/Schreibtisch/Workspace/ros2/agent/install/setup.zsh'

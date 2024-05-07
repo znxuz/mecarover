@@ -1,0 +1,6 @@
+set(COMPONENT_SRCS "mrlogger.c" "tcplogger.c")
+#set(COMPONENT_ADD_INCLUDEDIRS "$ENV{PROJECT_PATH}/components/mrlogger" "$ENV{PROJECT_PATH}/include")
+set(COMPONENT_ADD_INCLUDEDIRS "." "../../include")
+set(COMPONENT_REQUIRES network ros_lib)
+register_component()
+
