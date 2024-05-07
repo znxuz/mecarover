@@ -67,7 +67,7 @@ extern "C" {
 namespace imsl {
 
 //Ethernet Communication
-static eth_transport_params_t default_params = { { 0, 0, 0 }, { "192.168.20.115" }, { "8888" } }; //{"192.168.20.123"}, {"8888"}};
+static eth_transport_params_t default_params = { { 0, 0, 0 }, { "192.168.1.228" }, { "8888" } }; //{"192.168.20.123"}, {"8888"}};
 
 
 //Usart Communication
