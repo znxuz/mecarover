@@ -125,6 +125,7 @@ TGT_CFLAGS = \
 C_SRCS := $(filter-out \
 		  ./components/micro_ros_stm32cubemx_utils/extra_sources/microros_transports/dma_transport.c \
 		  ./components/micro_ros_stm32cubemx_utils/extra_sources/microros_transports/it_transport.c \
+		  ./components/micro_ros_stm32cubemx_utils/extra_sources/microros_transports/usb_cdc_transport.c \
 		  ./components/micro_ros_stm32cubemx_utils/sample_main.c \
 		  ./Core/Src/freertos.c \
 		  ./Core/Src/syscalls.c \
@@ -146,7 +147,7 @@ OBJDUMP_LIST := $(BUILD_DIR)/$(NAME).list
 
 .PHONY: all clean
 
-all: $(EXECUTABLES) $(SIZE_OUTPUT) $(OBJDUMP_LIST)
+all: $(BIN) $(SIZE_OUTPUT) $(OBJDUMP_LIST)
 
 $(BUILD_DIR)/%.o $(BUILD_DIR)/%.su: %.c
 	$(DIR_GUARD)
@@ -180,7 +181,9 @@ $(OBJDUMP_LIST): $(EXECUTABLES)
 
 clean:
 	$(RM) $(OBJS)
-	$(RM) $(shell find $(BUILD_DIR) -type f -name '*.su' -or -name '*.d')
+	$(RM) $(EXECUTABLES)
+	$(RM) $(BIN)
+	$(RM) $(shell find $(BUILD_DIR) -type f -name '*.su' -or -name '*.d' -or -name '*.o')
 
 fclean:
 	$(RM) -r $(BUILD_DIR)
