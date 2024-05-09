@@ -187,11 +187,14 @@ fclean:
 	$(RM) -r $(BUILD_DIR)
 
 # test
-echo_src:
+echo_c_src:
 	@echo $(C_SRCS)
+
+echo_cc_src:
+	@echo $(CC_SRCS)
 
 echo_objs:
 	@echo $(OBJS)
 
 diff:
-	@diff *.bin
+	@diff $(BUILD_DIR)/*.bin
