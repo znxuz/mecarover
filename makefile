@@ -22,7 +22,6 @@ TGT_CPPFLAGS = \
 			   -I"components/controller" \
 			   -I"components/HAL" \
 			   -I"components/mrlogger" \
-			   -I"components/network" \
 			   -I"components/ros_interface" \
 			   -ICore/Inc \
 			   -I"components/Eigen" \

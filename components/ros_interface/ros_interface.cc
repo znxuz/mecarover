@@ -26,7 +26,6 @@
 #include "retarget.h"
 
 #include "eth_transport.h"
-//#include "connection.h"
 #include <lwip.h>
 #include "api.h"
 
