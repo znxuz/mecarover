@@ -48,7 +48,6 @@
 // using WiFi or Ethernet
 #undef WIFI
 //#define WIFI
-#include "imsl_network.h"
 #include "lwip.h"
 
 #include "LaserScanner.h"
