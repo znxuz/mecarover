@@ -4,7 +4,7 @@ DIR_GUARD = @mkdir -p "$(@D)"
 
 TGT_CPPFLAGS = \
 			   -mcpu=cortex-m7 \
-			   -std=gnu++14 \
+			   -std=gnu++17 \
 			   -g3 \
 			   -DDEBUG \
 			   -DUSE_HAL_DRIVER \

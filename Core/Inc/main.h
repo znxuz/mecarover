@@ -19,8 +19,7 @@
 /* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __MAIN_H
-#define __MAIN_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -126,12 +125,8 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 
-extern struct netif gnetif;
-
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __MAIN_H */

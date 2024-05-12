@@ -1,8 +1,4 @@
 #pragma once
-#ifndef RTOS_CONFIG_H
-#define RTOS_CONFIG_H
-
-#include "cmsis_os2.h"
 
 // definitions for RTOS - 0 lowest Priority 56 highest Priority
 #define POSE_CONTROLLER_PRIORITY 30 //highest Priority
@@ -16,5 +12,3 @@
 #define STACK_SIZE 7500	//20000 Stack Size - Specified in words, so 1 Word = 4 Bytes ->7000
 #define ETH_SIZE 1500
 //StackSize can be set in STMCubeMX and FreeRTOSConfig.h at configTOTAL_HEAP_SIZE
-
-#endif

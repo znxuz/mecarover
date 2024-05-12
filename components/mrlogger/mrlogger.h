@@ -1,26 +1,22 @@
-/* 
- * this header defines a C interface to the logger
- */
-  
-#ifndef INCLUDED_MRLOGGER_H
-#define INCLUDED_MRLOGGER_H
+#pragma once
 
-#include <stdint.h>
 #include <stdbool.h>
 
 #if __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-typedef enum mr_logprio_t {
-    log_emerg = 0,
-    log_alert = 1,
-    log_crit = 2,
-    log_error = 3,
-    log_warning = 4,
-    log_notice = 5,
-    log_info = 6,
-    log_debug = 7,
+typedef enum mr_logprio_t
+{
+	log_emerg = 0,
+	log_alert = 1,
+	log_crit = 2,
+	log_error = 3,
+	log_warning = 4,
+	log_notice = 5,
+	log_info = 6,
+	log_debug = 7,
 } mr_logprio_t;
 
 void log_message(mr_logprio_t prio, const char *fmt, ...) __attribute__ ((__format__ (__printf__, 2, 3)));
@@ -33,6 +29,3 @@ void logger_use_colors(bool use_colors);
 #if __cplusplus
 }
 #endif
-
-#endif // INCLUDED_MRLOGGER_H
-

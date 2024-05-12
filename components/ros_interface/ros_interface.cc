@@ -1,15 +1,10 @@
-#include "ros_interface.h" // declarations (API) of the component
-//#include <../../build/config/sdkconfig.h>
-#include "ros_debug.h" //ros Los message
-#include "hal.h"
-
-// ros2 messages
-#include <std_msgs/msg/bool.h>          // for enable topic
-#include <std_msgs/msg/byte.h>          // for ctrl_status
+#include <std_msgs/msg/bool.h>
+#include <std_msgs/msg/byte.h>
 #include <geometry_msgs/msg/transform_stamped.h>
 #include <geometry_msgs/msg/twist.h>
 #include <sensor_msgs/msg/range.h>
-
+#include <sensor_msgs/msg/detail/laser_scan__struct.h>
+#include <sensor_msgs/msg/laser_scan.h>
 #include <tf2_msgs/msg/tf_message.h>
 
 // ros2 headers
@@ -20,51 +15,46 @@
 #include <rclc/executor.h>
 #include <rmw_microros/rmw_microros.h>
 #include <uxr/client/config.h>
-
-#include "usart.h"
-#include <main.h> //gnetif
-#include "retarget.h"
-
-#include "eth_transport.h"
 #include <lwip.h>
-#include "api.h"
-
-#include "sensor_msgs/msg/detail/laser_scan__struct.h"
-#include <sensor_msgs/msg/laser_scan.h>
-#include "LaserScanner.h"
-#include <math.h>
 
 //nav2
 #include <nav_msgs/msg/odometry.h>
+
+#include "ros_interface.h"
+#include "ControllerTasks.h"
+#include "ros_debug.h"
+#include "eth_transport.h"
+#include "LaserScanner.h"
 
 using namespace imsl;
 using namespace imsl::vehiclecontrol;
 
 #define RCCHECK(fn)                                                                \
-  {                                                                                \
-    rcl_ret_t temp_rc = fn;                                                        \
-    if ((temp_rc != RCL_RET_OK))                                                   \
-    {                                                                              \
-      printf("Failed status on line %d: %d. Aborting.\n", __LINE__, (int)temp_rc); \
-      vTaskDelete(NULL);                                                           \
-    }                                                                              \
-  }
+{                                                                                \
+	rcl_ret_t temp_rc = fn;                                                        \
+	if ((temp_rc != RCL_RET_OK))                                                   \
+	{                                                                              \
+		printf("Failed status on line %d: %d. Aborting.\n", __LINE__, (int)temp_rc); \
+		vTaskDelete(NULL);                                                           \
+	}                                                                              \
+}
 #define RCSOFTCHECK(fn)                                                              \
-  {                                                                                  \
-    rcl_ret_t temp_rc = fn;                                                          \
-    if ((temp_rc != RCL_RET_OK)){                                                    \
-      printf("Failed status on line %d: %d. Continuing.\n", __LINE__, (int)temp_rc); \
-    }                                                                                \
-  }
+{                                                                                  \
+	rcl_ret_t temp_rc = fn;                                                          \
+	if ((temp_rc != RCL_RET_OK)){                                                    \
+		printf("Failed status on line %d: %d. Continuing.\n", __LINE__, (int)temp_rc); \
+	}                                                                                \
+}
 
 #define DEG2RAD(x) ((x)*M_PI/180.)
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-namespace imsl {
-
+namespace imsl
+{
 //Ethernet Communication
 static eth_transport_params_t default_params = { { 0, 0, 0 }, { "192.168.1.228" }, { "8888" } }; //{"192.168.20.123"}, {"8888"}};
 
@@ -111,31 +101,31 @@ int requestedNumberOfPoints = 360;
 float er[360];
 
 
-void rplidar_scan(rcl_timer_t *timer, int64_t last_call_time) {
+void rplidar_scan(rcl_timer_t *timer, int64_t last_call_time)
+{
+	/* Package the data into the correct format
+	   Here is what is in the LaserScan message:
+	   Header header            # timestamp in the header is the acquisition time of
+# the first ray in the scan.
+#
+# in frame frame_id, angles are measured around
+# the positive Z axis (counterclockwise, if Z is up)
+# with zero angle being forward along the x axis
 
-        /* Package the data into the correct format
-            Here is what is in the LaserScan message:
-            Header header            # timestamp in the header is the acquisition time of
-                                     # the first ray in the scan.
-                                     #
-                                     # in frame frame_id, angles are measured around
-                                     # the positive Z axis (counterclockwise, if Z is up)
-                                     # with zero angle being forward along the x axis
-
-            float32 angle_min        # start angle of the scan [rad]
-            float32 angle_max        # end angle of the scan [rad]
-            float32 angle_increment  # angular distance between measurements [rad]
-            float32 time_increment   # time between measurements [seconds] - if your scanner
-                                     # is moving, this will be used in interpolating position
-                                     # of 3d points
-            float32 scan_time        # time between scans [seconds]
-            float32 range_min        # minimum range value [m]
-            float32 range_max        # maximum range value [m]
-            float32[] ranges         # range data [m] (Note: values < range_min or > range_max should be discarded)
-            float32[] intensities    # intensity data [device-specific units].  If your
-                                     # device does not provide intensities, please leave
-                                     # the array empty.
-        */
+float32 angle_min        # start angle of the scan [rad]
+float32 angle_max        # end angle of the scan [rad]
+float32 angle_increment  # angular distance between measurements [rad]
+float32 time_increment   # time between measurements [seconds] - if your scanner
+# is moving, this will be used in interpolating position
+# of 3d points
+float32 scan_time        # time between scans [seconds]
+float32 range_min        # minimum range value [m]
+float32 range_max        # maximum range value [m]
+float32[] ranges         # range data [m] (Note: values < range_min or > range_max should be discarded)
+float32[] intensities    # intensity data [device-specific units].  If your
+# device does not provide intensities, please leave
+# the array empty.
+*/
 
 	//Synchronize the ROS time
 	RCSOFTCHECK(rmw_uros_sync_session(1000));
@@ -149,7 +139,7 @@ void rplidar_scan(rcl_timer_t *timer, int64_t last_call_time) {
 	//set the angle range (start angle and end angle)
 	float startAngle = 0;
 	float endAngle = ((2 * 3.14159) / requestedNumberOfPoints)
-			* (requestedNumberOfPoints - 1);
+		* (requestedNumberOfPoints - 1);
 	distance[0].angle_min = startAngle;
 	distance[0].angle_max = endAngle;
 	distance[0].angle_increment = (2 * 3.14159) / requestedNumberOfPoints;
@@ -172,10 +162,10 @@ void rplidar_scan(rcl_timer_t *timer, int64_t last_call_time) {
 	if (timer != NULL) {
 		RCSOFTCHECK(rcl_publish(&laserscanner, &distance, NULL));
 	}
-
 }
 
-void start_Scan_cb(const void *start_Scan){
+void start_Scan_cb(const void *start_Scan)
+{
 	const std_msgs__msg__Bool *startScan =	(const std_msgs__msg__Bool*) start_Scan;
 
 	if (startScan->data) {
@@ -186,7 +176,8 @@ void start_Scan_cb(const void *start_Scan){
 	}
 }
 
-void timer_cb(rcl_timer_t *timer, int64_t last_call_time) {
+void timer_cb(rcl_timer_t *timer, int64_t last_call_time)
+{
 	vehiclecontrol::CtrlMode controllerMode = ct->GetControllerMode();
 
 	ctrl_status_msg.data = int8_t(controllerMode);
@@ -223,7 +214,8 @@ void timer_cb(rcl_timer_t *timer, int64_t last_call_time) {
 	}
 }
 
-void cmd_cb(const void *cmd_msg) {
+void cmd_cb(const void *cmd_msg)
+{
 	//  log_message(log_debug,"cmd_vel x: %f, y: %f, theta: %f", cmd_msg.linear.x, cmd_msg.linear.y, cmd_msg.angular.z);
 	geometry_msgs__msg__Twist *msg = (geometry_msgs__msg__Twist*) cmd_msg;
 
@@ -237,25 +229,27 @@ void cmd_cb(const void *cmd_msg) {
 	}
 }
 
-void enable_topic_cb(const void *enable_topic) {
+void enable_topic_cb(const void *enable_topic)
+{
 	const std_msgs__msg__Bool *enable =
-			(const std_msgs__msg__Bool*) enable_topic;
+		(const std_msgs__msg__Bool*) enable_topic;
 	if (enable->data) {
-//      hal_amplifiers_enable();
+		//      hal_amplifiers_enable();
 		ct->SetControllerMode(vehiclecontrol::CtrlMode::TWIST);
 
 		log_message(log_info, "amplifiers enable, going into twist mode");
 	} else {
-//      hal_amplifiers_disable();
+		//      hal_amplifiers_disable();
 		ct->SetControllerMode(vehiclecontrol::CtrlMode::OFF);
 
 		log_message(log_info, "amplifiers disable, mode off");
 	}
 }
 
-void rosInit(void *controller) {
+void rosInit(void *controller)
+{
 
-//		 micro-ROS configuration
+	//		 micro-ROS configuration
 
 	//init lwip for Ethernet Communication
 	MX_LWIP_Init();
@@ -269,7 +263,7 @@ void rosInit(void *controller) {
 			eth_transport_read);
 
 	rcl_allocator_t freeRTOS_allocator =
-			rcutils_get_zero_initialized_allocator();
+		rcutils_get_zero_initialized_allocator();
 	freeRTOS_allocator.allocate = microros_allocate;
 	freeRTOS_allocator.deallocate = microros_deallocate;
 	freeRTOS_allocator.reallocate = microros_reallocate;
@@ -298,14 +292,14 @@ void rosInit(void *controller) {
 	node_ops.domain_id = 56;
 	RCCHECK(rclc_node_init_with_options(&node, "RobotNode", "", &support, &node_ops));
 
-//	RCCHECK(rclc_node_init_default(&node, "RobotNode", "", &support));
+	//	RCCHECK(rclc_node_init_default(&node, "RobotNode", "", &support));
 
 	//initialize publisher and subscriber
 	//with best effort variant
-//	RCCHECK(rclc_publisher_init_best_effort(&ctrl_status, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Byte), "ctrl_status"));
-//	RCCHECK(rclc_publisher_init_best_effort(&tf_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(tf2_msgs, msg, TFMessage), "tf"));
-//	RCCHECK(rclc_subscription_init_best_effort(&sub_cmd_vel, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "cmd_vel"));
-//	RCCHECK(rclc_subscription_init_best_effort(&sub_enable, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool), "enable"));
+	//	RCCHECK(rclc_publisher_init_best_effort(&ctrl_status, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Byte), "ctrl_status"));
+	//	RCCHECK(rclc_publisher_init_best_effort(&tf_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(tf2_msgs, msg, TFMessage), "tf"));
+	//	RCCHECK(rclc_subscription_init_best_effort(&sub_cmd_vel, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "cmd_vel"));
+	//	RCCHECK(rclc_subscription_init_best_effort(&sub_enable, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool), "enable"));
 
 	//inittialize publisher for LaserScanner, default (qos) Settings
 	RCCHECK(rclc_publisher_init_default(&laserscanner, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, LaserScan), "scan"));
@@ -318,11 +312,11 @@ void rosInit(void *controller) {
 	RCCHECK(rclc_subscription_init_default(&sub_enable, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool), "enable"));
 
 	//with qos settings
-//	rmw_qos_profile_t qos = {RMW_QOS_POLICY_HISTORY_KEEP_LAST, 5, RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT, RMW_QOS_POLICY_DURABILITY_VOLATILE, false};
-//	RCCHECK(rclc_publisher_init(&ctrl_status, &node, rosidl_typesupport_c__get_message_type_support_handle__std_msgs__msg__Byte(), "ctrl_status", &qos));
-//	RCCHECK(rclc_publisher_init(&tf_publisher, &node, rosidl_typesupport_c__get_message_type_support_handle__geometry_msgs__msg__TransformStamped(), "tf", &qos));
-//	RCCHECK(rclc_subscription_init(&sub_cmd_vel, &node, rosidl_typesupport_c__get_message_type_support_handle__geometry_msgs__msg__Twist(), "cmd_vel", &qos));
-//	RCCHECK(rclc_subscription_init(&sub_enable, &node, rosidl_typesupport_c__get_message_type_support_handle__std_msgs__msg__Bool(), "enable", &qos));
+	//	rmw_qos_profile_t qos = {RMW_QOS_POLICY_HISTORY_KEEP_LAST, 5, RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT, RMW_QOS_POLICY_DURABILITY_VOLATILE, false};
+	//	RCCHECK(rclc_publisher_init(&ctrl_status, &node, rosidl_typesupport_c__get_message_type_support_handle__std_msgs__msg__Byte(), "ctrl_status", &qos));
+	//	RCCHECK(rclc_publisher_init(&tf_publisher, &node, rosidl_typesupport_c__get_message_type_support_handle__geometry_msgs__msg__TransformStamped(), "tf", &qos));
+	//	RCCHECK(rclc_subscription_init(&sub_cmd_vel, &node, rosidl_typesupport_c__get_message_type_support_handle__geometry_msgs__msg__Twist(), "cmd_vel", &qos));
+	//	RCCHECK(rclc_subscription_init(&sub_enable, &node, rosidl_typesupport_c__get_message_type_support_handle__std_msgs__msg__Bool(), "enable", &qos));
 
 	//Create timer.
 	rcl_timer_t timer = rcl_get_zero_initialized_timer();
@@ -370,18 +364,13 @@ void rosInit(void *controller) {
 
 	vTaskDelete(NULL);
 }
-
-bool rosConnected() {
-	return rmw_uros_ping_agent(100, 3) == RCL_RET_OK ? true : false;
 }
-
-} // namespace imsl
 
 #ifdef __cplusplus
 }
 #endif
 
-void ros_log_message(mr_logprio_t prio, const char *msg) {
+void ros_log_message(mr_logprio_t prio, const char *msg)
+{
 	return; // do nothing, at the moment rosserial_python crashes on ros log messages
 }
-

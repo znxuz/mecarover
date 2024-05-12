@@ -1,14 +1,3 @@
-/*
- * retarget.c
- *
- *  Created on: Apr 12, 2022
- *      Author: Fabian Schäfer
- */
-
-// Allen Dank an Carmine Noviello für diesen Code
-// https://github.com/cnoviello/mastering-stm32/blob/master/nucleo-f030R8/system/src/retarget/retarget.c
-// Quelle: https://shawnhymel.com/1873/how-to-use-printf-on-stm32/
-
 // All credit to Carmine Noviello for this code
 // https://github.com/cnoviello/mastering-stm32/blob/master/nucleo-f030R8/system/src/retarget/retarget.c
 
@@ -17,17 +6,15 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
-#include <signal.h>
 #include <time.h>
 #include <sys/time.h>
 #include <sys/times.h>
-#include "usart.h"
-#include "retarget.h"
 #include <stm32f7xx.h>
 #include <string.h>
 
-#if !defined(OS_USE_SEMIHOSTING)
+#include "retarget.h"
 
+#if !defined(OS_USE_SEMIHOSTING)
 #define STDIN_FILENO  0
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
@@ -51,12 +38,13 @@ volatile uint8_t txBuffer[200];
 
 UART_HandleTypeDef *gHuart;
 
-void RetargetInit(UART_HandleTypeDef *huart) {
-  gHuart = huart;
+void retarget_init(UART_HandleTypeDef *huart)
+{
+	gHuart = huart;
 
-  /* Disable I/O buffering for STDOUT stream, so that
-   * chars are sent out as soon as they are printed. */
-  setvbuf(stdout, NULL, _IONBF, 0);
+	/* Disable I/O buffering for STDOUT stream, so that
+	 * chars are sent out as soon as they are printed. */
+	setvbuf(stdout, NULL, _IONBF, 0);
 }
 
 int _getpid(void)
@@ -80,32 +68,32 @@ int _read(int file, char *ptr, int len)
 {
 	HAL_StatusTypeDef hstatus;
 
-	  if (file == STDIN_FILENO) {
-	    hstatus = HAL_UART_Receive(gHuart, (uint8_t *) ptr, 1, HAL_MAX_DELAY);
-	    if (hstatus == HAL_OK)
-	      return 1;
-	    else
-	      return EIO;
-	  }
-	  errno = EBADF;
-	  return -1;
+	if (file == STDIN_FILENO) {
+		hstatus = HAL_UART_Receive(gHuart, (uint8_t *) ptr, 1, HAL_MAX_DELAY);
+		if (hstatus == HAL_OK)
+			return 1;
+		else
+			return EIO;
+	}
+	errno = EBADF;
+	return -1;
 }
 
 int _write(int file, char *ptr, int len)
 {
 
-	  HAL_StatusTypeDef hstatus;
+	HAL_StatusTypeDef hstatus;
 
-	  if (file == STDOUT_FILENO || file == STDERR_FILENO) {
-	    hstatus = HAL_UART_Transmit(gHuart, (uint8_t *) ptr, len, HAL_MAX_DELAY);
+	if (file == STDOUT_FILENO || file == STDERR_FILENO) {
+		hstatus = HAL_UART_Transmit(gHuart, (uint8_t *) ptr, len, HAL_MAX_DELAY);
 
-	    if (hstatus == HAL_OK)
-	      return len;
-	    else
-	      return EIO;
-	  }
-	  errno = EBADF;
-	  return -1;
+		if (hstatus == HAL_OK)
+			return len;
+		else
+			return EIO;
+	}
+	errno = EBADF;
+	return -1;
 
 
 }
@@ -113,41 +101,41 @@ int _write(int file, char *ptr, int len)
 
 int _close(int fd)
 {
-	  if (fd >= STDIN_FILENO && fd <= STDERR_FILENO)
-	    return 0;
+	if (fd >= STDIN_FILENO && fd <= STDERR_FILENO)
+		return 0;
 
-	  errno = EBADF;
-	  return -1;
+	errno = EBADF;
+	return -1;
 }
 
 
 int _fstat(int fd, struct stat *st)
 {
-	  if (fd >= STDIN_FILENO && fd <= STDERR_FILENO) {
-	    st->st_mode = S_IFCHR;
-	    return 0;
-	  }
+	if (fd >= STDIN_FILENO && fd <= STDERR_FILENO) {
+		st->st_mode = S_IFCHR;
+		return 0;
+	}
 
-	  errno = EBADF;
-	  return 0;
+	errno = EBADF;
+	return 0;
 }
 
 int _isatty(int fd)
 {
-	  if (fd >= STDIN_FILENO && fd <= STDERR_FILENO)
-	    return 1;
+	if (fd >= STDIN_FILENO && fd <= STDERR_FILENO)
+		return 1;
 
-	  errno = EBADF;
-	  return 0;}
+	errno = EBADF;
+	return 0;}
 
 int _lseek(int fd, int ptr, int dir)
 {
-	  (void) fd;
-	  (void) ptr;
-	  (void) dir;
+	(void) fd;
+	(void) ptr;
+	(void) dir;
 
-	  errno = EBADF;
-	  return -1;
+	errno = EBADF;
+	return -1;
 }
 
 int _open(char *path, int flags, ...)
@@ -198,25 +186,24 @@ int _execve(char *name, char **argv, char **env)
 }
 
 caddr_t _sbrk(int incr) {
-    extern char __heap_start__ asm("end");  // Defined by the linker.
-    static char *heap_end;
-    char *prev_heap_end;
+	extern char __heap_start__ asm("end");  // Defined by the linker.
+	static char *heap_end;
+	char *prev_heap_end;
 
-    if (heap_end == NULL) heap_end = &__heap_start__;
+	if (heap_end == NULL) heap_end = &__heap_start__;
 
-    prev_heap_end = heap_end;
+	prev_heap_end = heap_end;
 
-    if (heap_end + incr > &_estack - _Min_Stack_Size) {
-            __asm("BKPT #0\n");
-        errno = ENOMEM;
-        return (caddr_t)-1;
+	if (heap_end + incr > &_estack - _Min_Stack_Size) {
+		__asm("BKPT #0\n");
+		errno = ENOMEM;
+		return (caddr_t)-1;
 
-    }
+	}
 
-    heap_end += incr;
-    return (caddr_t)prev_heap_end;
+	heap_end += incr;
+	return (caddr_t)prev_heap_end;
 
 }
 
 #endif //#if !defined(OS_USE_SEMIHOSTING)
-

@@ -5,20 +5,14 @@
  *      Author: Fabia
  */
 
-
-#include "usart.h"
-#include "tim.h"
-
 #include "STM_counter.h"
 #include "stm32f7xx_hal_tim.h"
-
 
 #define New_Zero 32767
 #define Max_Value 65535
 //#define Max_Value 100
 #define Min_Value 0
 //#define New_Zero 50
-
 
 /*
  *
@@ -30,15 +24,14 @@
  *
  */
 
-
 int64_t flow[NumMotors] = { -New_Zero, -New_Zero, -New_Zero, -New_Zero };
 int64_t akt_pos[NumMotors] = {0,0,0,0};
 TIM_HandleTypeDef timer[NumMotors];
-extern bool hal_is_init;
-
+static bool hal_is_init;
 
 //init der Encoder
-bool STM_Counter::init(TIM_HandleTypeDef *htim, int id) {
+bool STM_Counter::init(TIM_HandleTypeDef *htim, int id)
+{
 
 	__HAL_TIM_SET_COUNTER(htim, New_Zero);
 
@@ -54,7 +47,8 @@ bool STM_Counter::init(TIM_HandleTypeDef *htim, int id) {
 	return is_init;
 }
 
-uint64_t STM_Counter::getCount(int id) {
+uint64_t STM_Counter::getCount(int id)
+{
 	if (is_init) {
 
 		 enc_value = __HAL_TIM_GET_COUNTER(&timer[id]);
@@ -77,7 +71,8 @@ uint64_t STM_Counter::getCount(int id) {
  * @param  htim : TIM handle
  * @retval None
  */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
 	/* USER CODE BEGIN Callback 0 */
 
 	/* USER CODE END Callback 0 */
@@ -139,4 +134,3 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 	/* USER CODE END Callback 1 */
 }
-
