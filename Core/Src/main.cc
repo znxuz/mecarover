@@ -77,7 +77,7 @@ int main()
 	MX_TIM11_Init();
 	MX_TIM13_Init();
 
-	// retarget_init(&huart2);
+	retarget_init(&huart3);
 
 	if (hal_init(&fz)) { // init PWM and encoders
 		hal_is_init = true;
@@ -109,7 +109,6 @@ int main()
 	if (xReturned != pdPASS) {
 		printf("Error: logger_init(), xTaskCreate()\n");
 	}
-
 
 	size_t free_heap = xPortGetMinimumEverFreeHeapSize(); //ESP.getMinFreeHeap(); //lowest level of free heap since boot
 	uint32_t free_stack = RT_Task::thisTaskGetStackHighWaterMark();

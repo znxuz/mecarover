@@ -23,7 +23,7 @@ extern "C" {
 #include <stm32f7xx.h>
 #include <sys/stat.h>
 
-void RetargetInit(UART_HandleTypeDef *huart);
+void retarget_init(UART_HandleTypeDef *huart);
 
 
 int _isatty(int fd);

@@ -189,13 +189,13 @@ fclean:
 	$(RM) -r $(BUILD_DIR)
 
 # test
-echo_c_src:
+print_c_src:
 	@echo $(C_SRCS)
 
-echo_cc_src:
+print_cc_src:
 	@echo $(CC_SRCS)
 
-echo_objs:
+print_objs:
 	@echo $(OBJS)
 
 diff:
