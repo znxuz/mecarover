@@ -53,7 +53,7 @@ extern "C" {
 #endif
 
 /* Application specific configuration options. */
-#include "FreeRTOSConfig.h"
+#include <Core/Inc/FreeRTOSConfig.h>
 
 /* Basic FreeRTOS definitions. */
 #include "projdefs.h"

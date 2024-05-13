@@ -26,10 +26,14 @@
 #include "netif/etharp.h"
 #include "lwip/ethip6.h"
 #include "ethernetif.h"
-#include "lan8742.h"
-#include <string.h>
 #include "cmsis_os.h"
 #include "lwip/tcpip.h"
+
+#include "cmsis_os.h"
+
+#include <string.h>
+#include <Drivers/BSP/Components/lan8742/lan8742.h>
+#include <rtos_config.h>
 
 /* Within 'USER CODE' section, code will be kept by default at each generation */
 /* USER CODE BEGIN 0 */

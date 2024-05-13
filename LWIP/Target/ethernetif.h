@@ -23,11 +23,9 @@
 
 #include "lwip/err.h"
 #include "lwip/netif.h"
-#include "cmsis_os.h"
 
 /* Within 'USER CODE' section, code will be kept by default at each generation */
 /* USER CODE BEGIN 0 */
-#include "rtos_config.h"
 
 /* USER CODE END 0 */
 

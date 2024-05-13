@@ -1,117 +1,57 @@
 NAME := ros2
+
 BUILD_DIR := build
 DIR_GUARD = @mkdir -p "$(@D)"
 
-TGT_CPPFLAGS = \
-			   -mcpu=cortex-m7 \
-			   -std=gnu++17 \
-			   -g3 \
-			   -DDEBUG \
-			   -DUSE_HAL_DRIVER \
-			   -DSTM32F767xx \
-			   -c \
-			   -I"components/micro_ros_stm32cubemx_utils/microros_static_library/libmicroros/microros_include" \
-			   -IDrivers/STM32F7xx_HAL_Driver/Inc \
-			   -IDrivers/STM32F7xx_HAL_Driver/Inc/Legacy \
-			   -IDrivers/CMSIS/Device/ST/STM32F7xx/Include \
-			   -IDrivers/CMSIS/Include \
-			   -IMiddlewares/Third_Party/FreeRTOS/Source/include \
-			   -IMiddlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 \
-			   -IMiddlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1 \
-			   -I"config" \
-			   -I"components/controller" \
-			   -I"components/HAL" \
-			   -I"components/mrlogger" \
-			   -I"components/ros_interface" \
-			   -ICore/Inc \
-			   -I"components/Eigen" \
-			   -I"components/Eigen/Eigen" \
-			   -I"Core/Inc" \
-			   -ILWIP/App \
-			   -ILWIP/Target \
-			   -IMiddlewares/Third_Party/LwIP/src/include \
-			   -IMiddlewares/Third_Party/LwIP/system \
-			   -IDrivers/BSP/Components/lan8742 \
-			   -IMiddlewares/Third_Party/LwIP/src/include/netif/ppp \
-			   -IMiddlewares/Third_Party/LwIP/src/include/lwip \
-			   -IMiddlewares/Third_Party/LwIP/src/include/lwip/apps \
-			   -IMiddlewares/Third_Party/LwIP/src/include/lwip/priv \
-			   -IMiddlewares/Third_Party/LwIP/src/include/lwip/prot \
-			   -IMiddlewares/Third_Party/LwIP/src/include/netif \
-			   -IMiddlewares/Third_Party/LwIP/src/include/compat/posix \
-			   -IMiddlewares/Third_Party/LwIP/src/include/compat/posix/arpa \
-			   -IMiddlewares/Third_Party/LwIP/src/include/compat/posix/net \
-			   -IMiddlewares/Third_Party/LwIP/src/include/compat/posix/sys \
-			   -IMiddlewares/Third_Party/LwIP/src/include/compat/stdc \
-			   -IMiddlewares/Third_Party/LwIP/system/arch \
-			   -I"components/micro_ros_stm32cubemx_utils" \
-			   -I"components/LaserScanner" \
-			   -O0 \
-			   -ffunction-sections \
-			   -fdata-sections \
-			   -fno-exceptions \
-			   -fno-rtti \
-			   -fno-use-cxa-atexit \
-			   -Wall \
-			   -fexceptions \
-			   -u_printf_float \
-			   -fstack-usage \
-			   -MMD \
-			   -MP \
-			   -MF"$(@:%.o=%.d)" \
-			   -MT"$@" \
-			   --specs=nano.specs \
-			   -mfpu=fpv5-d16 \
-			   -mfloat-abi=hard \
-			   -mthumb
+ST_CORE := Core
+ST_DRIVERS := Drivers
+ST_MW := Middlewares/Third_Party
 
-TGT_CFLAGS = \
+MICROROS_DIR := micro_ros_stm32cubemx_utils/microros_static_library/libmicroros
+MICROROS_LIB := -L$(MICROROS_DIR) -lmicroros
+
+LIBS := lib
+
+INCL_PATHS := \
+			  -I$(CURDIR) \
+			  -I$(LIBS) \
+			  -I$(ST_CORE)/Inc \
+			  -I$(ST_DRIVERS)/STM32F7xx_HAL_Driver/Inc \
+			  -I$(ST_DRIVERS)/CMSIS/Device/ST/STM32F7xx/Include \
+			  -I$(ST_DRIVERS)/CMSIS/Include \
+			  -I$(ST_MW)/FreeRTOS/Source/include \
+			  -I$(ST_MW)/FreeRTOS/Source/CMSIS_RTOS_V2 \
+			  -I$(ST_MW)/FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1 \
+			  -I$(ST_MW)/LwIP/src/include \
+			  -I$(ST_MW)/LwIP/system \
+			  -I$(ST_MW)/LwIP/src/include/netif/ppp \
+			  -I$(ST_MW)/LwIP/src/include/lwip \
+			  -I$(ST_MW)/LwIP/src/include/lwip/apps \
+			  -I$(ST_MW)/LwIP/src/include/lwip/priv \
+			  -I$(ST_MW)/LwIP/src/include/lwip/prot \
+			  -I$(ST_MW)/LwIP/src/include/netif \
+			  -I$(ST_MW)/LwIP/src/include/compat/posix \
+			  -I$(ST_MW)/LwIP/src/include/compat/posix/arpa \
+			  -I$(ST_MW)/LwIP/src/include/compat/posix/net \
+			  -I$(ST_MW)/LwIP/src/include/compat/posix/sys \
+			  -I$(ST_MW)/LwIP/src/include/compat/stdc \
+			  -I$(ST_MW)/LwIP/system/arch \
+			  -I$(MICROROS_DIR)/microros_include \
+			  -ILWIP/App \
+			  -ILWIP/Target
+
+TGT_FLAGS = \
 			 -mcpu=cortex-m7 \
-			 -std=gnu11 \
 			 -g3 \
 			 -DDEBUG \
 			 -DUSE_HAL_DRIVER \
 			 -DSTM32F767xx \
 			 -c \
-			 -I"components/micro_ros_stm32cubemx_utils/microros_static_library/libmicroros/microros_include" \
-			 -IDrivers/STM32F7xx_HAL_Driver/Inc \
-			 -IDrivers/STM32F7xx_HAL_Driver/Inc/Legacy \
-			 -IDrivers/CMSIS/Device/ST/STM32F7xx/Include \
-			 -IDrivers/CMSIS/Include \
-			 -IMiddlewares/Third_Party/FreeRTOS/Source/include \
-			 -IMiddlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 \
-			 -IMiddlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1 \
-			 -I"components/controller" \
-			 -I"config" \
-			 -I"components/mrlogger" \
-			 -I"components/HAL" \
-			 -ICore/Inc \
-			 -I"components/Eigen/Eigen" \
-			 -I"Core/Inc" \
-			 -ILWIP/App \
-			 -ILWIP/Target \
-			 -IMiddlewares/Third_Party/LwIP/src/include \
-			 -IMiddlewares/Third_Party/LwIP/system \
-			 -IDrivers/BSP/Components/lan8742 \
-			 -IMiddlewares/Third_Party/LwIP/src/include/netif/ppp \
-			 -IMiddlewares/Third_Party/LwIP/src/include/lwip \
-			 -IMiddlewares/Third_Party/LwIP/src/include/lwip/apps \
-			 -IMiddlewares/Third_Party/LwIP/src/include/lwip/priv \
-			 -IMiddlewares/Third_Party/LwIP/src/include/lwip/prot \
-			 -IMiddlewares/Third_Party/LwIP/src/include/netif \
-			 -IMiddlewares/Third_Party/LwIP/src/include/compat/posix \
-			 -IMiddlewares/Third_Party/LwIP/src/include/compat/posix/arpa \
-			 -IMiddlewares/Third_Party/LwIP/src/include/compat/posix/net \
-			 -IMiddlewares/Third_Party/LwIP/src/include/compat/posix/sys \
-			 -IMiddlewares/Third_Party/LwIP/src/include/compat/stdc \
-			 -IMiddlewares/Third_Party/LwIP/system/arch \
-			 -I"components/LaserScanner" \
 			 -O0 \
 			 -ffunction-sections \
 			 -fdata-sections \
-			 -Wall \
-			 -fexceptions \
 			 -u_printf_float \
+			 -Wall \
 			 -fstack-usage \
 			 -MMD \
 			 -MP \
@@ -120,20 +60,29 @@ TGT_CFLAGS = \
 			 --specs=nano.specs \
 			 -mfpu=fpv5-d16 \
 			 -mfloat-abi=hard \
-			 -mthumb
+			 -mthumb \
+			 $(INCL_PATHS)
+
+	TGT_CPPFLAGS = $(TGT_FLAGS) \
+				   -std=gnu++17 \
+				   -fexceptions \
+				   -fno-rtti \
+				   -fno-use-cxa-atexit
+
+TGT_CFLAGS = $(TGT_FLAGS) \
+			 -std=gnu11
 
 C_SRCS := $(filter-out \
-		  ./components/micro_ros_stm32cubemx_utils/extra_sources/microros_transports/dma_transport.c \
-		  ./components/micro_ros_stm32cubemx_utils/extra_sources/microros_transports/it_transport.c \
-		  ./components/micro_ros_stm32cubemx_utils/extra_sources/microros_transports/usb_cdc_transport.c \
-		  ./components/micro_ros_stm32cubemx_utils/sample_main.c \
-		  ./Core/Src/freertos.c \
-		  ./Core/Src/syscalls.c \
-		  ./Core/Src/sysmem.c \
+		  ./micro_ros_stm32cubemx_utils/extra_sources/microros_transports/dma_transport.c \
+		  ./micro_ros_stm32cubemx_utils/extra_sources/microros_transports/it_transport.c \
+		  ./micro_ros_stm32cubemx_utils/extra_sources/microros_transports/usb_cdc_transport.c \
+		  ./micro_ros_stm32cubemx_utils/sample_main.c \
+		  ./$(ST_CORE)/Src/freertos.c \
+		  ./$(ST_CORE)/Src/syscalls.c \
+		  ./$(ST_CORE)/Src/sysmem.c \
 		  , $(shell find . -type f -name "*.c"))
 CC_SRCS := $(shell find . -type f -name "*.cc")
-S_SRC := Core/Startup/startup_stm32f767zitx.s
-LIBS := -lmicroros
+S_SRC := $(ST_CORE)/Startup/startup_stm32f767zitx.s
 
 OBJS := $(addprefix $(BUILD_DIR)/, $(C_SRCS:.c=.o)) \
 		$(addprefix $(BUILD_DIR)/, $(CC_SRCS:.cc=.o)) \
@@ -142,8 +91,8 @@ OBJS := $(addprefix $(BUILD_DIR)/, $(C_SRCS:.c=.o)) \
 BIN := $(BUILD_DIR)/$(NAME).bin
 EXECUTABLES := $(BUILD_DIR)/$(NAME).elf
 MAP_FILES := $(BUILD_DIR)/$(NAME).map
-SIZE_OUTPUT := $(BUILD_DIR)/default.size.stdout
 OBJDUMP_LIST := $(BUILD_DIR)/$(NAME).list
+SIZE_OUTPUT := $(BUILD_DIR)/default.size.stdout
 
 .PHONY: all clean
 
@@ -168,7 +117,7 @@ $(BIN): $(EXECUTABLES)
 	arm-none-eabi-objcopy -O binary $(EXECUTABLES) $(EXECUTABLES:.elf=.bin)
 
 $(EXECUTABLES) $(MAP_FILES): $(OBJS) STM32F767ZITX_FLASH.ld
-	arm-none-eabi-g++ -o $(EXECUTABLES) $(OBJS) $(LIBS) -mcpu=cortex-m7 -TSTM32F767ZITX_FLASH.ld --specs=nosys.specs -Wl,-Map=$(MAP_FILES) -Wl,--gc-sections -static -Lcomponents/micro_ros_stm32cubemx_utils/microros_static_library/libmicroros -u_printf_float --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -u _printf_float -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
+	arm-none-eabi-g++ -o $(EXECUTABLES) $(OBJS) $(MICROROS_LIB) -mcpu=cortex-m7 -TSTM32F767ZITX_FLASH.ld --specs=nosys.specs -Wl,-Map=$(MAP_FILES) -Wl,--gc-sections -static $(MICROROS_LIB) -u_printf_float --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
 	@echo 'Finished building target: $@'
 
 $(SIZE_OUTPUT): $(EXECUTABLES)
@@ -181,12 +130,13 @@ $(OBJDUMP_LIST): $(EXECUTABLES)
 
 clean:
 	$(RM) $(OBJS)
-	$(RM) $(EXECUTABLES)
-	$(RM) $(BIN)
-	$(RM) $(shell find $(BUILD_DIR) -type f -name '*.su' -or -name '*.d' -or -name '*.o')
 
 fclean:
-	$(RM) -r $(BUILD_DIR)
+	$(RM) $(shell find $(BUILD_DIR) -type f -name '*.su' -or -name '*.d' -or -name '*.o')
+	$(RM) $(EXECUTABLES)
+	$(RM) $(BIN)
+	$(RM) $(MAP_FILES)
+	$(RM) $(OBJDUMP_LIST)
 
 # test
 print_c_src:
@@ -197,6 +147,10 @@ print_cc_src:
 
 print_objs:
 	@echo $(OBJS)
+
+backup: $(BIN)
+	@cp $(BIN) $(BUILD_DIR)/$(shell git log -1 --pretty='%h').bin
+	@rm -f $(BUILD_DIR)/$(shell git log -2 --pretty='%h').bin
 
 diff:
 	@diff $(BUILD_DIR)/*.bin

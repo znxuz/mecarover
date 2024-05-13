@@ -19,14 +19,16 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include "lwip.h"
-#include "lwip/init.h"
-#include "lwip/netif.h"
+#include <lwip.h>
+#include <lwip/init.h>
+#include <lwip/netif.h>
 #if defined ( __CC_ARM )  /* MDK ARM Compiler */
-#include "lwip/sio.h"
+#include <lwip/sio.h>
 #endif /* MDK ARM Compiler */
-#include "ethernetif.h"
+#include <ethernetif.h>
+
 #include <string.h>
+#include <rtos_config.h>
 
 /* USER CODE BEGIN 0 */
 

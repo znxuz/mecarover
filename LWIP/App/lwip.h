@@ -41,7 +41,6 @@
 #endif /* WITH_RTOS */
 
 /* USER CODE BEGIN 0 */
-#include "rtos_config.h"
 
 /* USER CODE END 0 */
 
