@@ -3,6 +3,7 @@
 #include <rtos_config.h>
 #include <mrcpptypes.h>
 #include <mecarover/hal/stm_hal.h>
+#include <RTOS.h>
 
 #include "VehicleControl.h"
 

@@ -33,15 +33,14 @@
 #include <cmsis_os2.h>
 #include <stm32f7xx_hal.h>
 #include <rtos_config.h>
-#include <robot_config.h>
 
+#include <mecarover/robot_config.h>
+#include <mecarover/retarget.h>
+#include <mecarover/lidar/lidar.h>
 #include <mecarover/hal/stm_hal.h>
+#include <mecarover/microros_init/microros_init.h>
 #include <mecarover/controls/FourWheelMecanumControllerTasks.h>
 #include <mecarover/controls/DiffDriveControllerTasks.h>
-
-#include <mecarover/microros_init/microros_init.h>
-#include <mecarover/lidar/lidar.h>
-#include <mecarover/retarget.h>
 
 real_t test;
 LaserScanner ls;

@@ -1,7 +1,8 @@
 #pragma once
 
+#include <tim.h>
+#include <stm32f7xx_hal_tim.h>
 #include <mrtypes.h>
-#include <system_config.h>
 
 #if __cplusplus
 extern "C"

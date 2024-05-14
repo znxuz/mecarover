@@ -23,8 +23,6 @@
 #include <mecarover/controls/ControllerTasks.h>
 #include <mecarover/lidar/lidar.h>
 
-#include <ros_debug.h>
-
 #include "microros_init.h"
 #include "eth_transport.h"
 
@@ -371,8 +369,3 @@ void rosInit(void *controller)
 #ifdef __cplusplus
 }
 #endif
-
-void ros_log_message(mr_logprio_t prio, const char *msg)
-{
-	return; // do nothing, at the moment rosserial_python crashes on ros log messages
-}

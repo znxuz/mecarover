@@ -9,7 +9,6 @@
 #include <stdarg.h>  //  va_list, va_start, va_end 
 
 #include <mrtypes.h>
-#include <ros_debug.h>
 
 #include <rtos_config.h>
 #include <cmsis_os2.h>
@@ -146,4 +145,9 @@ void log_message(mr_logprio_t prio, const char *format, ...) {
 		xSemaphoreGive(msgmutex); // unlock
 	}
 
+}
+
+void ros_log_message(mr_logprio_t prio, const char* msg)
+{
+	return; // do nothing, at the moment rosserial_python crashes on ros log messages
 }

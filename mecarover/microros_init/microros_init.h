@@ -57,11 +57,12 @@ odometry: ros2 topic echo /tf
 
 #pragma once
 
+#include <mecarover/mrlogger/mrlogger.h>
+
 #ifdef  __cplusplus
 extern "C"
 {
 #endif
-
 namespace imsl
 {
 void rosInit(void * ct);

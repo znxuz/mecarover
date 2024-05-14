@@ -1,4 +1,4 @@
-NAME := ros2
+NAME := mecarover
 
 BUILD_DIR := build
 DIR_GUARD = @mkdir -p "$(@D)"
@@ -12,7 +12,7 @@ MICROROS_LIB := -L$(MICROROS_DIR) -lmicroros
 
 LIBS := lib
 
-INCL_PATHS := \
+TGT_INCL_PATHS := \
 			  -I$(CURDIR) \
 			  -I$(LIBS) \
 			  -I$(ST_CORE)/Inc \
@@ -41,35 +41,37 @@ INCL_PATHS := \
 			  -ILWIP/Target
 
 TGT_FLAGS = \
-			 -mcpu=cortex-m7 \
-			 -g3 \
-			 -DDEBUG \
-			 -DUSE_HAL_DRIVER \
-			 -DSTM32F767xx \
-			 -c \
-			 -O0 \
-			 -ffunction-sections \
-			 -fdata-sections \
-			 -u_printf_float \
-			 -Wall \
-			 -fstack-usage \
-			 -MMD \
-			 -MP \
-			 -MF"$(@:%.o=%.d)" \
-			 -MT"$@" \
-			 --specs=nano.specs \
-			 -mfpu=fpv5-d16 \
-			 -mfloat-abi=hard \
-			 -mthumb \
-			 $(INCL_PATHS)
+			-mcpu=cortex-m7 \
+			-g3 \
+			-DDEBUG \
+			-DUSE_HAL_DRIVER \
+			-DSTM32F767xx \
+			-c \
+			-O0 \
+			-ffunction-sections \
+			-fdata-sections \
+			-u_printf_float \
+			-Wall \
+			-fstack-usage \
+			-MMD \
+			-MP \
+			-MF"$(@:%.o=%.d)" \
+			-MT"$@" \
+			--specs=nano.specs \
+			-mfpu=fpv5-d16 \
+			-mfloat-abi=hard \
+			-mthumb \
+			$(TGT_INCL_PATHS)
 
-	TGT_CPPFLAGS = $(TGT_FLAGS) \
-				   -std=gnu++17 \
-				   -fexceptions \
-				   -fno-rtti \
-				   -fno-use-cxa-atexit
+TGT_CPPFLAGS = \
+			   $(TGT_FLAGS) \
+			   -std=gnu++17 \
+			   -fexceptions \
+			   -fno-rtti \
+			   -fno-use-cxa-atexit
 
-TGT_CFLAGS = $(TGT_FLAGS) \
+TGT_CFLAGS = \
+			 $(TGT_FLAGS) \
 			 -std=gnu11
 
 C_SRCS := $(filter-out \
@@ -150,7 +152,7 @@ print_objs:
 
 backup: $(BIN)
 	@cp $(BIN) $(BUILD_DIR)/$(shell git log -1 --pretty='%h').bin
-	@rm -f $(BUILD_DIR)/$(shell git log -2 --pretty='%h').bin
+	@rm -f $(BUILD_DIR)/$(shell git log -2 --pretty='%h' | tail -n1).bin
 
 diff:
 	@diff $(BUILD_DIR)/*.bin

@@ -26,6 +26,8 @@ void logger_set_log_level(mr_logprio_t prio);
 void logger_set_screen_level(mr_logprio_t prio);
 void logger_use_colors(bool use_colors);
 
+void ros_log_message(mr_logprio_t prio, const char* msg);
+
 #if __cplusplus
 }
 #endif
