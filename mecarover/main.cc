@@ -25,22 +25,22 @@
 
 #include <stdio.h>
 
-#include <main.h>
-#include <gpio.h>
-#include <tim.h>
-#include <dma.h>
-#include <usart.h>
 #include <cmsis_os2.h>
-#include <stm32f7xx_hal.h>
+#include <dma.h>
+#include <gpio.h>
+#include <main.h>
 #include <rtos_config.h>
+#include <stm32f7xx_hal.h>
+#include <tim.h>
+#include <usart.h>
 
-#include <mecarover/robot_config.h>
-#include <mecarover/retarget.h>
-#include <mecarover/lidar/lidar.h>
-#include <mecarover/hal/stm_hal.h>
-#include <mecarover/microros_init/microros_init.h>
-#include <mecarover/controls/FourWheelMecanumControllerTasks.h>
 #include <mecarover/controls/DiffDriveControllerTasks.h>
+#include <mecarover/controls/FourWheelMecanumControllerTasks.h>
+#include <mecarover/hal/stm_hal.h>
+#include <mecarover/lidar/lidar.h>
+#include <mecarover/microros_init/microros_init.h>
+#include <mecarover/retarget.h>
+#include <mecarover/robot_config.h>
 
 real_t test;
 LaserScanner ls;
@@ -48,21 +48,19 @@ LaserScanner ls;
 using namespace imsl;
 using namespace imsl::vehiclecontrol;
 
-FourWheelMecanumControllerTasks<real_t> myController; // controller for 4 wheel Mecanum robot
-ControllerTasksInterfaces<real_t> *controllerTasks = &myController;
+ControllerTasksInterfaces<real_t> *controllerTasks;
 bool hal_is_init = false;
 
-extern "C"
-{
+extern "C" {
+
 extern void MX_LWIP_Init(void);
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 int main()
 {
-
 	logger_init(); // init the screen logger before the other components
-	HAL_Init(); //init aus main-Methode
+	HAL_Init(); // init aus main-Methode
 	SystemClock_Config();
 	MX_GPIO_Init();
 	MX_DMA_Init();
@@ -89,32 +87,32 @@ int main()
 
 	if (fz.type == MRC_VEHICLETYPE_MECANUM) {
 		// controller for 4 wheel Mecanum robot like OmniRob, Nexus or FILU
-		controllerTasks = new FourWheelMecanumControllerTasks<real_t>; // myController;
+		controllerTasks = new FourWheelMecanumControllerTasks<real_t>;
 	} else {
 		// differential drive robot like ADRZ D4
-		controllerTasks = new DiffDriveControllerTasks<real_t>; // myController;
+		controllerTasks = new DiffDriveControllerTasks<real_t>;
 	}
 
 	controllerTasks->Init(&fz, Regler, Ta); // init controllers
 
-	//init LaserScanner
+	// init LaserScanner
 	ls.init_LaserScanner(&ls);
 
 	log_message(log_info, "starting ROS");
 	/* Init scheduler */
-	osKernelInitialize(); /* Call init function for freertos objects (in freertos.c) */
+	osKernelInitialize();
 
 	BaseType_t xReturned;
 	xReturned = xTaskCreate(rosInit, "executor", STACK_SIZE, controllerTasks,
-			(osPriority_t)MICRO_ROS_TASK_PRIORITY, NULL);
+		(osPriority_t)MICRO_ROS_TASK_PRIORITY, NULL);
 	if (xReturned != pdPASS) {
 		printf("Error: logger_init(), xTaskCreate()\n");
 	}
 
-	size_t free_heap = xPortGetMinimumEverFreeHeapSize(); //ESP.getMinFreeHeap(); //lowest level of free heap since boot
+	size_t free_heap = xPortGetMinimumEverFreeHeapSize(); // ESP.getMinFreeHeap(); //lowest level of free heap since boot
 	uint32_t free_stack = RT_Task::thisTaskGetStackHighWaterMark();
-	log_message(log_info,"running into main loop, free heap: %d, free stack: %lu\r\n",
-			free_heap, free_stack);
+	log_message(log_info, "running into main loop, free heap: %d, free stack: %lu\n",
+		free_heap, free_stack);
 	//    RT_PeriodicTimer loopTimer(500); // wait period 500 ms = 2 Hz loop frequency
 	RT_PeriodicTimer loopTimer(Ta.FzLage * 1000); // wait period is pose controller period
 	controllerTasks->SetControllerMode(vehiclecontrol::CtrlMode::OFF);
@@ -123,10 +121,12 @@ int main()
 
 	/* Start scheduler */
 	osKernelStart();
-	while (true) {
-		log_message(log_info, "main while Log Message Test\r\n");
 
-		hal_encoder_read(&test); //Test der Encoder
+	// code unreachable due to osKernelStart never returning
+	while (true) {
+		log_message(log_info, "main while Log Message Test\n");
+
+		hal_encoder_read(&test); // Test der Encoder
 
 		char msg_buffer[100];
 		// output to terminal
@@ -138,24 +138,23 @@ int main()
 			const char *mode_str = "";
 
 			switch (mode) {
-				case CtrlMode::ESTOP:
-					mode_str = "ESTOP";
-					break;
-				case CtrlMode::OFF:
-					mode_str = "OFF";
-					break;
-				case CtrlMode::TWIST:
-					mode_str = "TWIST";
-					break;
-				case CtrlMode::POSE:
-					mode_str = "POSE";
-					break;
+			case CtrlMode::ESTOP:
+				mode_str = "ESTOP";
+				break;
+			case CtrlMode::OFF:
+				mode_str = "OFF";
+				break;
+			case CtrlMode::TWIST:
+				mode_str = "TWIST";
+				break;
+			case CtrlMode::POSE:
+				mode_str = "POSE";
+				break;
 			}
 
 			sprintf(msg_buffer, "x: %f, y: %f, theta: %f", p.x, p.y, p.theta);
 
-			printf("main while loop \r\n");
-
+			printf("main while loop \n");
 
 			log_message(log_debug, "%s", msg_buffer); // write pose to logger
 			log_message(log_info, "ROS: Mode: %s", mode_str);
@@ -170,15 +169,15 @@ int main()
  */
 void SystemClock_Config(void)
 {
-	RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-	RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+	RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
+	RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
 
 	/** Configure LSE Drive Capability
-	*/
+	 */
 	HAL_PWR_EnableBkUpAccess();
 
 	/** Configure the main internal regulator output voltage
-	*/
+	 */
 	__HAL_RCC_PWR_CLK_ENABLE();
 	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
@@ -194,33 +193,29 @@ void SystemClock_Config(void)
 	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
 	RCC_OscInitStruct.PLL.PLLQ = 9;
 	RCC_OscInitStruct.PLL.PLLR = 2;
-	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-	{
+	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
 		Error_Handler();
 	}
 
 	/** Activate the Over-Drive mode
-	*/
-	if (HAL_PWREx_EnableOverDrive() != HAL_OK)
-	{
+	 */
+	if (HAL_PWREx_EnableOverDrive() != HAL_OK) {
 		Error_Handler();
 	}
 
 	/** Initializes the CPU, AHB and APB buses clocks
-	*/
-	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-		|RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+	 */
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
+		| RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
 	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
 	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
 	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
 	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7) != HAL_OK)
-	{
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7) != HAL_OK) {
 		Error_Handler();
 	}
 }
-
 
 /* USER CODE BEGIN 4 */
 volatile unsigned long ulHighFrequencyTimerTicks;
@@ -246,13 +241,12 @@ void Error_Handler(void)
 	/* USER CODE BEGIN Error_Handler_Debug */
 	/* User can add his own implementation to report the HAL error return state */
 	__disable_irq();
-	while (1)
-	{
+	while (1) {
 	}
 	/* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
  * @brief  Reports the name of the source file and the source line number
  *         where the assert_param error has occurred.
@@ -264,8 +258,9 @@ void assert_failed(uint8_t *file, uint32_t line)
 {
 	/* USER CODE BEGIN 6 */
 	/* User can add his own implementation to report the file name and line number,
-ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+ex: printf("Wrong parameters value: file %s on line %d\n", file, line) */
 	/* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
 }

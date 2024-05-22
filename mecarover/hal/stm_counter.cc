@@ -10,9 +10,9 @@
 
 #define New_Zero 32767
 #define Max_Value 65535
-//#define Max_Value 100
+// #define Max_Value 100
 #define Min_Value 0
-//#define New_Zero 50
+// #define New_Zero 50
 
 /*
  *
@@ -25,23 +25,21 @@
  */
 
 int64_t flow[NumMotors] = { -New_Zero, -New_Zero, -New_Zero, -New_Zero };
-int64_t akt_pos[NumMotors] = {0,0,0,0};
+int64_t akt_pos[NumMotors] = { 0, 0, 0, 0 };
 TIM_HandleTypeDef timer[NumMotors];
 static bool hal_is_init;
 
-//init der Encoder
+// init der Encoder
 bool STMCounter::init(TIM_HandleTypeDef *htim, int id)
 {
-
 	__HAL_TIM_SET_COUNTER(htim, New_Zero);
 
-		HAL_TIM_Encoder_Start(htim, TIM_CHANNEL_1);
-		HAL_TIM_Encoder_Start(htim, TIM_CHANNEL_2);
-		HAL_TIM_Base_Start_IT(htim); //Start update Interrupt the trigger by overflow/underflow
-		akt_pos[id] = __HAL_TIM_GET_COUNTER(htim);
+	HAL_TIM_Encoder_Start(htim, TIM_CHANNEL_1);
+	HAL_TIM_Encoder_Start(htim, TIM_CHANNEL_2);
+	HAL_TIM_Base_Start_IT(htim); // Start update Interrupt the trigger by overflow/underflow
+	akt_pos[id] = __HAL_TIM_GET_COUNTER(htim);
 
-
-		timer[id] = *htim;
+	timer[id] = *htim;
 
 	is_init = true;
 	return is_init;
@@ -50,17 +48,14 @@ bool STMCounter::init(TIM_HandleTypeDef *htim, int id)
 uint64_t STMCounter::getCount(int id)
 {
 	if (is_init) {
+		enc_value = __HAL_TIM_GET_COUNTER(&timer[id]);
 
-		 enc_value = __HAL_TIM_GET_COUNTER(&timer[id]);
+		akt_pos[id] = enc_value;
+		counter = akt_pos[id] + flow[id];
 
-		 akt_pos[id] = enc_value;
-		 counter = akt_pos[id] + flow[id];
-
-			return counter;
-
+		return counter;
 	}
 	return 0;
-
 }
 
 /**
@@ -73,64 +68,54 @@ uint64_t STMCounter::getCount(int id)
  */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	/* USER CODE BEGIN Callback 0 */
-
-	/* USER CODE END Callback 0 */
 	if (htim->Instance == TIM12) {
 		HAL_IncTick();
 	}
 
-	/* USER CODE BEGIN Callback 1 */
-
-	if(hal_is_init == true){
-
-		//hinzu: ob Rad sich vor- oder rückwärts dreht
-	if (htim->Instance == TIM3) {
-		//Overflow
-		if (__HAL_TIM_GET_COUNTER(htim) < akt_pos[0]) {
-			flow[0] += Max_Value + 1;
-		}
-		//Underflow
-		if (__HAL_TIM_GET_COUNTER(htim) > akt_pos[0]) {
-			flow[0] -= Max_Value - 1;
+	if (hal_is_init == true) {
+		// hinzu: ob Rad sich vor- oder rückwärts dreht
+		if (htim->Instance == TIM3) {
+			// Overflow
+			if (__HAL_TIM_GET_COUNTER(htim) < akt_pos[0]) {
+				flow[0] += Max_Value + 1;
+			}
+			// Underflow
+			if (__HAL_TIM_GET_COUNTER(htim) > akt_pos[0]) {
+				flow[0] -= Max_Value - 1;
+			}
 		}
 
-	}
-
-	if (htim->Instance == TIM1) {
-		//Overflow
+		if (htim->Instance == TIM1) {
+			// Overflow
 			if (__HAL_TIM_GET_COUNTER(htim) < akt_pos[1]) {
 				flow[1] += Max_Value + 1;
 			}
-			//Underflow
+			// Underflow
 			if (__HAL_TIM_GET_COUNTER(htim) > akt_pos[1]) {
 				flow[1] -= Max_Value - 1;
 			}
-	}
+		}
 
-	if (htim->Instance == TIM2) {
-		//Overflow
+		if (htim->Instance == TIM2) {
+			// Overflow
 			if (__HAL_TIM_GET_COUNTER(htim) < akt_pos[2]) {
 				flow[2] += Max_Value + 1;
 			}
-			//Underflow
+			// Underflow
 			if (__HAL_TIM_GET_COUNTER(htim) > akt_pos[2]) {
 				flow[2] -= Max_Value - 1;
 			}
-	}
+		}
 
-	if (htim->Instance == TIM4) {
-		//Overflow
+		if (htim->Instance == TIM4) {
+			// Overflow
 			if (__HAL_TIM_GET_COUNTER(htim) < akt_pos[3]) {
 				flow[3] += Max_Value + 1;
 			}
-			//Underflow
+			// Underflow
 			if (__HAL_TIM_GET_COUNTER(htim) > akt_pos[3]) {
 				flow[3] -= Max_Value - 1;
 			}
+		}
 	}
-
-	}
-
-	/* USER CODE END Callback 1 */
 }

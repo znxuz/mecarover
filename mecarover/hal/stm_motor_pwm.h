@@ -10,14 +10,13 @@
 #include <tim.h>
 #include "stm32f7xx_hal_tim.h"
 
-class STMMotorPWM
-{
+class STMMotorPWM {
 public:
 	STMMotorPWM() = default;
 	bool init(int motor, TIM_HandleTypeDef *htim, uint32_t Channel_PwmA,
-			uint32_t Channel_PwmB);
+		uint32_t Channel_PwmB);
 	void setPWM(float duty_cicle, TIM_HandleTypeDef *timer, int ChannelA,
-			int ChannelB); // duty cicle in +/- percent
+		int ChannelB); // duty cicle in +/- percent
 
 private:
 	bool is_init = false;

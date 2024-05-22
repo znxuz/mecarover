@@ -39,7 +39,7 @@ odometry: rostopic echo tf
 /////////////////////////////////////////////////////////////
 /*
  *ROS2
- start ros agent: ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888 
+ start ros agent: ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
 
  * ROS topics:
  /cmd_vel type Twist,
@@ -59,15 +59,13 @@ odometry: ros2 topic echo /tf
 
 #include <mecarover/mrlogger/mrlogger.h>
 
-#ifdef  __cplusplus
-extern "C"
-{
+#ifdef __cplusplus
+extern "C" {
 #endif
-namespace imsl
-{
-void rosInit(void * ct);
+namespace imsl {
+	void rosInit(void *ct);
 }
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 }
 #endif

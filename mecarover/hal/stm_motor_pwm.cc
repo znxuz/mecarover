@@ -7,11 +7,11 @@
 
 #include "stm_motor_pwm.h"
 
-//init des PWM Signals
+// init des PWM Signals
 bool STMMotorPWM::init(int motor, TIM_HandleTypeDef *htim,
-		uint32_t Channel_PwmA, uint32_t Channel_PwmB)
+	uint32_t Channel_PwmA, uint32_t Channel_PwmB)
 {
-	//Start Timer
+	// Start Timer
 	HAL_TIM_PWM_Start(htim, Channel_PwmA);
 	HAL_TIM_PWM_Start(htim, Channel_PwmB);
 
@@ -23,7 +23,7 @@ bool STMMotorPWM::init(int motor, TIM_HandleTypeDef *htim,
 }
 
 void STMMotorPWM::setPWM(float duty_cicle, TIM_HandleTypeDef *timer,
-		int ChannelA, int ChannelB)
+	int ChannelA, int ChannelB)
 {
 	if (is_init) {
 		// pwm must be in the range from -100.0 to +100.0
@@ -33,11 +33,11 @@ void STMMotorPWM::setPWM(float duty_cicle, TIM_HandleTypeDef *timer,
 			duty_cicle = -100.0;
 		}
 
-		//		printf("Dutycicle setPWM: %.4f\n\r", duty_cicle);
+		//		printf("Dutycicle setPWM: %.4f\n", duty_cicle);
 
 		if (duty_cicle == 0.0) {
 
-			__HAL_TIM_SET_COMPARE(timer, ChannelA, 0); //set dutycicle = 0
+			__HAL_TIM_SET_COMPARE(timer, ChannelA, 0); // set dutycicle = 0
 			__HAL_TIM_SET_COMPARE(timer, ChannelB, 0);
 
 		} else if (duty_cicle > 0.0) {
@@ -49,7 +49,6 @@ void STMMotorPWM::setPWM(float duty_cicle, TIM_HandleTypeDef *timer,
 
 			__HAL_TIM_SET_COMPARE(timer, ChannelA, 0);
 			__HAL_TIM_SET_COMPARE(timer, ChannelB, -duty_cicle);
-
 		}
 	}
 }

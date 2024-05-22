@@ -16,27 +16,25 @@
 
 #include <unistd.h>
 
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-typedef struct{
-    struct pollfd poll_fd;
-    char ip[15];
-    char port[5];
-}eth_transport_params_t;
+typedef struct {
+	struct pollfd poll_fd;
+	char ip[15];
+	char port[5];
+} eth_transport_params_t;
 
 #define MICRO_ROS_FRAMING_REQUIRED false
 
-
-bool eth_transport_open(struct uxrCustomTransport * transport);
-bool eth_transport_close(struct uxrCustomTransport * transport);
-size_t eth_transport_write(struct uxrCustomTransport* transport, const uint8_t * buf, size_t len, uint8_t * err);
-size_t eth_transport_read(struct uxrCustomTransport* transport, uint8_t* buf, size_t len, int timeout, uint8_t* err);
+bool eth_transport_open(struct uxrCustomTransport *transport);
+bool eth_transport_close(struct uxrCustomTransport *transport);
+size_t eth_transport_write(struct uxrCustomTransport *transport, const uint8_t *buf, size_t len, uint8_t *err);
+size_t eth_transport_read(struct uxrCustomTransport *transport, uint8_t *buf, size_t len, int timeout, uint8_t *err);
 
 #ifdef __cplusplus
 }

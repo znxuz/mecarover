@@ -5,11 +5,9 @@
 
 #include "VehicleControl.h"
 
-namespace imsl::vehiclecontrol
-{
-template<typename T>
-class DifferentialDriveController : public VehicleController<T, 2, 2>
-{
+namespace imsl::vehiclecontrol {
+template <typename T>
+class DifferentialDriveController : public VehicleController<T, 2, 2> {
 public:
 	using typename VehicleController<T, 2, 2>::WheelVel;
 	using typename VehicleController<T, 2, 2>::VehicleVel;
@@ -19,11 +17,11 @@ public:
 	using VehicleController<T, 2, 2>::vRF2vWheel;
 
 private:
-	T WheelTrack;         // wheel track (width) in mm
-	T WheelRadius;        // in mm 
-	T JoystickAcc;        // maximum acceleration in manual mode in mm/s/s 
+	T WheelTrack; // wheel track (width) in mm
+	T WheelRadius; // in mm
+	T JoystickAcc; // maximum acceleration in manual mode in mm/s/s
 	ReglerParam_t Regler;
-	Abtastzeit_t Ta;      // Abtastzeiten der Regler
+	Abtastzeit_t Ta; // Abtastzeiten der Regler
 	WheelVel RAbwAlt;
 	WheelVel Integr;
 	dPose<T> DeltaPose;
@@ -36,11 +34,10 @@ private:
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW // eigenlib 16 Byte alignement
 
+	DifferentialDriveController() = default;
 
-		DifferentialDriveController() {
-		}
-
-	void Init(Fahrzeug_t * Fz, ReglerParam_t Regler, Abtastzeit_t Ta) {
+	void Init(Fahrzeug_t *Fz, ReglerParam_t Regler, Abtastzeit_t Ta)
+	{
 		WheelTrack = Fz->Breite;
 		WheelRadius = Fz->Radradius;
 		JoystickAcc = Fz->JoystickBeschl;
@@ -60,32 +57,34 @@ public:
 					the right wheel is defined as 1 (y position in robot frame in negative)
 					*/
 		// robot frame to wheels
-		J << 1.0, -WheelTrack/2.0, 
-		  1.0, +WheelTrack/2.0;
+		J << 1.0, -WheelTrack / 2.0,
+			1.0, +WheelTrack / 2.0;
 		J /= WheelRadius;
 
 		// wheels to robot frame
-		iJ << 1.0,                   1.0,
-		   -1.0 / (WheelTrack / 2.0), +1.0 / (WheelTrack / 2.0);
+		iJ << 1.0, 1.0,
+			-1.0 / (WheelTrack / 2.0), +1.0 / (WheelTrack / 2.0);
 		iJ *= WheelRadius / 2.0;
 
 		//            std::cerr << "J: " << J << std::endl;
 		//            std::cerr << "iJ: " << iJ << std::endl;
 	}
 
-	DifferentialDriveController(Fahrzeug_t * Fz, ReglerParam_t Regler, Abtastzeit_t Ta) {
+	DifferentialDriveController(Fahrzeug_t *Fz, ReglerParam_t Regler, Abtastzeit_t Ta)
+	{
 		Init(Fz, Regler, Ta);
 	}
 
-	Pose<T> odometry(Pose<T> oldPose, const WheelVel& m) override { 
-		dPose<T> WFDelta, RFDelta; 
+	Pose<T> odometry(Pose<T> oldPose, const WheelVel &m) override
+	{
+		dPose<T> WFDelta, RFDelta;
 		Pose<T> newPose;
 
 		// transform wheel movements to vehicle movements in robot frame
 		VehicleVel v;
-		v = vWheel2vRF(m); 
+		v = vWheel2vRF(m);
 
-		RFDelta.x = v(0); 
+		RFDelta.x = v(0);
 		RFDelta.y = 0.0;
 		RFDelta.theta = v(1);
 
@@ -93,12 +92,12 @@ public:
 		WFDelta = dRF2dWF<T>(RFDelta, oldPose.theta + RFDelta.theta / T(2.0));
 
 		// calculate new pose
-		//newPose.x = oldPose.x + WFDelta.x;
-		//newPose.y = oldPose.y + WFDelta.y;
-		//newPose.theta = oldPose.theta + WFDelta.theta;
+		// newPose.x = oldPose.x + WFDelta.x;
+		// newPose.y = oldPose.y + WFDelta.y;
+		// newPose.theta = oldPose.theta + WFDelta.theta;
 
-		// move theta to -PI .. +PI 
-		//newPose.theta = MAXPI(newPose.theta);
+		// move theta to -PI .. +PI
+		// newPose.theta = MAXPI(newPose.theta);
 
 		newPose = oldPose + WFDelta;
 
@@ -109,31 +108,31 @@ public:
 
 		if (DeltaHeadingCounter > 0) {
 			newPose.theta += DeltaHeading;
-			//newPose.theta = MAXPI(newPose.theta);
+			// newPose.theta = MAXPI(newPose.theta);
 			DeltaHeadingCounter--;
 		}
 
 		return newPose;
 	} // end of method Odometry
 
-	VehicleVel poseControl(PoseV<T> ref, PoseV<T> act) override {
-		dPose<T> PoseErrorWF, PoseErrorRF; 
+	VehicleVel poseControl(PoseV<T> ref, PoseV<T> act) override
+	{
+		dPose<T> PoseErrorWF, PoseErrorRF;
 		vPose<T> WKSStellV, vWFref, vRFref;
 
 		PoseErrorWF.x = ref.x - act.x;
 		PoseErrorWF.y = ref.y - act.y;
 		PoseErrorWF.theta = ref.theta - act.theta;
 
-		// move theta to -PI .. +PI 
+		// move theta to -PI .. +PI
 		PoseErrorWF.theta = Heading<T>(PoseErrorWF.theta);
 
 		// check error limits
-		if ((std::abs(PoseErrorWF.x) > Regler.LageSchleppMax.x) || (std::abs(PoseErrorWF.y) > Regler.LageSchleppMax.y) ||
-				(std::abs(PoseErrorWF.theta) > Regler.LageSchleppMax.theta)) {
+		if ((std::abs(PoseErrorWF.x) > Regler.LageSchleppMax.x) || (std::abs(PoseErrorWF.y) > Regler.LageSchleppMax.y) || (std::abs(PoseErrorWF.theta) > Regler.LageSchleppMax.theta)) {
 			log_message(log_debug, "%s, %s, deviation position controller too large: act.x: %f, ref.x: %f, act.y: %f, ref.y: %f, act.theta: %f, ref.theta: %f",
-					__FILE__, __FUNCTION__, act.x, ref.x, act.y, ref.y, T(act.theta), T(ref.theta));
+				__FILE__, __FUNCTION__, act.x, ref.x, act.y, ref.y, T(act.theta), T(ref.theta));
 			log_message(log_error, "Max. Schleppabstand: %f, %f, %f, Schleppabstand %f, %f, %f,", Regler.LageSchleppMax.x,
-					Regler.LageSchleppMax.y, Regler.LageSchleppMax.theta, PoseErrorWF.x, PoseErrorWF.y, PoseErrorWF.theta);
+				Regler.LageSchleppMax.y, Regler.LageSchleppMax.theta, PoseErrorWF.x, PoseErrorWF.y, PoseErrorWF.theta);
 			throw MRC_LAGEERR;
 		}
 
@@ -146,10 +145,10 @@ public:
 		vWFref.omega = ref.omega;
 
 		// transformation to reference velocity in robot frame
-		vRFref =  vWF2vRF<T>(vWFref, act.theta);
+		vRFref = vWF2vRF<T>(vWFref, act.theta);
 
 		// new reference heading
-		Heading<T> ThetaRef; //T ThetaRef;
+		Heading<T> ThetaRef; // T ThetaRef;
 		ThetaRef = ref.theta + T(Regler.LageKv.y * PoseErrorRF.y); // * vRFref.vx / Vmax; // reduce lead angle at low speed
 
 		// vehicle moves backwards (usually manual mode)
@@ -177,12 +176,13 @@ public:
 		return v;
 	} // end of method PoseControl
 
-	WheelVel wheelControl(const WheelVel& ReferenceVel, const WheelVel& ActualVel) override {
+	WheelVel wheelControl(const WheelVel &ReferenceVel, const WheelVel &ActualVel) override
+	{
 		T rabw, diff;
 		WheelVel StellV;
 
 		for (int i = 0; i < 2; i++) {
-			// Regelabweichung, Sollwert und Istwert in rad/s   
+			// Regelabweichung, Sollwert und Istwert in rad/s
 			rabw = ReferenceVel(i) - ActualVel(i);
 
 			// I-Anteil
@@ -206,12 +206,12 @@ public:
 			StellV(i) *= Regler.DzrSkalierung[i];
 
 			RAbwAlt(i) = rabw;
-
 		}
 		return StellV;
 	}
 
-	vPose<T> velocityFilter(vPose<T> vRFref, vPose<T> vRFold) override {
+	vPose<T> velocityFilter(vPose<T> vRFref, vPose<T> vRFold) override
+	{
 		T v_diff;
 		vPose<T> vRFnew;
 		vRFnew.vx = vRFref.vx;
@@ -222,8 +222,7 @@ public:
 
 		if (vRFref.vx - vRFold.vx > v_diff) {
 			vRFnew.vx = vRFold.vx + v_diff;
-		}
-		else if (vRFold.vx - vRFref.vx > v_diff) {
+		} else if (vRFold.vx - vRFref.vx > v_diff) {
 			vRFnew.vx = vRFold.vx - v_diff;
 		}
 
@@ -231,22 +230,22 @@ public:
 
 		if (vRFref.omega - vRFold.omega > v_diff) {
 			vRFnew.omega = vRFold.omega + v_diff;
-		}
-		else if (vRFold.omega - vRFref.omega > v_diff) {
+		} else if (vRFold.omega - vRFref.omega > v_diff) {
 			vRFnew.omega = vRFold.omega - v_diff;
 		}
 		return vRFnew;
 	}
 
-	void poseUpdate(dPose<T> Delta, unsigned int Divisor) override {
+	void poseUpdate(dPose<T> Delta, unsigned int Divisor) override
+	{
 		DeltaPoseCounter = Divisor;
 		DeltaPose = Delta / (T)Divisor;
 	}
 
-	void headingUpdate(T Delta, unsigned int Divisor) override {
+	void headingUpdate(T Delta, unsigned int Divisor) override
+	{
 		DeltaHeadingCounter = Divisor;
 		DeltaHeading = Delta / (T)Divisor;
 	}
-
 };
 }

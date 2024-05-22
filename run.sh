@@ -7,7 +7,7 @@ topleft_pane()
 
 bottom_left_pane()
 {
-	echo "tmux splitw -h -b 'picocom -b 115200 /dev/ttyACM0'"
+	echo "tmux splitw -h -b 'picocom -b 115200 /dev/ttyACM0 --imap lfcrlf'"
 }
 
 current_pane()

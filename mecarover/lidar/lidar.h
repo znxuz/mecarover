@@ -5,9 +5,7 @@
  *      Author: fabian
  */
 
-#ifndef LASERSCANNER_LASERSCANNER_H_
-#define LASERSCANNER_LASERSCANNER_H_
-
+#pragma once
 
 #include <stdint.h>
 
@@ -30,8 +28,8 @@ public:
 
 	uint8_t rplidar_reset[2] = { 0xA5, 0x40 };
 	uint8_t rplidar_legacy_scan[9] = { 0xA5, 0x82, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x22 };
-	uint8_t rplidar_start_scan[2] = { 0xA5, 0x20};
-	uint8_t rplidar_RPM[6] = { 0xA5, 0xA8, 0x02, 0x00, 0x00, 0x00};
+	uint8_t rplidar_start_scan[2] = { 0xA5, 0x20 };
+	uint8_t rplidar_RPM[6] = { 0xA5, 0xA8, 0x02, 0x00, 0x00, 0x00 };
 	uint8_t rplidar_stop_scan[2] = { 0xA5, 0x25 };
 	uint8_t rplidar_get_Health[2] = { 0xA5, 0x52 };
 
@@ -41,4 +39,3 @@ public:
 	void Start();
 	void invert(float arr[], float erg[], int n);
 };
-#endif /* LASERSCANNER_LASERSCANNER_H_ */

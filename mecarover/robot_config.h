@@ -2,8 +2,8 @@
 
 //------------ configuration of the vehicle and controller parameters
 
-#include <mrtypes.h> // definition of Fahrzeug_t
 #include <mecarover/controls/VehicleControl.h> // definition of imsl::vehiclecontrol::ReglerParam_t, imsl::vehiclecontrol::Abtastzeit_t
+#include <mrtypes.h> // definition of Fahrzeug_t
 
 // ---------------------------------- OmniRob configuration
 /*
@@ -22,7 +22,7 @@
    HubzylinderVorhanden = 1;
    ArmVorhanden = 0;
    BreakDown = 1;
-BremsBeschl : 
+BremsBeschl :
 {
 a = 400.0;
 alpha = 0.5;
@@ -48,14 +48,14 @@ alpha = 0.5;
 //                   };
 
 //// controller parameters
-//imsl::vehiclecontrol::ReglerParam_t Regler = {
-//                        0.3,  // Kv Drehzahl //1.0
-//                        0.1, //0.006, // Ta/Tn  Ta Abstastzeit //0.001
-//                        0.0,   // Tv/Ta //0.0
-//                        3.0,   // max I //0.1
-//                        0.0,   // e max, wheel
-//                        {1.0, 1.0, 1.0, 1.0}, // Skalierung
-//                        {-0.1, 0.1, -0.1, 0.1}, // Koppelfehler ?
+// imsl::vehiclecontrol::ReglerParam_t Regler = {
+//                         0.3,  // Kv Drehzahl //1.0
+//                         0.1, //0.006, // Ta/Tn  Ta Abstastzeit //0.001
+//                         0.0,   // Tv/Ta //0.0
+//                         3.0,   // max I //0.1
+//                         0.0,   // e max, wheel
+//                         {1.0, 1.0, 1.0, 1.0}, // Skalierung
+//                         {-0.1, 0.1, -0.1, 0.1}, // Koppelfehler ?
 ////                        {10.0, 10.0, 10.0},     // Kv Lage
 //                        {1.0, 1.0, 1.0},     // Kv Lage
 ////                        {3000000.0, 3000000.0, 300000.0},   // Schleppf. max, e_pose
@@ -69,7 +69,8 @@ imsl::vehiclecontrol::Abtastzeit_t Ta = {
 		   //                    0.003, // 3 ms sampling time of wheel control loop
 	0.005, // 5 ms sampling time of wheel control loop
 	0.015, // 15 ms sampling time of pose control loop
-	3};    // 15 ms / 5 ms ratio pose / wheel
+	3
+}; // 15 ms / 5 ms ratio pose / wheel
 
 /* FILU Roboter
 // ------------------------- FILU robot configuration
@@ -78,7 +79,7 @@ Fahrzeug_t fz = {
 	.type = MRC_VEHICLETYPE_MECANUM,
 	.Inkremente = 48.0, // 4 x 1024 //4096
 	.Uebersetzung = 64.0, // gear ration //68
-	.OmegaMax = 120.0,   // n / min //6400
+	.OmegaMax = 120.0, // n / min //6400
 	.Rad2RPM = 120.0 / 2.0 / M_PI,
 	.Ink2Rad = 2.0 * M_PI / (64.0 * 48.0),
 	.Laenge = 325,
@@ -86,32 +87,31 @@ Fahrzeug_t fz = {
 	.LplusBhalbe = 0.5 * (360 + 325),
 	.Radradius = 50,
 	.Rollenradius = 20.0, /* in mm                           */
-	.VBahnMax = 1000.0,  /* in mm/s                         */
+	.VBahnMax = 1000.0, /* in mm/s                         */
 	.VthetaMax = 2000.0, /* in rad/s                        */
 	.JoystickBeschl = 1000.0, // in mm/s²
-	.MaxRPM = {5740.6, 5740.6, 7268.4, 7268.4}
+	.MaxRPM = { 5740.6, 5740.6, 7268.4, 7268.4 }
 };
 
-imsl::vehiclecontrol::ReglerParam_t Regler={
+imsl::vehiclecontrol::ReglerParam_t Regler = {
 	//                .MaxRPM = {5740.6, 5740.6, 7268.4, 7268.4},
 	.DzrKv = 0.3,
 	.DzrTaDTn = 0.1,
 	.DzrTvDTa = 0.0,
 	.DzrIntMax = 30.0,
 	.DzrSchleppMax = 0.0,
-	{1.0,1.0,1.0,1.0},
-	{-0.1,0.1,-0.1,0.1},
+	{ 1.0, 1.0, 1.0, 1.0 },
+	{ -0.1, 0.1, -0.1, 0.1 },
 	//                .DzrSkalierung[0] = 1.0,
 	//                .DzrSkalierung[1] = 1.0,
 	//                .DzrSkalierung[2] = 1.0,
 	//                .DzrSkalierung[3] = 1.0,
 	//                .Rad2Volt = 1,
-	.LageKv = {5,5,5}, // 5 5 5
-	.LageSchleppMax = {300.0, 300.0, 30.0},
+	.LageKv = { 5, 5, 5 }, // 5 5 5
+	.LageSchleppMax = { 300.0, 300.0, 30.0 },
 	0.0
-		//                .korrekturmatrix = { 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 }
+	//                .korrekturmatrix = { 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 }
 };
-
 
 /*
    typedef struct {
@@ -124,7 +124,7 @@ imsl::vehiclecontrol::ReglerParam_t Regler={
    FourReal_t DzrKoppel;
    Pose_t LageKv;
    Pose_t LageSchleppMax;
-   double Koppel; 
+   double Koppel;
    } ReglerParam_t;
    */
 

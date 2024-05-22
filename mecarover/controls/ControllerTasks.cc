@@ -4,14 +4,14 @@ using namespace imsl::vehiclecontrol;
 
 void PoseControllerTaskFunction(void *arg)
 {
-	ControllerTasksInterfaces<real_t>* controllerTasks = (ControllerTasksInterfaces<real_t>*) arg;
+	ControllerTasksInterfaces<real_t> *controllerTasks = (ControllerTasksInterfaces<real_t> *)arg;
 	log_message(log_info, "pose controller");
-	controllerTasks->PoseControlTask(); 
+	controllerTasks->PoseControlTask();
 }
 
 void WheelControllerTaskFunction(void *arg)
 {
-	ControllerTasksInterfaces<real_t>* controllerTasks = (ControllerTasksInterfaces<real_t>*) arg;
+	ControllerTasksInterfaces<real_t> *controllerTasks = (ControllerTasksInterfaces<real_t> *)arg;
 	log_message(log_info, "wheel controller");
 	controllerTasks->WheelControlTask();
 }

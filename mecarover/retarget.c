@@ -2,38 +2,38 @@
 // https://github.com/cnoviello/mastering-stm32/blob/master/nucleo-f030R8/system/src/retarget/retarget.c
 
 /* Includes */
-#include <sys/stat.h>
-#include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
-#include <time.h>
-#include <sys/time.h>
-#include <sys/times.h>
+#include <stdlib.h>
 #include <stm32f7xx.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/times.h>
+#include <time.h>
 
 #include "retarget.h"
 
 #if !defined(OS_USE_SEMIHOSTING)
-#define STDIN_FILENO  0
+#define STDIN_FILENO 0
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
 
 /* Variables */
-//#undef errno
+// #undef errno
 extern int errno;
 extern int __io_putchar(int ch) __attribute__((weak));
 extern int __io_getchar(void) __attribute__((weak));
 
-register char * stack_ptr asm("sp");
+register char *stack_ptr asm("sp");
 
 char *__env[1] = { 0 };
 char **environ = __env;
 
-extern char _estack;  // see ld file
-extern char _Min_Stack_Size;  // see ld file
+extern char _estack; // see ld file
+extern char _Min_Stack_Size; // see ld file
 
-volatile int txComplete=1;
+volatile int txComplete = 1;
 volatile uint8_t txBuffer[200];
 
 UART_HandleTypeDef *gHuart;
@@ -58,10 +58,10 @@ int _kill(int pid, int sig)
 	return -1;
 }
 
-void _exit (int status)
+void _exit(int status)
 {
 	_kill(status, -1);
-	while (1) {}		/* Make sure we hang here */
+	while (1) { } /* Make sure we hang here */
 }
 
 int _read(int file, char *ptr, int len)
@@ -69,7 +69,7 @@ int _read(int file, char *ptr, int len)
 	HAL_StatusTypeDef hstatus;
 
 	if (file == STDIN_FILENO) {
-		hstatus = HAL_UART_Receive(gHuart, (uint8_t *) ptr, 1, HAL_MAX_DELAY);
+		hstatus = HAL_UART_Receive(gHuart, (uint8_t *)ptr, 1, HAL_MAX_DELAY);
 		if (hstatus == HAL_OK)
 			return 1;
 		else
@@ -85,7 +85,7 @@ int _write(int file, char *ptr, int len)
 	HAL_StatusTypeDef hstatus;
 
 	if (file == STDOUT_FILENO || file == STDERR_FILENO) {
-		hstatus = HAL_UART_Transmit(gHuart, (uint8_t *) ptr, len, HAL_MAX_DELAY);
+		hstatus = HAL_UART_Transmit(gHuart, (uint8_t *)ptr, len, HAL_MAX_DELAY);
 
 		if (hstatus == HAL_OK)
 			return len;
@@ -94,10 +94,7 @@ int _write(int file, char *ptr, int len)
 	}
 	errno = EBADF;
 	return -1;
-
-
 }
-
 
 int _close(int fd)
 {
@@ -107,7 +104,6 @@ int _close(int fd)
 	errno = EBADF;
 	return -1;
 }
-
 
 int _fstat(int fd, struct stat *st)
 {
@@ -126,13 +122,14 @@ int _isatty(int fd)
 		return 1;
 
 	errno = EBADF;
-	return 0;}
+	return 0;
+}
 
 int _lseek(int fd, int ptr, int dir)
 {
-	(void) fd;
-	(void) ptr;
-	(void) dir;
+	(void)fd;
+	(void)ptr;
+	(void)dir;
 
 	errno = EBADF;
 	return -1;
@@ -185,12 +182,14 @@ int _execve(char *name, char **argv, char **env)
 	return -1;
 }
 
-caddr_t _sbrk(int incr) {
-	extern char __heap_start__ asm("end");  // Defined by the linker.
+caddr_t _sbrk(int incr)
+{
+	extern char __heap_start__ asm("end"); // Defined by the linker.
 	static char *heap_end;
 	char *prev_heap_end;
 
-	if (heap_end == NULL) heap_end = &__heap_start__;
+	if (heap_end == NULL)
+		heap_end = &__heap_start__;
 
 	prev_heap_end = heap_end;
 
@@ -198,12 +197,10 @@ caddr_t _sbrk(int incr) {
 		__asm("BKPT #0\n");
 		errno = ENOMEM;
 		return (caddr_t)-1;
-
 	}
 
 	heap_end += incr;
 	return (caddr_t)prev_heap_end;
-
 }
 
-#endif //#if !defined(OS_USE_SEMIHOSTING)
+#endif // #if !defined(OS_USE_SEMIHOSTING)
