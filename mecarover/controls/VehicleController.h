@@ -29,47 +29,37 @@ struct Abtastzeit_t {
 	uint32_t FzLageZuDreh;
 };
 
-// Base class for all vehicle controllers
-template <typename T, unsigned int NumbWheels, unsigned int DegFreed>
+template <typename T, unsigned int N_WHEEL, unsigned int DOF>
 class VehicleController {
 public:
-	using WheelVel = Eigen::Matrix<T, NumbWheels, 1>;
-	using VehicleVel = Eigen::Matrix<T, DegFreed, 1>;
-	using Jacobi = Eigen::Matrix<T, NumbWheels, DegFreed>;
-	using InverseJacobi = Eigen::Matrix<T, DegFreed, NumbWheels>;
+	using VelWheel = Eigen::Matrix<T, N_WHEEL, 1>;
+	using VelRF = Eigen::Matrix<T, DOF, 1>;
+	using Jacobian = Eigen::Matrix<T, N_WHEEL, DOF>;
+	using InvJacobian = Eigen::Matrix<T, DOF, N_WHEEL>;
 
 protected:
-	InverseJacobi iJ;
-	Jacobi J;
+	InvJacobian inv_j = InvJacobian::Zero();
+	Jacobian j = Jacobian::Zero();
 
 public:
 	// for data types Jacobi InverseJacobi
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW // eigenlib 16 Byte alignement
 
-		VehicleVel
-		vWheel2vRF(const WheelVel &u) const
+	VehicleController() = default;
+
+	VelRF vWheel2vRF(const VelWheel &u) const
 	{
-		VehicleVel vRF;
-		vRF = iJ * u;
-		return vRF;
+		return inv_j * u;
 	}
 
-	WheelVel vRF2vWheel(const VehicleVel &v) const
+	VelWheel vRF2vWheel(const VelRF &v) const
 	{
-		WheelVel u;
-		u = J * v;
-		return u;
+		return j * v;
 	}
 
-	VehicleController()
-		: iJ(InverseJacobi::Zero())
-		, J(Jacobi::Zero())
-	{
-	}
-
-	virtual imsl::Pose<T> odometry(Pose<T>, const WheelVel &) = 0;
-	virtual VehicleVel poseControl(PoseV<T> reference, PoseV<T> actual) = 0;
-	virtual WheelVel wheelControl(const WheelVel &setPoint, const WheelVel &contrInput) = 0;
+	virtual imsl::Pose<T> odometry(Pose<T>, const VelWheel &) = 0;
+	virtual VelRF poseControl(PoseV<T> reference, PoseV<T> actual) = 0;
+	virtual VelWheel wheelControl(const VelWheel &setPoint, const VelWheel &contrInput) = 0;
 	virtual imsl::vPose<T> velocityFilter(vPose<T> vRFref, vPose<T> vRFold) = 0;
 	virtual void poseUpdate(dPose<T> delta, unsigned int divisor) = 0;
 	virtual void headingUpdate(T delta, unsigned int divisor) = 0;

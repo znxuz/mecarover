@@ -5,17 +5,23 @@
 #include <mrcpptypes.h>
 #include <rtos_config.h>
 
-#include "VehicleControl.h"
+#include "VehicleController.h"
 
-extern "C" {
-void PoseControllerTaskFunction(void *arg);
-void WheelControllerTaskFunction(void *arg);
+extern "C"
+{
+void call_pose_control_task(void *arg);
+void call_wheel_control_task(void *arg);
 
-// TODO has to be implemented
-int get_ref_pose(PoseV_t *p); // get reference pose from interpolator
+static inline int get_ref_pose(PoseV_t *p)
+{
+	// TODO has to be implemented
+	// get reference pose from interpolator
+	return 0;
+}
 }
 
-namespace imsl::vehiclecontrol {
+namespace imsl::vehiclecontrol
+{
 
 enum class CtrlMode {
 	OFF, // disable motors
@@ -24,43 +30,11 @@ enum class CtrlMode {
 	POSE // cmd_pose: pose command from ros
 };
 
-template <typename real_t>
-class ControllerTasksInterfaces {
-public:
-	virtual void *PoseControlTask() = 0;
-	virtual void *WheelControlTask() = 0;
-	virtual int GetPose(PoseV_t *pose) = 0;
-	virtual int SetPose(Pose_t *pose, int delta) = 0;
-	virtual int GetOPose(Pose_t *pose) = 0;
-	virtual int GetGOPose(Pose_t *pose) = 0;
-	virtual int SetOPose(Pose_t *pose) = 0;
-	virtual int SetGOPose(Pose_t *pose) = 0;
-	virtual int GetRFVel(Pose_t *vel) = 0;
-	virtual CtrlMode GetControllerMode() = 0;
-	virtual int SetControllerMode(CtrlMode mode) = 0;
-	//    virtual mrc_mode GetControllerMode() = 0;
-	//    virtual int SetControllerMode(mrc_mode mode) = 0;
-	virtual mrc_stat GetControllerErrorStatus() = 0;
-	virtual int SetControllerErrorStatus(mrc_stat status) = 0;
-	virtual void SetManuRef(vPose<real_t> vel) = 0;
-
-	//    virtual int updatePoseDelta(Pose_t * pose, unsigned int Divisor)  = 0;
-	//    virtual int updateHeadingDelta(real_t HeadingDelta, unsigned int Divisor)  = 0;
-	virtual int getOdometryHeading(real_t *odoHeading) = 0;
-	virtual void OdometrieCallback() = 0;
-	virtual int Init(Fahrzeug_t *fz, ReglerParam_t Regler, Abtastzeit_t Ta) = 0;
-	//    virtual int CleanUp() = 0;
-	//    virtual int Join(void **retval) = 0;
-	//    virtual bool CheckCollision(mrc_mode mode, const vPose<real_t>& vpose) = 0;
-	//    virtual void SetIgnoreCollisions(bool ignore) = 0;
-	virtual real_t GetSamplingTime(void) = 0;
-};
-
-template <typename real_t>
-class ControllerTasks : public ControllerTasksInterfaces<real_t> {
+template <typename T>
+class ControllerTask {
 private:
 	/* Uebergabe der Drehzahlsollwerte -> Drehzahlregler in rad/s */
-	real_t RadSollWert[4] = { 0.0, 0.0, 0.0, 0.0 };
+	T RadSollWert[4] = { 0.0, 0.0, 0.0, 0.0 };
 	RT_Mutex SollwMutex; // Mutex fuer Drehzahlsollwert Lageregler -> Drehzahlregler
 
 	// Threads, Semaphores and Mutexes
@@ -69,13 +43,13 @@ private:
 
 	RT_Semaphore LgrSchedSem; // Semphore zum Wecken des Lagereglers
 
-	PoseV<real_t> PosAkt; /* Aktuelle Position des Roboters, alle Sensoren */
-	Pose<real_t> OPosAkt; /* Aktuelle Position nur Odometrie */
-	Pose<real_t> GOPosAkt; /* Aktuelle Position Odometrie mit Gyroskop Fusion */
-	vPose<real_t> RKSVAkt; /* Aktuelle Geschwindigkeit in Roboterkoordinaten */
+	PoseV<T> PosAkt; /* Aktuelle Position des Roboters, alle Sensoren */
+	Pose<T> OPosAkt; /* Aktuelle Position nur Odometrie */
+	Pose<T> GOPosAkt; /* Aktuelle Position Odometrie mit Gyroskop Fusion */
+	vPose<T> RKSVAkt; /* Aktuelle Geschwindigkeit in Roboterkoordinaten */
 	RT_Mutex PosAktMut; // Mutex fuer die Posen
 
-	Heading<real_t> OdoHeading; // Heading of the vehicle calculated by odometry only
+	Heading<T> OdoHeading; // Heading of the vehicle calculated by odometry only
 	RT_Mutex OdoHeadingMutex; // Mutex fuer OdoHeading
 
 	bool UseWheelControllerTask = false;
@@ -89,7 +63,7 @@ private:
 	mrc_stat Fz_Stoerung = MRC_NOERR;
 
 	RT_Mutex ManuRefVelMut;
-	vPose<real_t> ManuRefVel;
+	vPose<T> ManuRefVel;
 
 protected:
 	int NumbWheels = 0;
@@ -98,9 +72,7 @@ protected:
 	ReglerParam_t Regler;
 	Abtastzeit_t Ta;
 
-	//----------------------------------------------- protected methods -----------------
-
-	void getPose(Pose<real_t> &pose)
+	void getPose(Pose<T> &pose)
 	{ // private interface with C++-type
 		PosAktMut.lock();
 		pose.x = PosAkt.x;
@@ -109,7 +81,7 @@ protected:
 		PosAktMut.unlock();
 	}
 
-	void setPose(const Pose<real_t> &pose)
+	void setPose(const Pose<T> &pose)
 	{ // private interface with C++-type
 		PosAktMut.lock();
 		PosAkt.x = pose.x;
@@ -119,37 +91,27 @@ protected:
 	}
 
 	// Interfaces for sub classes
-	virtual int PoseControlInterface(PoseV_t reference, PoseV_t actual,
-		vPose<real_t> &RKSGeschw, real_t *CorrectingVel)
-		= 0;
-	virtual void WheelControlInterface(real_t *ReferenceVel, real_t *ActualVel,
-		real_t *CorrectingVel)
-		= 0;
-	virtual void OdometryInterface(real_t *RadDeltaPhi,
-		dPose<real_t> &VehicleMovement)
-		= 0;
-	virtual void ManualModeInterface(vPose<real_t> &vRFref,
-		vPose<real_t> &vRFold, Pose<real_t> &ManuPose)
-		= 0;
-	virtual void PoseUpdate(dPose<real_t> Delta, unsigned int Divisor) = 0;
-	virtual void HeadingUpdate(real_t Delta, unsigned int Divisor) = 0;
+	virtual int PoseControlInterface(PoseV_t reference, PoseV_t actual, vPose<T> &RKSGeschw, T *CorrectingVel) = 0;
+	virtual void WheelControlInterface(T *ReferenceVel, T *ActualVel, T *CorrectingVel) = 0;
+	virtual void OdometryInterface(T *RadDeltaPhi, dPose<T> &VehicleMovement) = 0;
+	virtual void ManualModeInterface(vPose<T> &vRFref, vPose<T> &vRFold, Pose<T> &ManuPose) = 0;
+	virtual void PoseUpdate(dPose<T> Delta, unsigned int Divisor) = 0;
+	virtual void HeadingUpdate(T Delta, unsigned int Divisor) = 0;
 
-	//-------------------------------------------------- public methods -----------------
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW // eigenlib 16 Byte alignement
 
-		// manual mode
-		vPose<real_t>
-		GetManuRef()
+	// manual mode
+	vPose<T> GetManuRef()
 	{
-		vPose<real_t> vel;
+		vPose<T> vel;
 		ManuRefVelMut.lock();
 		vel = ManuRefVel;
 		ManuRefVelMut.unlock();
 		return vel;
 	}
 
-	void SetManuRef(vPose<real_t> vel) override
+	void SetManuRef(vPose<T> vel)
 	{
 		//      log_message(log_debug,"vel x: %f, y: %f, theta: %f", vel.vx, vel.vy, vel.omega);
 		ManuRefVelMut.lock();
@@ -158,7 +120,7 @@ public:
 		ManuRefVelMut.unlock();
 	}
 
-	CtrlMode GetControllerMode() override
+	CtrlMode GetControllerMode()
 	{
 		CtrlMode mode;
 		ControllerModeMut.lock();
@@ -167,7 +129,7 @@ public:
 		return mode;
 	}
 
-	int SetControllerMode(CtrlMode mode) override
+	int SetControllerMode(CtrlMode mode)
 	{
 		ControllerModeMut.lock();
 		ControllerMode = mode;
@@ -175,7 +137,7 @@ public:
 		return 0;
 	}
 
-	mrc_stat GetControllerErrorStatus() override
+	mrc_stat GetControllerErrorStatus()
 	{
 		mrc_stat status;
 		ControllerErrorStatusMut.lock();
@@ -184,7 +146,7 @@ public:
 		return status;
 	}
 
-	int SetControllerErrorStatus(mrc_stat status) override
+	int SetControllerErrorStatus(mrc_stat status)
 	{
 		ControllerErrorStatusMut.lock();
 		Fz_Stoerung = status;
@@ -192,9 +154,9 @@ public:
 		return 0;
 	}
 
-	int Init(Fahrzeug_t *fz, ReglerParam_t Regler, Abtastzeit_t Ta) override
+	virtual int Init(Fahrzeug_t *fz, ReglerParam_t Regler, Abtastzeit_t Ta)
 	{
-		//      log_message(log_info, "starting controller initialization");
+		log_message(log_info, "ControllerTask Init");
 		ControllerMode = CtrlMode::OFF;
 		this->Regler = Regler;
 		this->Ta = Ta;
@@ -240,59 +202,55 @@ public:
 			return -1;
 		}
 
-		//      log_message(log_debug, "main task old priority: %li", uxTaskPriorityGet(NULL));
-		vTaskPrioritySet(NULL, (osPriority_t)MAIN_TASK_PRIORITY); // set priority of calling task (main task)
-																  //      log_message(log_debug, "main task new priority: %li", uxTaskPriorityGet(NULL));
+		// log_message(log_debug, "main task old priority: %li", uxTaskPriorityGet(NULL));
+		vTaskPrioritySet(NULL, static_cast<osPriority_t>(MAIN_TASK_PRIORITY));
 
 		if (UseWheelControllerTask) {
-
-			if (!drehzahlregler_thread.create(WheelControllerTaskFunction,
+			if (!drehzahlregler_thread.create(call_wheel_control_task,
 					"WheelControllerTask", STACK_SIZE, this,
 					WHEEL_CONTROLLER_PRIORITY)) {
-				//        if (!drehzahlregler_thread.createPinnedToCore(WheelControllerTaskFunction, "WheelControllerTask", STACK_SIZE,
-				//                                                      this, WHEEL_CONTROLLER_PRIORITY, 1)) { // pin task to core 1
-				//          log_message(log_error, "Can not create drehzahlregler thread");
-				//          return -1;
+				log_message(log_error, "Can not create drehzahlregler thread");
+				return -1;
 			}
 		}
 
 		vTaskDelay(10); // wait some ticks to give wheel controller some time to start
 
-		if (!lageregler_thread.create((PoseControllerTaskFunction),
+		if (!lageregler_thread.create(call_pose_control_task,
 				"PoseControllerTask", STACK_SIZE, this,
 				POSE_CONTROLLER_PRIORITY)) {
-			//      if (!lageregler_thread.createPinnedToCore((PoseControllerTaskFunction), "PoseControllerTask", STACK_SIZE,
-			//                                                this, POSE_CONTROLLER_PRIORITY, 1)) { // pin task to core 1
-			//        log_message(log_error, "Can not create lageregler thread");
-			//        return -1;
+			log_message(log_error, "Can not create lageregler thread");
+			return -1;
 		}
 
 		return 0;
-	} // end of method Init
+	}
+
 	/*
-	   int CleanUp() override {
+	   int CleanUp() {
 
 	   return 0;
 	   } // end of method CleanUp
 
-	   int Join(void **retval) override {
+	   int Join(void **retval) {
 	   if (UseWheelControllerTask) {
 	//        pthread_join(drehzahlregler_thread, retval);
 	}
 	return; // pthread_join(lageregler_thread, retval);
 	} // end of method Join
 	*/
-	void *PoseControlTask() override
+
+	void PoseControlTask()
 	{
-		Pose<real_t> ManuPose; // pose for manual mode
-		vPose<real_t> wksSollV, RKSGeschwAlt;
-		vPose<real_t> RKSGeschw; // Geschwindigkeiten in Roboterkoordinaten
-		vPose<real_t> vRFref; // reference velocity of the pose in robot frame
+		Pose<T> ManuPose; // pose for manual mode
+		vPose<T> wksSollV, RKSGeschwAlt;
+		vPose<T> RKSGeschw; // Geschwindigkeiten in Roboterkoordinaten
+		vPose<T> vRFref; // reference velocity of the pose in robot frame
 		PoseV_t wksSoll = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 }, // wegen der Warnungen
 			aktPose = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-		//      PoseV<real_t> wksSollAlt;
-		vPose<real_t> rksSollV; // reference pose and velocity in robot frame
-		real_t vWheelref[4] = { 0.0, 0.0, 0.0, 0.0 }; // reference velocities for wheel control
+		//      PoseV<T> wksSollAlt;
+		vPose<T> rksSollV; // reference pose and velocity in robot frame
+		T vWheelref[4] = { 0.0, 0.0, 0.0, 0.0 }; // reference velocities for wheel control
 
 		// unsigned int wksSollinit = 0;
 		CtrlMode oldmode = CtrlMode::OFF;
@@ -307,12 +265,9 @@ public:
 			"pose controller initialized, running into control loop, free heap: %d, free stack: %ld",
 			free_heap, free_stack);
 
-		// --------------------------------------------- Control Loop Begin -----------------------------------------------
 		int count = 0;
 		while (true) {
-
 			printf("POSETask: %ld\n", uwTick);
-
 			LgrSchedSem.wait(); // wait for signal from wheel controller
 								//        int64_t stop_time = __HAL_TIM_GET_COUNTER(&htim13); // get time in microseconds since start
 								//        uint32_t elapsed_time = stop_time - start_time; // time needed for control loop
@@ -344,7 +299,6 @@ public:
 				wksSoll.vx = 0.0;
 				wksSoll.vy = 0.0;
 				wksSoll.omega = 0.0;
-
 				ManuPose = aktPose;
 				/*
 				   ManuPose.x = aktPose.x;
@@ -354,9 +308,7 @@ public:
 				RKSGeschwAlt.vx = 0.0;
 				RKSGeschwAlt.vy = 0.0;
 				RKSGeschwAlt.omega = 0.0;
-
 				break;
-
 			case CtrlMode::TWIST:
 				/* First time after mode switch */
 				if (oldmode != CtrlMode::TWIST) {
@@ -373,14 +325,14 @@ public:
 				if (count++ > 100) {
 					count = 0;
 					log_message(log_debug, "ManuPose x: %f, y: %f, theta: %f",
-						ManuPose.x, ManuPose.y, real_t(ManuPose.theta));
+						ManuPose.x, ManuPose.y, T(ManuPose.theta));
 				}
 
 				RKSGeschwAlt = vRFref; // for manual mode velocity filter
 				rksSollV = vRFref;
 
 				/* V von RKS -> WKS transformieren */
-				wksSollV = vRF2vWF<real_t>(vRFref, aktPose.theta);
+				wksSollV = vRF2vWF<T>(vRFref, aktPose.theta);
 
 				wksSoll.x = ManuPose.x;
 				wksSoll.y = ManuPose.y;
@@ -389,20 +341,14 @@ public:
 				wksSoll.vy = wksSollV.vy;
 				wksSoll.omega = wksSollV.omega;
 				break;
-
 			case CtrlMode::POSE:
 				get_ref_pose(&wksSoll); // read reference pose from interpolator
 				break;
-
-			} // END switch (controllerMode)
+			}
 
 			if ((controllerMode != CtrlMode::OFF)
 				&& (controllerMode != CtrlMode::ESTOP)) {
-				// call PoseController in derived class
-				if (PoseControlInterface(wksSoll, aktPose, RKSGeschw, vWheelref)
-					!= 0) {
-					return (void *)-1;
-				}
+				PoseControlInterface(wksSoll, aktPose, RKSGeschw, vWheelref);
 
 				// check if wheel controller task is active
 				if (UseWheelControllerTask) {
@@ -414,8 +360,6 @@ public:
 						SetControllerMode(CtrlMode::OFF);
 						log_message(log_error, "%s: Can not set RadSollWert",
 							__FUNCTION__);
-
-						return (void *)-1;
 					}
 				} else { // no wheel controller task, set velocities via CAN
 					hal_wheel_vel_set(vWheelref); // TODO CAN-HAL
@@ -431,26 +375,23 @@ public:
 			} // end of if ((controllerMode != CtrlMode::OFF) && (controllerMode != CtrlMode::ESTOP))
 
 			//        wksSollAlt = wksSoll;     /* Für PositionHalten speichern */
+		}
+	}
 
-		} // end of while (true) -------------------------------------- Control Loop End ---------------------------------------
-
-		return (void *)0; // this should never happen
-	} // end of void PoseControlTask()
-
-	void *WheelControlTask() override
+	void WheelControlTask()
 	{
 		int counter;
 		int i;
 
-		real_t RadDeltaPhi[4]; /* DeltaPhi-Wert der Raeder in rad zwischen zwei Abtastschritten */
-		real_t sollw[4]; /* lokaler Drehzahlsollwert der Achsen in rad/s */
+		T RadDeltaPhi[4]; /* DeltaPhi-Wert der Raeder in rad zwischen zwei Abtastschritten */
+		T sollw[4]; /* lokaler Drehzahlsollwert der Achsen in rad/s */
 
-		real_t IstwAlt[4]; /* vorhergehender Wert in rad/s */
-		real_t SollwAlt[4]; /* vorhergehender Sollwert in rad/s */
-		real_t DZRNullwert[4]; /* Nullwert fuer Drehzahlregler */
-		real_t Stellgroesse[4]; /* aufintegrierter Wert aus Regelabweichung  */
-		real_t *Sollwert; // Zeiger auf den aktuellen Sollwert-Vektor Umschalten 0, werte
-		real_t radgeschw[4]; /* Current wheel speeds */
+		T IstwAlt[4]; /* vorhergehender Wert in rad/s */
+		T SollwAlt[4]; /* vorhergehender Sollwert in rad/s */
+		T DZRNullwert[4]; /* Nullwert fuer Drehzahlregler */
+		T Stellgroesse[4]; /* aufintegrierter Wert aus Regelabweichung  */
+		T *Sollwert; // Zeiger auf den aktuellen Sollwert-Vektor Umschalten 0, werte
+		T radgeschw[4]; /* Current wheel speeds */
 
 		/* Make compiler happy */
 		(void)SollwAlt;
@@ -482,7 +423,6 @@ public:
 		RT_PeriodicTimer WheelControllerTimer(Ta.FzDreh * 1000); // periode in ms
 		int estopCounter = 0;
 		while (true) {
-
 			controllerMode = GetControllerMode();
 			printf("WheelTask: %ld\n", uwTick);
 
@@ -591,12 +531,10 @@ public:
 			//          log_message(log_debug, "wheel jitter: %li µs", max_elapsed_time - 3000);
 			//        }
 			//        start_time = __HAL_TIM_GET_COUNTER(&htim13); // get time in microseconds since start
+		}
+	}
 
-		} // end of while(true)
-		return (void *)0; // this should never happen
-	} // end of void* WheelControlTask()
-
-	int GetPose(PoseV_t *pose) override
+	int GetPose(PoseV_t *pose)
 	{
 		PosAktMut.lock();
 
@@ -611,7 +549,7 @@ public:
 		return 0;
 	}
 
-	int SetPose(Pose_t *pose, int delta) override
+	int SetPose(Pose_t *pose, int delta)
 	{
 		PosAktMut.lock();
 
@@ -629,7 +567,7 @@ public:
 		return 0;
 	}
 
-	int GetOPose(Pose_t *pose) override
+	int GetOPose(Pose_t *pose)
 	{
 		PosAktMut.lock();
 
@@ -641,7 +579,7 @@ public:
 		return 0;
 	}
 
-	int GetGOPose(Pose_t *pose) override
+	int GetGOPose(Pose_t *pose)
 	{
 		PosAktMut.lock();
 
@@ -653,7 +591,7 @@ public:
 		return 0;
 	}
 
-	int SetOPose(Pose_t *pose) override
+	int SetOPose(Pose_t *pose)
 	{
 		PosAktMut.lock();
 
@@ -666,7 +604,7 @@ public:
 		return 0;
 	}
 
-	int SetGOPose(Pose_t *pose) override
+	int SetGOPose(Pose_t *pose)
 	{
 		PosAktMut.lock();
 
@@ -679,7 +617,7 @@ public:
 		return 0;
 	}
 
-	int GetRFVel(Pose_t *vel) override
+	int GetRFVel(Pose_t *vel)
 	{
 		PosAktMut.lock();
 
@@ -691,15 +629,15 @@ public:
 		return 0;
 	}
 
-	real_t GetSamplingTime(void) override
+	T GetSamplingTime(void)
 	{
 		return Ta.FzLage;
 	}
 
 	// TODO pruefen !!!
-	int getOdometryHeading(real_t *odoHeading) override
+	int getOdometryHeading(T *odoHeading)
 	{
-		real_t oh;
+		T oh;
 
 		OdoHeadingMutex.lock();
 		oh = OdoHeading;
@@ -709,10 +647,10 @@ public:
 		return 0;
 	}
 
-	void OdometrieCallback() override
+	void OdometrieCallback()
 	{
-		real_t RadDeltaPhi[4]; /* Geschwindigkeits-Istwert der Raeder in Rad  */
-		real_t timediff = Ta.FzLage / Ta.FzLageZuDreh; // calculate cycle time of odometry
+		T RadDeltaPhi[4]; /* Geschwindigkeits-Istwert der Raeder in Rad  */
+		T timediff = Ta.FzLage / Ta.FzLageZuDreh; // calculate cycle time of odometry
 
 		if (hal_encoder_read(RadDeltaPhi) < 0) {
 			SetControllerMode(CtrlMode::OFF);
@@ -738,36 +676,30 @@ public:
 		}
 	}
 
-	//----------------------------------------------------- private methods -----------------
 private:
-	int mr_radsollwert_set(real_t *sollw)
+	int mr_radsollwert_set(T *sollw)
 	{
-		if (!SollwMutex.lock())
-			return -1;
+		SollwMutex.lock();
 		for (int i = 0; i < NumbWheels; i++) {
 			RadSollWert[i] = sollw[i];
 		}
-		if (!SollwMutex.unlock())
-			return -1;
+		SollwMutex.unlock();
 		return 0;
 	}
 
-	int mr_radsollwert_get(real_t *sollw)
+	int mr_radsollwert_get(T *sollw)
 	{
-		if (!SollwMutex.lock())
-			return -1;
-
+		SollwMutex.lock();
 		for (int i = 0; i < NumbWheels; i++) {
 			sollw[i] = RadSollWert[i];
 		}
-		if (!SollwMutex.unlock())
-			return -1;
+		SollwMutex.unlock();
 		return 0;
 	}
 
-	void Odometry(real_t *RadDeltaPhi, real_t timediff)
+	void Odometry(T *RadDeltaPhi, T timediff)
 	{
-		dPose<real_t> wfm, rfm;
+		dPose<T> wfm, rfm;
 		// rks_move_t RKS_delta;              // Movement in RKS frame  TODO wofür
 
 		// call subclass
@@ -786,27 +718,26 @@ private:
 
 		// new odometry pose
 		// movements in world frame with odo pose
-		wfm = dRF2dWF<real_t>(rfm, OPosAkt.theta + rfm.theta / real_t(2.0));
+		wfm = dRF2dWF<T>(rfm, OPosAkt.theta + rfm.theta / T(2.0));
 		OPosAkt.x += wfm.x;
 		OPosAkt.y += wfm.y;
 		OPosAkt.theta += wfm.theta;
 
 		// new gyro odo pose
 		// movements in world frame with gyro odo pose
-		wfm = dRF2dWF<real_t>(rfm, GOPosAkt.theta + rfm.theta / real_t(2.0));
+		wfm = dRF2dWF<T>(rfm, GOPosAkt.theta + rfm.theta / T(2.0));
 		GOPosAkt.x += wfm.x;
 		GOPosAkt.y += wfm.y;
 		GOPosAkt.theta += wfm.theta;
 
 		// movement with actual heading
-		wfm = dRF2dWF<real_t>(rfm, PosAkt.theta + rfm.theta / real_t(2.0));
+		wfm = dRF2dWF<T>(rfm, PosAkt.theta + rfm.theta / T(2.0));
 
 		PosAkt.vx = wfm.x / timediff;
 		PosAkt.vy = wfm.y / timediff;
 		PosAkt.omega = wfm.theta / timediff;
 
 		PosAktMut.unlock();
-
 	}
 };
 

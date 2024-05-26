@@ -2,7 +2,7 @@
 
 //------------ configuration of the vehicle and controller parameters
 
-#include <mecarover/controls/VehicleControl.h> // definition of imsl::vehiclecontrol::ReglerParam_t, imsl::vehiclecontrol::Abtastzeit_t
+#include <mecarover/controls/VehicleController.h> // definition of imsl::vehiclecontrol::ReglerParam_t, imsl::vehiclecontrol::Abtastzeit_t
 #include <mrtypes.h> // definition of Fahrzeug_t
 
 // ---------------------------------- OmniRob configuration

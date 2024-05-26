@@ -34,8 +34,7 @@
 #include <tim.h>
 #include <usart.h>
 
-#include <mecarover/controls/DiffDriveControllerTasks.h>
-#include <mecarover/controls/FourWheelMecanumControllerTasks.h>
+#include <mecarover/controls/MecanumControllerTask.h>
 #include <mecarover/hal/stm_hal.h>
 #include <mecarover/lidar/lidar.h>
 #include <mecarover/microros_init/microros_init.h>
@@ -48,8 +47,7 @@ LaserScanner ls;
 using namespace imsl;
 using namespace imsl::vehiclecontrol;
 
-ControllerTasksInterfaces<real_t> *controllerTasks;
-bool hal_is_init = false;
+ControllerTask<real_t> *controllerTask;
 
 extern "C" {
 
@@ -78,22 +76,14 @@ int main()
 
 	retarget_init(&huart3);
 
-	if (hal_init(&fz)) { // init PWM and encoders
-		hal_is_init = true;
-		log_message(log_info, "HAL: initialization ok");
-	} else {
+	if (!hal_init(&fz))
 		log_message(log_error, "HAL: initialization failed");
-	}
 
-	if (fz.type == MRC_VEHICLETYPE_MECANUM) {
-		// controller for 4 wheel Mecanum robot like OmniRob, Nexus or FILU
-		controllerTasks = new FourWheelMecanumControllerTasks<real_t>;
-	} else {
-		// differential drive robot like ADRZ D4
-		controllerTasks = new DiffDriveControllerTasks<real_t>;
-	}
+	if (fz.type != MRC_VEHICLETYPE_MECANUM)
+		log_message(log_error, "Vehicle type is supposed to be mecanum");
 
-	controllerTasks->Init(&fz, Regler, Ta); // init controllers
+	controllerTask = new MecanumControllerTask<real_t>;
+	controllerTask->Init(&fz, Regler, Ta);
 
 	// init LaserScanner
 	ls.init_LaserScanner(&ls);
@@ -102,20 +92,18 @@ int main()
 	/* Init scheduler */
 	osKernelInitialize();
 
-	BaseType_t xReturned;
-	xReturned = xTaskCreate(rosInit, "executor", STACK_SIZE, controllerTasks,
-		(osPriority_t)MICRO_ROS_TASK_PRIORITY, NULL);
-	if (xReturned != pdPASS) {
+	if (xTaskCreate(rosInit, "executor", STACK_SIZE, controllerTask,
+			(osPriority_t)MICRO_ROS_TASK_PRIORITY, NULL)
+		!= pdPASS)
 		printf("Error: logger_init(), xTaskCreate()\n");
-	}
 
-	size_t free_heap = xPortGetMinimumEverFreeHeapSize(); // ESP.getMinFreeHeap(); //lowest level of free heap since boot
+	size_t free_heap = xPortGetMinimumEverFreeHeapSize();
 	uint32_t free_stack = RT_Task::thisTaskGetStackHighWaterMark();
 	log_message(log_info, "running into main loop, free heap: %d, free stack: %lu\n",
 		free_heap, free_stack);
 	//    RT_PeriodicTimer loopTimer(500); // wait period 500 ms = 2 Hz loop frequency
 	RT_PeriodicTimer loopTimer(Ta.FzLage * 1000); // wait period is pose controller period
-	controllerTasks->SetControllerMode(vehiclecontrol::CtrlMode::OFF);
+	controllerTask->SetControllerMode(vehiclecontrol::CtrlMode::OFF);
 	loopTimer.init();
 	int loopCounter = 0;
 
@@ -133,8 +121,8 @@ int main()
 		if (loopCounter++ > 1.0 / Ta.FzLage) {
 			loopCounter = 0;
 			PoseV_t p;
-			controllerTasks->GetPose(&p);
-			CtrlMode mode = controllerTasks->GetControllerMode();
+			controllerTask->GetPose(&p);
+			CtrlMode mode = controllerTask->GetControllerMode();
 			const char *mode_str = "";
 
 			switch (mode) {

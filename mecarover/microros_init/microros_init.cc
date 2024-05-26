@@ -20,7 +20,7 @@
 // nav2
 #include <nav_msgs/msg/odometry.h>
 
-#include <mecarover/controls/ControllerTasks.h>
+#include <mecarover/controls/ControllerTask.h>
 #include <mecarover/lidar/lidar.h>
 
 #include "eth_transport.h"
@@ -71,7 +71,7 @@ namespace imsl
 
 	// local objects
 	// Odometry, Status
-	vehiclecontrol::ControllerTasksInterfaces<real_t> *ct = nullptr;
+	vehiclecontrol::ControllerTask<real_t> *ct = nullptr;
 	char buf[100];
 
 	tf2_msgs__msg__TFMessage tf;
@@ -231,12 +231,12 @@ namespace imsl
 			//      hal_amplifiers_enable();
 			ct->SetControllerMode(vehiclecontrol::CtrlMode::TWIST);
 
-			log_message(log_info, "amplifiers enable, going into twist mode");
+			log_message(log_info, "amplifiers enabled, going into twist mode");
 		} else {
 			//      hal_amplifiers_disable();
 			ct->SetControllerMode(vehiclecontrol::CtrlMode::OFF);
 
-			log_message(log_info, "amplifiers disable, mode off");
+			log_message(log_info, "amplifiers disabled, mode off");
 		}
 	}
 
@@ -266,7 +266,7 @@ namespace imsl
 			printf("Error on default allocators (line %d)\n", __LINE__);
 		}
 
-		ct = (vehiclecontrol::ControllerTasksInterfaces<real_t> *)controller;
+		ct = (vehiclecontrol::ControllerTask<real_t> *)controller;
 		rcl_allocator_t allocater = rcl_get_default_allocator();
 		rclc_support_t support;
 

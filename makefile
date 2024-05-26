@@ -147,7 +147,7 @@ $(BUILD_DIR)/%.o $(BUILD_DIR)/%.su: %.cc
 
 $(BUILD_DIR)/%.o: %.s
 	$(DIR_GUARD)
-	arm-none-eabi-gcc "$<" $(TGT_STARTUP_FLAGS) -o "$@"
+	arm-none-eabi-gcc $(TGT_STARTUP_FLAGS) "$<" -o "$@"
 
 flash: $(BIN)
 	st-flash --reset write $(EXECUTABLE:.elf=.bin) 0x8000000
@@ -191,5 +191,5 @@ backup: $(BIN)
 	@cp $(BIN) $(BUILD_DIR)/$(shell git log -1 --pretty='%h').bin
 	@rm -f $(BUILD_DIR)/$(shell git log -2 --pretty='%h' | tail -n1).bin
 
-diff:
+diff: $(BIN)
 	diff $(BUILD_DIR)/*.bin

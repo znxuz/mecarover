@@ -3,18 +3,14 @@
 #include <Eigen/Eigen/Core>
 #include <Eigen/Eigen/LU>
 
-#include "VehicleControl.h"
+#include "VehicleController.h"
 
 namespace imsl::vehiclecontrol {
 template <typename T>
 class DifferentialDriveController : public VehicleController<T, 2, 2> {
 public:
-	using typename VehicleController<T, 2, 2>::WheelVel;
-	using typename VehicleController<T, 2, 2>::VehicleVel;
-	using VehicleController<T, 2, 2>::J;
-	using VehicleController<T, 2, 2>::iJ;
-	using VehicleController<T, 2, 2>::vWheel2vRF;
-	using VehicleController<T, 2, 2>::vRF2vWheel;
+	using typename VehicleController<T, 2, 2>::VelWheel;
+	using typename VehicleController<T, 2, 2>::VelRF;
 
 private:
 	T WheelTrack; // wheel track (width) in mm
@@ -22,8 +18,8 @@ private:
 	T JoystickAcc; // maximum acceleration in manual mode in mm/s/s
 	ReglerParam_t Regler;
 	Abtastzeit_t Ta; // Abtastzeiten der Regler
-	WheelVel RAbwAlt;
-	WheelVel Integr;
+	VelWheel RAbwAlt;
+	VelWheel Integr;
 	dPose<T> DeltaPose;
 	unsigned int DeltaPoseCounter;
 	T DeltaHeading;
@@ -45,8 +41,8 @@ public:
 		this->Ta = Ta;
 		Vmax = Fz->VBahnMax;
 		Omega_max = Fz->VthetaMax;
-		Integr = WheelVel::Zero();
-		RAbwAlt = WheelVel::Zero();
+		Integr = VelWheel::Zero();
+		RAbwAlt = VelWheel::Zero();
 		DeltaPoseCounter = 0;
 		DeltaHeadingCounter = 0;
 		DeltaHeading = 0.0;
@@ -57,14 +53,14 @@ public:
 					the right wheel is defined as 1 (y position in robot frame in negative)
 					*/
 		// robot frame to wheels
-		J << 1.0, -WheelTrack / 2.0,
+		this->j << 1.0, -WheelTrack / 2.0,
 			1.0, +WheelTrack / 2.0;
-		J /= WheelRadius;
+		this->j /= WheelRadius;
 
 		// wheels to robot frame
-		iJ << 1.0, 1.0,
+		this->inv_j << 1.0, 1.0,
 			-1.0 / (WheelTrack / 2.0), +1.0 / (WheelTrack / 2.0);
-		iJ *= WheelRadius / 2.0;
+		this->inv_j *= WheelRadius / 2.0;
 
 		//            std::cerr << "J: " << J << std::endl;
 		//            std::cerr << "iJ: " << iJ << std::endl;
@@ -75,13 +71,13 @@ public:
 		Init(Fz, Regler, Ta);
 	}
 
-	Pose<T> odometry(Pose<T> oldPose, const WheelVel &m) override
+	Pose<T> odometry(Pose<T> oldPose, const VelWheel &m) override
 	{
 		dPose<T> WFDelta, RFDelta;
 		Pose<T> newPose;
 
 		// transform wheel movements to vehicle movements in robot frame
-		VehicleVel v;
+		VelRF v;
 		v = vWheel2vRF(m);
 
 		RFDelta.x = v(0);
@@ -115,7 +111,7 @@ public:
 		return newPose;
 	} // end of method Odometry
 
-	VehicleVel poseControl(PoseV<T> ref, PoseV<T> act) override
+	VelRF poseControl(PoseV<T> ref, PoseV<T> act) override
 	{
 		dPose<T> PoseErrorWF, PoseErrorRF;
 		vPose<T> WKSStellV, vWFref, vRFref;
@@ -168,7 +164,7 @@ public:
 		PoseErrorRF.theta = Heading<T>(ThetaRef - act.theta);
 
 		// control velocity in robot frame
-		VehicleVel v;
+		VelRF v;
 		v(0) = vRFref.vx * std::cos(PoseErrorRF.theta) + Regler.LageKv.x * PoseErrorRF.x;
 		// v(1) = vRFref.omega + Regler.LageKv.theta * PoseErrorRF.y;
 		v(1) = vRFref.omega + Regler.LageKv.theta * std::sin(PoseErrorRF.theta) * (std::abs(vRFref.omega) / Omega_max + std::abs(vRFref.vx) / Vmax);
@@ -176,10 +172,10 @@ public:
 		return v;
 	} // end of method PoseControl
 
-	WheelVel wheelControl(const WheelVel &ReferenceVel, const WheelVel &ActualVel) override
+	VelWheel wheelControl(const VelWheel &ReferenceVel, const VelWheel &ActualVel) override
 	{
 		T rabw, diff;
-		WheelVel StellV;
+		VelWheel StellV;
 
 		for (int i = 0; i < 2; i++) {
 			// Regelabweichung, Sollwert und Istwert in rad/s

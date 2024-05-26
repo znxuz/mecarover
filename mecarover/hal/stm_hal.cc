@@ -85,14 +85,14 @@ int hal_encoder_read(real_t *DeltaPhi)
 {
 	for (int i = 0; i < NumMotors; i++) {
 		int64_t val = Encoder[i].getCount(i); // get Encoder Counter
-											  //		printf("value %i =%d\n", i, val);
+											  //		printf("value %i =%d\r\n", i, val);
 
 		// Deltawerte der Raeder in rad fuer Odometrie
 		DeltaPhi[i] = Ink2Rad * real_t(val - old_encodervalue[i])
 			* encoderDirection[i] * encoderScaling[i];
 		old_encodervalue[i] = val;
 		// TODO check over- and underflow 16 Bit
-		//		log_message(log_info, "ENC%d = %f\n", i, DeltaPhi[i]);
+		//		log_message(log_info, "ENC%d = %f\n\r", i, DeltaPhi[i]);
 	}
 	return 0;
 }
@@ -112,7 +112,7 @@ int mr_hal_wheel_vel_set_pwm(real_t *duty)
 		MotorPWM[i].setPWM(duty[i], Tim_Pwm[i], Channel_PwmA[i],
 			Channel_PwmB[i]); // set DutyCicle to control the Motors
 
-		//		printf(" NR: %d dutycicle = %.2f\n", i, duty[i]);
+		//		printf(" NR: %d dutycicle = %.2f\r\n", i, duty[i]);
 	}
 	return 0;
 }
@@ -123,7 +123,7 @@ int hal_wheel_vel_set(real_t *w)
 	for (int i = 0; i < NumMotors; i++) {
 		w[i] *= motorDirection[i];
 
-		//		printf(" NR: %d W = %.4f\n", i, w[i]);
+		//		printf(" NR: %d W = %.4f\r\n", i, w[i]);
 	}
 
 	return mr_hal_wheel_vel_set_pwm(w); // hal_wheel_vel_set_pwm(w);
