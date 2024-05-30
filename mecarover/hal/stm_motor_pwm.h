@@ -16,10 +16,8 @@ public:
 	bool init(int motor, TIM_HandleTypeDef *htim, uint32_t Channel_PwmA,
 		uint32_t Channel_PwmB);
 	void setPWM(float duty_cicle, TIM_HandleTypeDef *timer, int ChannelA,
-		int ChannelB); // duty cicle in +/- percent
+		int ChannelB);
 
 private:
 	bool is_init = false;
-	int index = 0;
-	int Num_Motors = 4;
 };

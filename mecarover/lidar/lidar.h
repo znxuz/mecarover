@@ -33,8 +33,8 @@ public:
 	uint8_t rplidar_stop_scan[2] = { 0xA5, 0x25 };
 	uint8_t rplidar_get_Health[2] = { 0xA5, 0x52 };
 
-	void LaserScannerTask(LaserScanner *scan);
-	void init_LaserScanner(LaserScanner *scanner);
+	void LaserScannerTask();
+	void init_LaserScanner();
 	void Stop();
 	void Start();
 	void invert(float arr[], float erg[], int n);

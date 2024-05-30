@@ -2,6 +2,7 @@
 
 #include <Eigen/Eigen/Core>
 #include <Eigen/Eigen/LU>
+#include <iostream>
 #include <mecarover/mrlogger/mrlogger.h>
 
 #include "VehicleController.h"
@@ -145,6 +146,7 @@ public:
 			} else if (Integr(i) < -(Regler.DzrIntMax)) {
 				Integr(i) = -(Regler.DzrIntMax);
 			}
+			// printf("I-Anteil für den %d. Motor: %f\n", i, Integr(i));
 
 			// D-Anteil
 			diff = Regler.DzrTvDTa * (regelAbw - RAbwAlt(i));

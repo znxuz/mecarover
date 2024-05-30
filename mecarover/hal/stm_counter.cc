@@ -8,10 +8,10 @@
 #include "stm_counter.h"
 #include "stm_hal.h"
 
+// TODO ask why the initial value for the encoders are 32767 = 2^15 - 1
 #define New_Zero 32767
 #define Max_Value 65535
 // #define Max_Value 100
-#define Min_Value 0
 // #define New_Zero 50
 
 /*
@@ -27,7 +27,7 @@
 int64_t flow[NumMotors] = { -New_Zero, -New_Zero, -New_Zero, -New_Zero };
 int64_t akt_pos[NumMotors] = { 0, 0, 0, 0 };
 TIM_HandleTypeDef timer[NumMotors];
-static bool hal_is_init;
+extern bool hal_is_init;
 
 // init der Encoder
 bool STMCounter::init(TIM_HandleTypeDef *htim, int id)
@@ -47,15 +47,11 @@ bool STMCounter::init(TIM_HandleTypeDef *htim, int id)
 
 uint64_t STMCounter::getCount(int id)
 {
-	if (is_init) {
-		enc_value = __HAL_TIM_GET_COUNTER(&timer[id]);
+	if (!is_init) [[unlikely]]
+		return 0;
 
-		akt_pos[id] = enc_value;
-		counter = akt_pos[id] + flow[id];
-
-		return counter;
-	}
-	return 0;
+	akt_pos[id] = __HAL_TIM_GET_COUNTER(&timer[id]);
+	return akt_pos[id] + flow[id];
 }
 
 /**
@@ -68,11 +64,10 @@ uint64_t STMCounter::getCount(int id)
  */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	if (htim->Instance == TIM12) {
+	if (htim->Instance == TIM12)
 		HAL_IncTick();
-	}
 
-	if (hal_is_init == true) {
+	if (hal_is_init) {
 		// hinzu: ob Rad sich vor- oder rückwärts dreht
 		if (htim->Instance == TIM3) {
 			// Overflow

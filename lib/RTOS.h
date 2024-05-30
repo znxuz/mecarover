@@ -10,21 +10,17 @@ class RT_Task {
 public:
 	bool create(TaskFunction_t pvTaskCode, const char *const pcName, uint32_t usStackDepth, void *pvParameters, UBaseType_t uxPriority)
 	{
+		auto retval = xTaskCreate(pvTaskCode, pcName, usStackDepth,
+				pvParameters, (osPriority_t)uxPriority, &handle);
 
-		BaseType_t retval = xTaskCreate(pvTaskCode, pcName, usStackDepth, pvParameters, (osPriority_t)uxPriority, &handle);
-
-		if (retval == pdPASS) {
-			return true;
-		}
-
-		handle = nullptr; // just to be sure
-		return false;
+		if (!retval)
+			handle = nullptr; // just to be sure
+		return retval;
 	}
 
 	bool createPinnedToCore(TaskFunction_t pvTaskCode, const char *const pcName, uint32_t usStackDepth,
 		void *pvParameters, UBaseType_t uxPriority, BaseType_t xCoreID)
 	{
-
 		//  BaseType_t retval = xTaskCreatePinnedToCore(pvTaskCode, pcName, usStackDepth, pvParameters, uxPriority, &handle, xCoreID);
 		//
 		//    if (retval == pdPASS) {

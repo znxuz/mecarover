@@ -33,12 +33,11 @@ void LaserScannerTaskFunction(void *arg)
 {
 	LaserScanner *scan = (LaserScanner *)arg;
 	log_message(log_info, "LaserScanner Task");
-	scan->LaserScannerTask(scan);
+	scan->LaserScannerTask();
 }
 
-void LaserScanner::LaserScannerTask(LaserScanner *scan)
+void LaserScanner::LaserScannerTask()
 {
-
 	while (true) {
 
 		char receivedBytes[1800] = { 0 };
@@ -104,7 +103,7 @@ void LaserScanner::LaserScannerTask(LaserScanner *scan)
 	}
 }
 
-void LaserScanner::init_LaserScanner(LaserScanner *scanner)
+void LaserScanner::init_LaserScanner()
 {
 
 	log_message(log_info, "Create LaserScanner");
@@ -114,11 +113,8 @@ void LaserScanner::init_LaserScanner(LaserScanner *scanner)
 	__HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1, 0);
 
 	if (!laserscanner_thread.create(LaserScannerTaskFunction, "LaserScanner",
-			3000, this, (osPriority_t)LaserScanner_TASK_PRIORITY)) {
-
-	} else {
+			3000, this, (osPriority_t)LaserScanner_TASK_PRIORITY))
 		log_message(log_info, "Create LaserScanner failed");
-	}
 }
 
 void LaserScanner::Stop()

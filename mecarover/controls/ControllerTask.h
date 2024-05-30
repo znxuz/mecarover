@@ -161,11 +161,7 @@ public:
 		this->Regler = Regler;
 		this->Ta = Ta;
 
-		if (Ta.FzDreh > 0.0) {
-			UseWheelControllerTask = true;
-		} else {
-			UseWheelControllerTask = false;
-		}
+		UseWheelControllerTask = Ta.FzDreh > 0.0;
 
 		if (!PosAktMut.create()) {
 			log_message(log_error, "%s: Can init mutex", __FUNCTION__);
@@ -205,13 +201,12 @@ public:
 		// log_message(log_debug, "main task old priority: %li", uxTaskPriorityGet(NULL));
 		vTaskPrioritySet(NULL, static_cast<osPriority_t>(MAIN_TASK_PRIORITY));
 
-		if (UseWheelControllerTask) {
-			if (!drehzahlregler_thread.create(call_wheel_control_task,
+		if (UseWheelControllerTask &&
+				!drehzahlregler_thread.create(call_wheel_control_task,
 					"WheelControllerTask", STACK_SIZE, this,
 					WHEEL_CONTROLLER_PRIORITY)) {
-				log_message(log_error, "Can not create drehzahlregler thread");
-				return -1;
-			}
+			log_message(log_error, "Can not create drehzahlregler thread");
+			return -1;
 		}
 
 		vTaskDelay(10); // wait some ticks to give wheel controller some time to start
@@ -267,7 +262,7 @@ public:
 
 		int count = 0;
 		while (true) {
-			printf("POSETask: %ld\n", uwTick);
+			// printf("POSETask: %ld\n", uwTick);
 			LgrSchedSem.wait(); // wait for signal from wheel controller
 								//        int64_t stop_time = __HAL_TIM_GET_COUNTER(&htim13); // get time in microseconds since start
 								//        uint32_t elapsed_time = stop_time - start_time; // time needed for control loop
@@ -424,7 +419,7 @@ public:
 		int estopCounter = 0;
 		while (true) {
 			controllerMode = GetControllerMode();
-			printf("WheelTask: %ld\n", uwTick);
+			// printf("WheelTask: %ld\n", uwTick);
 
 			//        // read E-Stop input
 			if (hal_get_estop()) { // E-Stop is pressed
@@ -470,7 +465,7 @@ public:
 				//				log_message(log_info, "Sollwert: %d\n", sollw);
 
 				break;
-			} // end of switch (controllerMode)
+			}
 
 			/* Istwerte (Zaehlerstand seit dem letzten Lesen) von den Encodern lesen */
 			hal_encoder_read(RadDeltaPhi);
@@ -485,7 +480,6 @@ public:
 				/*
 				 * Drehzahlreglerfunktion aufrufen.
 				 */
-
 				WheelControlInterface(Sollwert, radgeschw, Stellgroesse);
 			} else if (controllerMode != CtrlMode::OFF) {
 				//          hal_amplifiers_disable();

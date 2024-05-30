@@ -43,17 +43,17 @@
 
 real_t test;
 LaserScanner ls;
+bool hal_is_init = false;
 
 using namespace imsl;
 using namespace imsl::vehiclecontrol;
-
-ControllerTask<real_t> *controllerTask;
 
 extern "C" {
 
 extern void MX_LWIP_Init(void);
 extern void MX_USB_DEVICE_Init(void);
-void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
+void SystemClock_Config(void);
+// void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 int main()
 {
@@ -63,54 +63,57 @@ int main()
 	MX_GPIO_Init();
 	MX_DMA_Init();
 	MX_TIM1_Init();
+	MX_TIM2_Init();
 	MX_TIM3_Init();
 	MX_TIM4_Init();
 	MX_TIM5_Init();
 	MX_TIM8_Init();
 	MX_TIM9_Init();
-	MX_USART3_UART_Init();
-	MX_TIM2_Init();
-	MX_USART2_UART_Init();
 	MX_TIM11_Init();
 	MX_TIM13_Init();
+	MX_USART2_UART_Init();
+	MX_USART3_UART_Init();
 
 	retarget_init(&huart3);
 
 	if (!hal_init(&fz))
 		log_message(log_error, "HAL: initialization failed");
+	hal_is_init = true;
 
 	if (fz.type != MRC_VEHICLETYPE_MECANUM)
 		log_message(log_error, "Vehicle type is supposed to be mecanum");
 
-	controllerTask = new MecanumControllerTask<real_t>;
+	ControllerTask<real_t> *controllerTask = new MecanumControllerTask<real_t>;
 	controllerTask->Init(&fz, Regler, Ta);
 
 	// init LaserScanner
-	ls.init_LaserScanner(&ls);
+	ls.init_LaserScanner();
 
 	log_message(log_info, "starting ROS");
+
 	/* Init scheduler */
 	osKernelInitialize();
 
 	if (xTaskCreate(rosInit, "executor", STACK_SIZE, controllerTask,
 			(osPriority_t)MICRO_ROS_TASK_PRIORITY, NULL)
 		!= pdPASS)
-		printf("Error: logger_init(), xTaskCreate()\n");
+		log_message(log_error, "Error: rosInit task failed");
 
+	/*
 	size_t free_heap = xPortGetMinimumEverFreeHeapSize();
 	uint32_t free_stack = RT_Task::thisTaskGetStackHighWaterMark();
 	log_message(log_info, "running into main loop, free heap: %d, free stack: %lu\n",
 		free_heap, free_stack);
-	//    RT_PeriodicTimer loopTimer(500); // wait period 500 ms = 2 Hz loop frequency
-	RT_PeriodicTimer loopTimer(Ta.FzLage * 1000); // wait period is pose controller period
-	controllerTask->SetControllerMode(vehiclecontrol::CtrlMode::OFF);
-	loopTimer.init();
-	int loopCounter = 0;
+	*/
 
 	/* Start scheduler */
 	osKernelStart();
 
-	// code unreachable due to osKernelStart never returning
+	// RT_PeriodicTimer loopTimer(500); // wait period 500 ms = 2 Hz loop frequency
+	RT_PeriodicTimer loopTimer(Ta.FzLage * 1000); // wait period is pose controller period
+	loopTimer.init();
+	int loopCounter = 0;
+	// code unreachable due to the scheduler never returning
 	while (true) {
 		log_message(log_info, "main while Log Message Test\n");
 

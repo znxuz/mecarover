@@ -29,6 +29,7 @@
 using namespace imsl;
 using namespace imsl::vehiclecontrol;
 
+// TODO rewrite as lambda callback
 #define RCCHECK(fn)                                                                      \
 	{                                                                                    \
 		rcl_ret_t temp_rc = fn;                                                          \
@@ -44,7 +45,6 @@ using namespace imsl::vehiclecontrol;
 			printf("Failed status on line %d: %d. Continuing.\n", __LINE__, (int)temp_rc); \
 		}                                                                                  \
 	}
-
 #define DEG2RAD(x) ((x) * M_PI / 180.)
 
 #ifdef __cplusplus
@@ -56,12 +56,6 @@ namespace imsl
 {
 	// Ethernet Communication
 	static eth_transport_params_t default_params = { { 0, 0, 0 }, { "192.168.1.228" }, { "8888" } }; //{"192.168.20.123"}, {"8888"}};
-
-	// Usart Communication
-	//  bool cubemx_transport_open(struct uxrCustomTransport * transport);
-	//  bool cubemx_transport_close(struct uxrCustomTransport * transport);
-	//  size_t cubemx_transport_write(struct uxrCustomTransport* transport, const uint8_t * buf, size_t len, uint8_t * err);
-	//  size_t cubemx_transport_read(struct uxrCustomTransport* transport, uint8_t* buf, size_t len, int timeout, uint8_t* err);
 
 	void *microros_allocate(size_t size, void *state);
 	void microros_deallocate(void *pointer, void *state);
@@ -228,23 +222,17 @@ namespace imsl
 	{
 		const std_msgs__msg__Bool *enable = (const std_msgs__msg__Bool *)enable_topic;
 		if (enable->data) {
-			//      hal_amplifiers_enable();
 			ct->SetControllerMode(vehiclecontrol::CtrlMode::TWIST);
-
 			log_message(log_info, "amplifiers enabled, going into twist mode");
 		} else {
-			//      hal_amplifiers_disable();
 			ct->SetControllerMode(vehiclecontrol::CtrlMode::OFF);
-
 			log_message(log_info, "amplifiers disabled, mode off");
 		}
 	}
 
+	// micro-ROS configuration
 	void rosInit(void *controller)
 	{
-
-		//		 micro-ROS configuration
-
 		// init lwip for Ethernet Communication
 		MX_LWIP_Init();
 
@@ -337,11 +325,11 @@ namespace imsl
 		RCCHECK(rclc_executor_add_timer(&sens_executor, &sens_timer));
 		RCCHECK(rclc_executor_add_subscription(&sens_executor, &sub_startScan, &start_Scan, &start_Scan_cb, ON_NEW_DATA));
 
-		// start spinning
 		while (true) {
 			RCCHECK(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(1))); // before 1000 now 1, because microRos Task waited too long for new Task to work
 			RCCHECK(rclc_executor_spin_some(&sens_executor, RCL_MS_TO_NS(1)));
 		}
+
 		RCCHECK(rcl_publisher_fini(&ctrl_status, &node));
 		RCCHECK(rcl_publisher_fini(&tf_publisher, &node));
 		RCCHECK(rcl_subscription_fini(&sub_cmd_vel, &node));

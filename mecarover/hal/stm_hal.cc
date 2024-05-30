@@ -1,14 +1,14 @@
+#include <tim.h>
+#include <stm32f7xx_hal_tim.h> //Für Kontrollausgaben bsp. __HAL_TIM_SET_Compare -> Pwm testen
+
 #include "stm_hal.h"
 #include "stm_counter.h"
 #include "stm_motor_pwm.h"
-#include "tim.h"
-
-#include <stm32f7xx_hal_tim.h> //Für Kontrollausgaben bsp. __HAL_TIM_SET_Compare -> Pwm testen
 
 constexpr real_t PWMmax = 100.0; // output value for 100% duty cycle
 constexpr real_t VoltMax = 10.0; // maximum positive output voltage
-constexpr int16_t DACmax = 4095; // this value leads to VoltMax Output
-constexpr int16_t DACmin = 0; // this value leads to -VoltMax Output
+/*constexpr int16_t DACmax = 4095; // this value leads to VoltMax Output*/
+/*constexpr int16_t DACmin = 0; // this value leads to -VoltMax Output*/
 
 static real_t Rad2PWM = 0.0;
 static real_t Rad2Volt = 1.0; // 0.0
@@ -34,9 +34,7 @@ constexpr real_t encoderScaling[4] = { 1.0, 1.0, 1.0, 1.0 };
 const int motorDirection[4] = { +1, +1, -1, -1 }; // rotation direction of the motors (DAC or PWM)  +1 or -1
 
 static STMCounter Encoder[NumMotors];
-
 static STMMotorPWM MotorPWM[NumMotors];
-
 static int64_t old_encodervalue[NumMotors];
 
 bool hal_init(Fahrzeug_t *fz)
@@ -46,19 +44,14 @@ bool hal_init(Fahrzeug_t *fz)
 	Ink2Rad = fz->Ink2Rad;
 
 	for (int i = 0; i < NumMotors; i++) {
-
 		// init Encoder
-		if (!Encoder[i].init(Tim_Enc[i], i)) {
+		if (!Encoder[i].init(Tim_Enc[i], i))
 			return false;
-		}
 
 		old_encodervalue[i] = Encoder[i].getCount(i);
 
-		// #ifdef PWM
-		// init Pwm
 		if (!MotorPWM[i].init(i, Tim_Pwm[i], Channel_PwmA[i], Channel_PwmB[i]))
 			return false;
-		// #endif
 	}
 
 	// Testen des Pwm Signals
@@ -88,7 +81,7 @@ int hal_encoder_read(real_t *DeltaPhi)
 											  //		printf("value %i =%d\r\n", i, val);
 
 		// Deltawerte der Raeder in rad fuer Odometrie
-		DeltaPhi[i] = Ink2Rad * real_t(val - old_encodervalue[i])
+		DeltaPhi[i] = Ink2Rad * static_cast<real_t>(val - old_encodervalue[i])
 			* encoderDirection[i] * encoderScaling[i];
 		old_encodervalue[i] = val;
 		// TODO check over- and underflow 16 Bit
@@ -100,18 +93,10 @@ int hal_encoder_read(real_t *DeltaPhi)
 int mr_hal_wheel_vel_set_pwm(real_t *duty)
 {
 	for (int i = 0; i < NumMotors; i++) {
+		duty[i] *= 1; // Rad2PWM TODO what does this line even do?
 
-		duty[i] *= 1; // Rad2PWM
-
-		if (duty[i] > PWMmax) {
-			duty[i] = PWMmax;
-		} else if (duty[i] < -PWMmax) {
-			duty[i] = -PWMmax;
-		}
-
-		MotorPWM[i].setPWM(duty[i], Tim_Pwm[i], Channel_PwmA[i],
-			Channel_PwmB[i]); // set DutyCicle to control the Motors
-
+		MotorPWM[i].setPWM(duty[i], Tim_Pwm[i],
+				Channel_PwmA[i], Channel_PwmB[i]);
 		//		printf(" NR: %d dutycicle = %.2f\r\n", i, duty[i]);
 	}
 	return 0;
@@ -122,8 +107,7 @@ int hal_wheel_vel_set(real_t *w)
 	// convert logical rotation direction to physical direction
 	for (int i = 0; i < NumMotors; i++) {
 		w[i] *= motorDirection[i];
-
-		//		printf(" NR: %d W = %.4f\r\n", i, w[i]);
+		// printf(" NR: %d W = %.4f\r\n", i, w[i]);
 	}
 
 	return mr_hal_wheel_vel_set_pwm(w); // hal_wheel_vel_set_pwm(w);
@@ -131,9 +115,6 @@ int hal_wheel_vel_set(real_t *w)
 
 bool hal_get_estop()
 {
-	// if (gpio_get_level(gpio_num_t(EStopPin))) {
-	//   return false;
-	// }
 	return false;
 }
 
