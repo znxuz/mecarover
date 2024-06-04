@@ -14,5 +14,5 @@ current_pane()
 {
 	echo "docker run -it --rm --net=host -e ROS_DOMAIN_ID=56 ros2-modified:latest"
 }
-
+tmux bind-key C-l send-keys -R \; clear-history
 tmux neww "$(bottom_left_pane); $(topleft_pane); tmux selectp -R; $(current_pane)"

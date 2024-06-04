@@ -18,6 +18,23 @@ public:
 	using WheelVel = Eigen::Matrix<T, 4, 1>;
 	using VehicleVel = Eigen::Matrix<T, 4, 1>;
 
+	int Init(Fahrzeug_t *fz, ReglerParam_t Regler, Abtastzeit_t Ta) override
+	{
+		log_message(log_info, "MecanumControllerTask init");
+		CT::NumbWheels = 4;
+		CT::DegFreed = 4;
+		Controller.Init(fz, Regler, Ta);
+
+		// TODO why commented out?? the mutex is used all over the place
+		// if (!ContrMutex.create()) {
+		//   log_message(log_error, "%s: Can init mutex: %s", __FUNCTION__,
+		//   strerror(errno));
+		//   return -1;
+		// }
+
+		return CT::Init(fz, Regler, Ta); // call base class Init
+	}
+
 protected:
 	int PoseControlInterface(PoseV_t reference, PoseV_t actual, vPose<T> &RKSGeschw, T *vWheel_ref) override
 	{
@@ -132,22 +149,6 @@ protected:
 		   log_message(log_debug,"vWFref x: %f, y: %f, theta: %f", vWFref.vx, vWFref.vy, vWFref.omega);
 		   }
 		   */
-	}
-
-	int Init(Fahrzeug_t *fz, ReglerParam_t Regler, Abtastzeit_t Ta) override
-	{
-		log_message(log_info, "MecanumControllerTask init");
-		CT::NumbWheels = 4;
-		CT::DegFreed = 4;
-		Controller.Init(fz, Regler, Ta);
-
-		// if (!ContrMutex.create()) {
-		//   log_message(log_error, "%s: Can init mutex: %s", __FUNCTION__,
-		//   strerror(errno));
-		//   return -1;
-		// }
-
-		return CT::Init(fz, Regler, Ta); // call base class Init
 	}
 
 	/*

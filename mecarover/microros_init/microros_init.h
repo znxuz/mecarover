@@ -59,13 +59,6 @@ odometry: ros2 topic echo /tf
 
 #include <mecarover/mrlogger/mrlogger.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 namespace imsl {
-	void rosInit(void *ct);
+	void uros_init(void *ct);
 }
-
-#ifdef __cplusplus
-}
-#endif

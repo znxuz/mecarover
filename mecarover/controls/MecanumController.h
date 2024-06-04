@@ -2,7 +2,6 @@
 
 #include <Eigen/Eigen/Core>
 #include <Eigen/Eigen/LU>
-#include <iostream>
 #include <mecarover/mrlogger/mrlogger.h>
 
 #include "VehicleController.h"

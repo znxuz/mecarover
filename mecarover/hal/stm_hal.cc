@@ -37,21 +37,22 @@ static STMCounter Encoder[NumMotors];
 static STMMotorPWM MotorPWM[NumMotors];
 static int64_t old_encodervalue[NumMotors];
 
-bool hal_init(Fahrzeug_t *fz)
+bool hal_is_init = false;
+
+void hal_init(Fahrzeug_t *fz)
 {
 	Rad2PWM = PWMmax * 60.0 * fz->Uebersetzung / (2.0 * PI * fz->OmegaMax); // OmegaMax is in revolutions / min
 	Rad2Volt = VoltMax * 60.0 * fz->Uebersetzung / (2.0 * PI * fz->OmegaMax);
 	Ink2Rad = fz->Ink2Rad;
 
 	for (int i = 0; i < NumMotors; i++) {
-		// init Encoder
 		if (!Encoder[i].init(Tim_Enc[i], i))
-			return false;
+			log_message(log_error, "Failed to initialize encoders");
 
 		old_encodervalue[i] = Encoder[i].getCount(i);
 
 		if (!MotorPWM[i].init(i, Tim_Pwm[i], Channel_PwmA[i], Channel_PwmB[i]))
-			return false;
+			log_message(log_error, "Failed to initialize encoders");
 	}
 
 	// Testen des Pwm Signals
@@ -70,8 +71,7 @@ bool hal_init(Fahrzeug_t *fz)
 	// write 0 velocity to all channels
 	real_t zero[4] = { 0.0, 0.0, 0.0, 0.0 };
 	hal_wheel_vel_set(zero);
-	//
-	return true;
+	hal_is_init = true;
 }
 
 int hal_encoder_read(real_t *DeltaPhi)
@@ -93,7 +93,7 @@ int hal_encoder_read(real_t *DeltaPhi)
 int mr_hal_wheel_vel_set_pwm(real_t *duty)
 {
 	for (int i = 0; i < NumMotors; i++) {
-		duty[i] *= 1; // Rad2PWM TODO what does this line even do?
+		duty[i] *= 1; // Rad2PWM TODO wtf does this line even do?
 
 		MotorPWM[i].setPWM(duty[i], Tim_Pwm[i],
 				Channel_PwmA[i], Channel_PwmB[i]);
@@ -110,11 +110,12 @@ int hal_wheel_vel_set(real_t *w)
 		// printf(" NR: %d W = %.4f\r\n", i, w[i]);
 	}
 
-	return mr_hal_wheel_vel_set_pwm(w); // hal_wheel_vel_set_pwm(w);
+	return mr_hal_wheel_vel_set_pwm(w);
 }
 
 bool hal_get_estop()
 {
+	// probably no estop from the stm32 mcu, dunno
 	return false;
 }
 

@@ -23,7 +23,7 @@ static inline int get_ref_pose(PoseV_t *p)
 namespace imsl::vehiclecontrol
 {
 
-enum class CtrlMode {
+enum class CtrlMode : int {
 	OFF, // disable motors
 	ESTOP, // enable motors, v = 0
 	TWIST, // cmd_vel: velocity command from ros
@@ -255,7 +255,6 @@ public:
 		uint32_t free_stack = lageregler_thread.getStackHighWaterMark();
 		//		uint32_t max_elapsed_time = 10; // time needed for control loop
 		//		int64_t start_time = __HAL_TIM_GET_COUNTER(&htim13); // get time in microseconds since start
-
 		log_message(log_info,
 			"pose controller initialized, running into control loop, free heap: %d, free stack: %ld",
 			free_heap, free_stack);

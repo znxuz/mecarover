@@ -41,123 +41,13 @@
 #include <mecarover/retarget.h>
 #include <mecarover/robot_config.h>
 
-real_t test;
 LaserScanner ls;
-bool hal_is_init = false;
 
 using namespace imsl;
 using namespace imsl::vehiclecontrol;
 
-extern "C" {
-
-extern void MX_LWIP_Init(void);
-extern void MX_USB_DEVICE_Init(void);
-void SystemClock_Config(void);
-// void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
-
-int main()
+extern "C"
 {
-	logger_init(); // init the screen logger before the other components
-	HAL_Init(); // init aus main-Methode
-	SystemClock_Config();
-	MX_GPIO_Init();
-	MX_DMA_Init();
-	MX_TIM1_Init();
-	MX_TIM2_Init();
-	MX_TIM3_Init();
-	MX_TIM4_Init();
-	MX_TIM5_Init();
-	MX_TIM8_Init();
-	MX_TIM9_Init();
-	MX_TIM11_Init();
-	MX_TIM13_Init();
-	MX_USART2_UART_Init();
-	MX_USART3_UART_Init();
-
-	retarget_init(&huart3);
-
-	if (!hal_init(&fz))
-		log_message(log_error, "HAL: initialization failed");
-	hal_is_init = true;
-
-	if (fz.type != MRC_VEHICLETYPE_MECANUM)
-		log_message(log_error, "Vehicle type is supposed to be mecanum");
-
-	ControllerTask<real_t> *controllerTask = new MecanumControllerTask<real_t>;
-	controllerTask->Init(&fz, Regler, Ta);
-
-	// init LaserScanner
-	ls.init_LaserScanner();
-
-	log_message(log_info, "starting ROS");
-
-	/* Init scheduler */
-	osKernelInitialize();
-
-	if (xTaskCreate(rosInit, "executor", STACK_SIZE, controllerTask,
-			(osPriority_t)MICRO_ROS_TASK_PRIORITY, NULL)
-		!= pdPASS)
-		log_message(log_error, "Error: rosInit task failed");
-
-	/*
-	size_t free_heap = xPortGetMinimumEverFreeHeapSize();
-	uint32_t free_stack = RT_Task::thisTaskGetStackHighWaterMark();
-	log_message(log_info, "running into main loop, free heap: %d, free stack: %lu\n",
-		free_heap, free_stack);
-	*/
-
-	/* Start scheduler */
-	osKernelStart();
-
-	// RT_PeriodicTimer loopTimer(500); // wait period 500 ms = 2 Hz loop frequency
-	RT_PeriodicTimer loopTimer(Ta.FzLage * 1000); // wait period is pose controller period
-	loopTimer.init();
-	int loopCounter = 0;
-	// code unreachable due to the scheduler never returning
-	while (true) {
-		log_message(log_info, "main while Log Message Test\n");
-
-		hal_encoder_read(&test); // Test der Encoder
-
-		char msg_buffer[100];
-		// output to terminal
-		if (loopCounter++ > 1.0 / Ta.FzLage) {
-			loopCounter = 0;
-			PoseV_t p;
-			controllerTask->GetPose(&p);
-			CtrlMode mode = controllerTask->GetControllerMode();
-			const char *mode_str = "";
-
-			switch (mode) {
-			case CtrlMode::ESTOP:
-				mode_str = "ESTOP";
-				break;
-			case CtrlMode::OFF:
-				mode_str = "OFF";
-				break;
-			case CtrlMode::TWIST:
-				mode_str = "TWIST";
-				break;
-			case CtrlMode::POSE:
-				mode_str = "POSE";
-				break;
-			}
-
-			sprintf(msg_buffer, "x: %f, y: %f, theta: %f", p.x, p.y, p.theta);
-
-			printf("main while loop \n");
-
-			log_message(log_debug, "%s", msg_buffer); // write pose to logger
-			log_message(log_info, "ROS: Mode: %s", mode_str);
-		}
-		loopTimer.wait();
-	}
-}
-
-/**
- * @brief System Clock Configuration
- * @retval None
- */
 void SystemClock_Config(void)
 {
 	RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
@@ -208,7 +98,6 @@ void SystemClock_Config(void)
 	}
 }
 
-/* USER CODE BEGIN 4 */
 volatile unsigned long ulHighFrequencyTimerTicks;
 
 void configureTimerForRunTimeStats(void)
@@ -221,7 +110,6 @@ unsigned long getRunTimeCounterValue(void)
 {
 	return ulHighFrequencyTimerTicks;
 }
-/* USER CODE END 4 */
 
 /**
  * @brief  This function is executed in case of error occurrence.
@@ -253,5 +141,87 @@ ex: printf("Wrong parameters value: file %s on line %d\n", file, line) */
 	/* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+}
 
+int main()
+{
+	logger_init();
+	HAL_Init();
+	SystemClock_Config();
+	MX_GPIO_Init();
+	MX_DMA_Init();
+	MX_TIM1_Init();
+	MX_TIM2_Init();
+	MX_TIM3_Init();
+	MX_TIM4_Init();
+	MX_TIM5_Init();
+	MX_TIM8_Init();
+	MX_TIM9_Init();
+	MX_TIM11_Init();
+	MX_TIM13_Init();
+	MX_USART2_UART_Init();
+	MX_USART3_UART_Init();
+	retarget_init(&huart3);
+	hal_init(&fz);
+
+	if (fz.type != MRC_VEHICLETYPE_MECANUM)
+		log_message(log_error, "Vehicle type is not mecanum");
+
+	/* Init scheduler */
+	osKernelInitialize();
+
+	auto *controller_task = new MecanumControllerTask<real_t>();
+	controller_task->Init(&fz, Regler, Ta);
+	ls.init_LaserScanner();
+	xTaskCreate(uros_init, "executor", STACK_SIZE, controller_task,
+			(osPriority_t)MICRO_ROS_TASK_PRIORITY, NULL);
+
+	osKernelStart();
+
+	/* code unreachable due to the scheduler never returning
+	log_message(log_error, "ERROR: the program counter should never reach here\n");
+	// RT_PeriodicTimer loopTimer(500); // wait period 500 ms = 2 Hz loop frequency
+	RT_PeriodicTimer loopTimer(Ta.FzLage * 1000); // wait period is pose controller period
+	loopTimer.init();
+	int loopCounter = 0;
+	real_t test;
+	while (true) {
+		log_message(log_info, "main while Log Message Test\n");
+
+		hal_encoder_read(&test); // Test der Encoder
+
+		char msg_buffer[100];
+		// output to terminal
+		if (loopCounter++ > 1.0 / Ta.FzLage) {
+			loopCounter = 0;
+			PoseV_t p;
+			controllerTask->GetPose(&p);
+			CtrlMode mode = controllerTask->GetControllerMode();
+			const char *mode_str = "";
+
+			switch (mode) {
+			case CtrlMode::ESTOP:
+				mode_str = "ESTOP";
+				break;
+			case CtrlMode::OFF:
+				mode_str = "OFF";
+				break;
+			case CtrlMode::TWIST:
+				mode_str = "TWIST";
+				break;
+			case CtrlMode::POSE:
+				mode_str = "POSE";
+				break;
+			}
+
+			sprintf(msg_buffer, "x: %f, y: %f, theta: %f", p.x, p.y, p.theta);
+
+			printf("main while loop \n");
+
+			log_message(log_debug, "%s", msg_buffer); // write pose to logger
+			log_message(log_info, "ROS: Mode: %s", mode_str);
+		}
+		loopTimer.wait();
+	}
+	*/
 }
