@@ -199,7 +199,8 @@ public:
 		}
 
 		// log_message(log_debug, "main task old priority: %li", uxTaskPriorityGet(NULL));
-		vTaskPrioritySet(NULL, static_cast<osPriority_t>(MAIN_TASK_PRIORITY));
+		// probably don't need this line below
+		// vTaskPrioritySet(NULL, static_cast<osPriority_t>(MAIN_TASK_PRIORITY));
 
 		if (UseWheelControllerTask &&
 				!drehzahlregler_thread.create(call_wheel_control_task,

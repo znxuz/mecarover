@@ -196,6 +196,7 @@ public:
 		return RKSGeschw;
 	}
 
+	// TODO functions below are not used, ask what they are for
 	void poseUpdate(dPose<T> delta, unsigned int divisor) override
 	{
 		DeltaPoseCounter = divisor;

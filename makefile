@@ -69,16 +69,16 @@ TGT_FLAGS = \
 			-mthumb \
 			$(TGT_INCL_PATHS)
 
+TGT_CFLAGS = \
+			 $(TGT_FLAGS) \
+			 -std=gnu11
+
 TGT_CPPFLAGS = \
 			   $(TGT_FLAGS) \
 			   -std=gnu++17 \
 			   -fexceptions \
 			   -fno-rtti \
 			   -fno-use-cxa-atexit
-
-TGT_CFLAGS = \
-			 $(TGT_FLAGS) \
-			 -std=gnu11
 
 TGT_LD_FLAGS = \
 			   $(MICROROS_LIB) \
@@ -117,6 +117,7 @@ TGT_STARTUP_FLAGS = \
 					-mfloat-abi=hard \
 					-mthumb
 
+# TODO replace the blacklist with a whitelist
 C_SRCS := $(filter-out \
 		  ./micro_ros_stm32cubemx_utils/extra_sources/microros_transports/dma_transport.c \
 		  ./micro_ros_stm32cubemx_utils/extra_sources/microros_transports/it_transport.c \
@@ -128,12 +129,11 @@ C_SRCS := $(filter-out \
 		  , $(shell find . -type f -name "*.c"))
 CC_SRCS := $(shell find . -type f -name "*.cc")
 S_SRC := $(ST_CORE)/Startup/startup_stm32f767zitx.s
-
 OBJS := $(addprefix $(BUILD_DIR)/, $(C_SRCS:.c=.o)) \
 		$(addprefix $(BUILD_DIR)/, $(CC_SRCS:.cc=.o)) \
 		$(addprefix $(BUILD_DIR)/, $(S_SRC:.s=.o))
 
-.PHONY: all clean
+.PHONY: all clean fclean flash
 
 all: $(BIN) $(SIZE_OUTPUT) $(OBJDUMP_LIST)
 

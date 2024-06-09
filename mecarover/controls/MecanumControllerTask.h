@@ -151,6 +151,7 @@ protected:
 		   */
 	}
 
+	// TODO functions below are not used, ask what they are for
 	/*
 	   int CleanUp() override {
 	   ContrMutex.Delete();

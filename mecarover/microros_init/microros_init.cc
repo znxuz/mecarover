@@ -216,7 +216,7 @@ void uros_init(void *controller)
 		eth_transport_write,
 		eth_transport_read);
 
-	ct = (vehiclecontrol::ControllerTask<real_t> *)controller;
+	ct = reinterpret_cast<vehiclecontrol::ControllerTask<real_t> *>(controller);
 
 	// Create init_options
 	rcl_allocator_t allocater = rcl_get_default_allocator();

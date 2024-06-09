@@ -173,6 +173,7 @@ int main()
 	auto *controller_task = new MecanumControllerTask<real_t>();
 	controller_task->Init(&fz, Regler, Ta);
 	ls.init_LaserScanner();
+
 	xTaskCreate(uros_init, "executor", STACK_SIZE, controller_task,
 			(osPriority_t)MICRO_ROS_TASK_PRIORITY, NULL);
 

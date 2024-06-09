@@ -5,7 +5,7 @@
 #define WHEEL_CONTROLLER_PRIORITY 29
 #define MICRO_ROS_TASK_PRIORITY 28
 #define LaserScanner_TASK_PRIORITY 27 //defined LaserScanner.c, Stack Size = 3000
-#define MAIN_TASK_PRIORITY 26//27
+#define MAIN_TASK_PRIORITY 26//27 dunno why this macro should be used
 #define LOGGER_TASK_PRIORITY 25
 #define ETH_TASK_PRIORITY 24 //defined ethernetif.c
 #define LWIP_TASK_PRIORITY 23 //defined lwip.c, lowest Priority, Normal Prio - 56 is max, Priority defined in cmsis_os2.h
