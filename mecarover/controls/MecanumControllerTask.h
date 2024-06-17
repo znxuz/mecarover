@@ -42,7 +42,7 @@ protected:
 		WheelVel WheelRefVel; // reference velocities of the wheels
 
 		try {
-			// call pose control method, obtain velocity in robot frame
+			// obtain velocity in robot frame
 			RFVel = Controller.poseControl(reference, actual);
 		} catch (mrc_stat e) { // Schleppfehler aufgetreten
 							   //        hal_amplifiers_disable();
@@ -98,28 +98,29 @@ protected:
 		}
 	}
 
-	void OdometryInterface(T *RadDeltaPhi, dPose<T> &VehicleMovement) override
+	/* 1. convert wheel encoder delta counts into robot velocity
+	 * 2. set the `VehicleMovement` variable to the new robot velocity
+	 * 3. set new pose in Controller.odometry
+	 */
+	void OdometryInterface(T *RadDeltaPhi, dPose<T> &robot_vel) override
 	{
-		WheelVel wm;
-		VehicleVel vm;
+		WheelVel matrix_wheel_rotation_delta;
+		for (int i = 0; i < CT::NumbWheels; i++)
+			matrix_wheel_rotation_delta(i) = RadDeltaPhi[i];
 
-		for (int i = 0; i < CT::NumbWheels; i++) {
-			wm(i) = RadDeltaPhi[i];
-		}
-
-		// movements in robot frame
-		vm = Controller.vWheel2vRF(wm);
+		// multiply the wheel rotation delta to the inverse jacobi matrix to
+		// get the robot velocity
+		VehicleVel matrix_robot_vel = Controller.vWheel2vRF(matrix_wheel_rotation_delta);
 
 		// convert vm to global type dPose<T>
-		VehicleMovement.x = vm(0);
-		VehicleMovement.y = vm(1);
-		VehicleMovement.theta = vm(2);
+		robot_vel.x = matrix_robot_vel(0);
+		robot_vel.y = matrix_robot_vel(1);
+		robot_vel.theta = matrix_robot_vel(2);
 
-		Pose<T> oldPose, newPose;
-		CT::getPose(oldPose);
+		Pose<T> oldPose = CT::getPose();
 
 		ContrMutex.lock();
-		newPose = Controller.odometry(oldPose, wm);
+		Pose<T> newPose = Controller.odometry(oldPose, matrix_wheel_rotation_delta);
 		ContrMutex.unlock();
 
 		CT::setPose(newPose);
@@ -128,15 +129,13 @@ protected:
 	void ManualModeInterface(vPose<T> &vRFref, vPose<T> &vRFold, Pose<T> &ManuPose) override
 	{
 		dPose<T> PoseErrorWF, PoseErrorRF;
-		Pose<T> aktPose;
-		vPose<T> vWFref;
 
 		vRFref = Controller.velocityFilter(vRFref, vRFold);
 
-		CT::getPose(aktPose); // obtain actual pose
+		Pose<T> aktPose = CT::getPose();
 
 		/* V von RKS -> WKS transformieren */
-		vWFref = vRF2vWF<T>(vRFref, aktPose.theta);
+		vPose<T> vWFref = vRF2vWF<T>(vRFref, aktPose.theta);
 
 		/* Positionssollwert anpassen, Geschwindigkeit WKS einstellen */
 		ManuPose.x += vWFref.vx * CT::Ta.FzLage;

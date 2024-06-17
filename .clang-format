@@ -2,7 +2,7 @@
 BasedOnStyle: WebKit
 TabWidth: 4
 UseTab: Always
-PointerAlignment: Right
+PointerAlignment: Left
 BreakBeforeBraces: Custom
 BraceWrapping:
     AfterControlStatement: Never
@@ -23,3 +23,6 @@ BraceWrapping:
     SplitEmptyNamespace: false
 IndentExternBlock: false
 IndentCaseLabels: false
+Cpp11BracedListStyle: true
+SpaceBeforeCpp11BracedList: false
+SpacesInContainerLiterals: false

@@ -195,8 +195,7 @@ int main()
 		// output to terminal
 		if (loopCounter++ > 1.0 / Ta.FzLage) {
 			loopCounter = 0;
-			PoseV_t p;
-			controllerTask->GetPose(&p);
+			PoseV_t p = controllerTask->GetPose();
 			CtrlMode mode = controllerTask->GetControllerMode();
 			const char *mode_str = "";
 

@@ -61,27 +61,32 @@ public:
 		//            std::cerr << "iJ: " << iJ << std::endl;
 	}
 
+	/*
+	 * convert the velocity delta of the wheels to the robot pose delta
+	 * calculate new pose by adding the pose delta to the old pose
+	 * vel: VelWheelMatrix
+	 */
 	Pose<T> odometry(Pose<T> oldPose, const VelWheel &vel) override
 	{
-		VelRF vRF = this->vWheel2vRF(vel);
+		VelRF rframe_vel = this->vWheel2vRF(vel);
 
-		dPose<T> WFDelta, RFDelta;
-		RFDelta.x = vRF(0); // movement in x direction
-		RFDelta.y = vRF(1); // movement in y direction
-		RFDelta.theta = vRF(2); // rotation around z axis (theta)
+		dPose<T> rframe_delta;
+		rframe_delta.x = rframe_vel(0); // movement in x direction
+		rframe_delta.y = rframe_vel(1); // movement in y direction
+		rframe_delta.theta = rframe_vel(2); // rotation around z axis (theta)
+		epsilon1 += rframe_vel(3); // coupling error (delta)
 
-		epsilon1 += vRF(3); // coupling error (delta)
+		dPose<T> wframe_delta = dRF2dWF<T>(rframe_delta, oldPose.theta + rframe_delta.theta / static_cast<T>(2));
 
-		WFDelta = dRF2dWF<T>(RFDelta, oldPose.theta + RFDelta.theta / static_cast<T>(2));
+		Pose<T> newPose = oldPose + wframe_delta; // calculate new pose of vehicle in wolrd frame
 
-		Pose<T> newPose = oldPose + WFDelta; // calculate new pose of vehicle in wolrd frame
-
+		// unused because both the counter and the delta
+		// are never updated
 		// update pose filter
 		if (DeltaPoseCounter > 0) {
 			newPose = newPose + DeltaPose;
 			DeltaPoseCounter--;
 		}
-
 		// update heading filter
 		if (DeltaHeadingCounter > 0) {
 			newPose.theta += DeltaHeading;
@@ -125,7 +130,7 @@ public:
 		v(0) = RKSGeschw.vx;
 		v(1) = RKSGeschw.vy;
 		v(2) = RKSGeschw.omega;
-		v(3) = Regler.Koppel * epsilon1;
+		v(3) = Regler.Koppel * epsilon1; // ASK Koppel is the proportional scaler from PID?
 		return v;
 	}
 

@@ -139,8 +139,7 @@ void start_Scan_cb(const void *start_Scan)
 void timer_cb(rcl_timer_t *timer, int64_t last_call_time)
 {
 	// tf odom <-> base_link
-	PoseV_t p;
-	ct->GetPose(&p);
+	PoseV_t p = ct->GetPose();
 
 	RCSOFTCHECK(rmw_uros_sync_session(1000));
 	int64_t time_ms = rmw_uros_epoch_millis();
