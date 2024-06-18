@@ -61,15 +61,11 @@ public:
 		//            std::cerr << "iJ: " << iJ << std::endl;
 	}
 
-	/*
-	 * convert the velocity delta of the wheels to the robot pose delta
-	 * calculate new pose by adding the pose delta to the old pose
-	 * vel: VelWheelMatrix
-	 */
-	Pose<T> odometry(Pose<T> oldPose, const VelWheel &vel) override
+	Pose<T> odometry(const Pose<T>& oldPose, const VelWheel &rad_delta_phi_matrix) override
 	{
-		VelRF rframe_vel = this->vWheel2vRF(vel);
+		VelRF rframe_vel = this->vWheel2vRF(rad_delta_phi_matrix);
 
+		// ASK: why are delta velocity assigned to delta pose
 		dPose<T> rframe_delta;
 		rframe_delta.x = rframe_vel(0); // movement in x direction
 		rframe_delta.y = rframe_vel(1); // movement in y direction
@@ -78,7 +74,7 @@ public:
 
 		dPose<T> wframe_delta = dRF2dWF<T>(rframe_delta, oldPose.theta + rframe_delta.theta / static_cast<T>(2));
 
-		Pose<T> newPose = oldPose + wframe_delta; // calculate new pose of vehicle in wolrd frame
+		auto newPose = oldPose + wframe_delta;
 
 		// unused because both the counter and the delta
 		// are never updated
@@ -96,7 +92,7 @@ public:
 		return newPose;
 	}
 
-	VelRF poseControl(PoseV<T> soll, PoseV<T> ist) override
+	VelRF poseControl(const Pose<T>& soll, const Pose<T>& ist) override
 	{
 		dPose<T> Schleppabst;
 		vPose<T> WKSStellV;
@@ -169,39 +165,34 @@ public:
 		return StellV;
 	}
 
-	vPose<T> velocityFilter(vPose<T> RKSGeschwSoll, vPose<T> RKSGeschwAlt) override
+	vPose<T> velocityFilter(const vPose<T>& vel_rframe_sp, const vPose<T>& vel_rframe_old) override
 	{
-		T v_diff;
-		vPose<T> RKSGeschw;
-		RKSGeschw.vx = RKSGeschwSoll.vx;
-		RKSGeschw.vy = RKSGeschwSoll.vy;
-		RKSGeschw.omega = RKSGeschwSoll.omega;
+		vPose<T> vel_rframe = vel_rframe_sp;
 
-		v_diff = JoystickBeschl * Ta.FzLage;
+		T v_diff = JoystickBeschl * Ta.FzLage;
 
-		if (RKSGeschw.vx - RKSGeschwAlt.vx > v_diff) {
-			RKSGeschw.vx = RKSGeschwAlt.vx + v_diff;
-		} else if (RKSGeschwAlt.vx - RKSGeschw.vx > v_diff) {
-			RKSGeschw.vx = RKSGeschwAlt.vx - v_diff;
-		}
+		if (vel_rframe.vx - vel_rframe_old.vx > v_diff)
+			vel_rframe.vx = vel_rframe_old.vx + v_diff;
+		else if (vel_rframe_old.vx - vel_rframe.vx > v_diff)
+			vel_rframe.vx = vel_rframe_old.vx - v_diff;
 
-		if (RKSGeschw.vy - RKSGeschwAlt.vy > v_diff) {
-			RKSGeschw.vy = RKSGeschwAlt.vy + v_diff;
-		} else if (RKSGeschwAlt.vy - RKSGeschw.vy > v_diff) {
-			RKSGeschw.vy = RKSGeschwAlt.vy - v_diff;
-		}
+
+		if (vel_rframe.vy - vel_rframe_old.vy > v_diff)
+			vel_rframe.vy = vel_rframe_old.vy + v_diff;
+		else if (vel_rframe_old.vy - vel_rframe.vy > v_diff)
+			vel_rframe.vy = vel_rframe_old.vy - v_diff;
 
 		v_diff /= LplusBhalbe;
 
-		if (RKSGeschw.omega - RKSGeschwAlt.omega > v_diff) {
-			RKSGeschw.omega = RKSGeschwAlt.omega + v_diff;
-		} else if (RKSGeschwAlt.omega - RKSGeschw.omega > v_diff) {
-			RKSGeschw.omega = RKSGeschwAlt.omega - v_diff;
-		}
-		return RKSGeschw;
+		if (vel_rframe.omega - vel_rframe_old.omega > v_diff)
+			vel_rframe.omega = vel_rframe_old.omega + v_diff;
+		else if (vel_rframe_old.omega - vel_rframe.omega > v_diff)
+			vel_rframe.omega = vel_rframe_old.omega - v_diff;
+
+		return vel_rframe;
 	}
 
-	// TODO functions below are not used, ask what they are for
+	// ASK functions below are not used, ask what they are for
 	void poseUpdate(dPose<T> delta, unsigned int divisor) override
 	{
 		DeltaPoseCounter = divisor;

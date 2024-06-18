@@ -57,10 +57,10 @@ public:
 		return j * v;
 	}
 
-	virtual imsl::Pose<T> odometry(Pose<T>, const VelWheel &) = 0;
-	virtual VelRF poseControl(PoseV<T> reference, PoseV<T> actual) = 0;
+	virtual imsl::Pose<T> odometry(const Pose<T>&, const VelWheel &) = 0;
+	virtual VelRF poseControl(const Pose<T>& reference, const Pose<T>& actual) = 0;
 	virtual VelWheel wheelControl(const VelWheel &setPoint, const VelWheel &contrInput) = 0;
-	virtual imsl::vPose<T> velocityFilter(vPose<T> vRFref, vPose<T> vRFold) = 0;
+	virtual imsl::vPose<T> velocityFilter(const vPose<T>& vel_rframe_sp, const vPose<T>& vel_rframe_old) = 0;
 	virtual void poseUpdate(dPose<T> delta, unsigned int divisor) = 0;
 	virtual void headingUpdate(T delta, unsigned int divisor) = 0;
 };

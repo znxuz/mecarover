@@ -26,3 +26,4 @@ IndentCaseLabels: false
 Cpp11BracedListStyle: true
 SpaceBeforeCpp11BracedList: false
 SpacesInContainerLiterals: false
+SpaceAfterTemplateKeyword: false

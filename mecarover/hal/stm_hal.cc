@@ -25,8 +25,6 @@ const uint32_t Channel_PwmA[4] = { TIM_CHANNEL_4, TIM_CHANNEL_1, TIM_CHANNEL_1,
 const uint32_t Channel_PwmB[4] = { TIM_CHANNEL_3, TIM_CHANNEL_2, TIM_CHANNEL_2,
 	TIM_CHANNEL_2 };
 
-typedef float real_t;
-
 // conversion of physical rotation direction to logical rotation direction
 int encoderDirection[4] = { +1, +1, +1, +1 }; // rotation direction of the wheel encoders: +1 or -1
 constexpr real_t encoderScaling[4] = { 1.0, 1.0, 1.0, 1.0 };
@@ -41,8 +39,8 @@ bool hal_is_init = false;
 
 void hal_init(Fahrzeug_t *fz)
 {
-	Rad2PWM = PWMmax * 60.0 * fz->Uebersetzung / (2.0 * PI * fz->OmegaMax); // OmegaMax is in revolutions / min
-	Rad2Volt = VoltMax * 60.0 * fz->Uebersetzung / (2.0 * PI * fz->OmegaMax);
+	Rad2PWM = PWMmax * 60.0 * fz->Uebersetzung / (2.0 * M_PI * fz->OmegaMax); // OmegaMax is in revolutions / min
+	Rad2Volt = VoltMax * 60.0 * fz->Uebersetzung / (2.0 * M_PI * fz->OmegaMax);
 	Ink2Rad = fz->Ink2Rad;
 
 	for (int i = 0; i < NumMotors; i++) {
@@ -92,7 +90,8 @@ int hal_encoder_read(real_t *DeltaPhi)
 int mr_hal_wheel_vel_set_pwm(real_t *duty)
 {
 	for (int i = 0; i < NumMotors; i++) {
-		duty[i] *= 1; // Rad2PWM TODO wtf does this line even do?
+		// ASK wtf does this line even do?
+		duty[i] *= 1; // Rad2PWM
 
 		MotorPWM[i].setPWM(duty[i], Tim_Pwm[i],
 				Channel_PwmA[i], Channel_PwmB[i]);
@@ -101,12 +100,13 @@ int mr_hal_wheel_vel_set_pwm(real_t *duty)
 	return 0;
 }
 
+// TODO fusion the function above to the one below
 int hal_wheel_vel_set(real_t *w)
 {
 	// convert logical rotation direction to physical direction
 	for (int i = 0; i < NumMotors; i++) {
 		w[i] *= motorDirection[i];
-		// printf(" NR: %d W = %.4f\n", i, w[i]);
+		// printf(" Nr.: %d W = %.4f\n", i, w[i]);
 	}
 
 	return mr_hal_wheel_vel_set_pwm(w);

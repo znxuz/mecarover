@@ -65,11 +65,11 @@ alpha = 0.5;
 
 // time constants
 static imsl::vehiclecontrol::Abtastzeit_t Ta = {
-	0.001, // 1 ms timer tick
+	.Timer = 0.001, // 1 ms timer tick
 		   //                    0.003, // 3 ms sampling time of wheel control loop
-	0.005, // 5 ms sampling time of wheel control loop
-	0.015, // 15 ms sampling time of pose control loop
-	3
+	.FzDreh = 0.005, // 5 ms sampling time of wheel control loop
+	.FzLage = 0.015, // 15 ms sampling time of pose control loop
+	.FzLageZuDreh = 3
 }; // 15 ms / 5 ms ratio pose / wheel
 
 /* FILU Roboter

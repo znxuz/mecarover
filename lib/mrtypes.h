@@ -14,10 +14,6 @@ extern "C" {
 #endif
 
 /*---------------------------------------------------------------------*/
-#ifndef PI
-#define PI    M_PI
-#endif
-
 #ifndef TRUE
 #define TRUE  1
 #endif
@@ -40,24 +36,24 @@ extern "C" {
 #endif
 
 #ifndef RAD
-#define RAD(grad)    ( PI*(grad)/180.0 )
+#define RAD(grad)    ( M_PI*(grad)/180.0 )
 #endif
 
 #ifndef GRAD
-#define GRAD(rad)    ( 180.0*(rad)/PI )
+#define GRAD(rad)    ( 180.0*(rad)/M_PI )
 #endif
 
 // Beschraenkung eines Winkels auf 0 ... 2PI
 #ifndef MAX2PI
-#define MAX2PI(x) ((x) > (2*PI)?((x) - (2*PI)):((x) < 0?((x) + (2*PI)):x))
+#define MAX2PI(x) ((x) > (2*M_PI)?((x) - (2*M_PI)):((x) < 0?((x) + (2*M_PI)):x))
 #endif
 
 // Beschraenkung eines Winkels auf -PI ... +PI
 #ifndef MAXPI
-#define MAXPI(x) ((x) > (PI)?((x) - (2*PI)):((x) < -PI?((x) + (2*PI)):x))
+#define MAXPI(x) ((x) > (M_PI)?((x) - (2*M_PI)) : ((x) < -M_PI ? ((x) + (2*M_PI)) : x))
 #endif
 
-typedef float real_t; // FPU supports only single precision (float)
+typedef double real_t;
 typedef double FourReal_t[4];
 
 typedef struct {

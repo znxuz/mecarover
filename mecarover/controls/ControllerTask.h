@@ -9,12 +9,12 @@
 
 extern "C"
 {
-void call_pose_control_task(void *arg);
-void call_wheel_control_task(void *arg);
+void call_pose_control_task(void* arg);
+void call_wheel_control_task(void* arg);
 
-static inline int get_ref_pose(PoseV_t *p)
+static inline int get_ref_pose(Pose_t p)
 {
-	// TODO has to be implemented
+	// ASK has to be implemented
 	// get reference pose from interpolator
 	return 0;
 }
@@ -30,11 +30,11 @@ enum class CtrlMode : int {
 	POSE // cmd_pose: pose command from ros
 };
 
-template <typename T>
+template<typename T>
 class ControllerTask {
 private:
 	/* Uebergabe der Drehzahlsollwerte -> Drehzahlregler in rad/s */
-	T RadSollWert[4] = { 0.0, 0.0, 0.0, 0.0 };
+	T RadSollWert[4] = {0.0, 0.0, 0.0, 0.0};
 	RT_Mutex SollwMutex; // Mutex fuer Drehzahlsollwert Lageregler -> Drehzahlregler
 
 	// Threads, Semaphores and Mutexes
@@ -43,7 +43,7 @@ private:
 
 	RT_Semaphore LgrSchedSem; // Semphore zum Wecken des Lagereglers
 
-	PoseV<T> PosAkt; /* Aktuelle Position des Roboters, alle Sensoren */
+	Pose<T> PosAkt; /* Aktuelle Position des Roboters, alle Sensoren */
 	Pose<T> OPosAkt; /* Aktuelle Position nur Odometrie */
 	Pose<T> GOPosAkt; /* Aktuelle Position Odometrie mit Gyroskop Fusion */
 	vPose<T> rframe_vel_actual; /* Aktuelle Geschwindigkeit in Roboterkoordinaten */
@@ -68,44 +68,21 @@ private:
 protected:
 	int NumbWheels = 0;
 	int DegFreed = 0;
-
 	ReglerParam_t Regler;
 	Abtastzeit_t Ta;
 
-	Pose<T> getPose()
-	{
-		auto pose = Pose<T>{};
-
-		PosAktMut.lock();
-		pose.x = PosAkt.x;
-		pose.y = PosAkt.y;
-		pose.theta = PosAkt.theta;
-		PosAktMut.unlock();
-
-		return pose;
-	}
-
-	void setPose(const Pose<T> &pose)
-	{
-		PosAktMut.lock();
-		PosAkt.x = pose.x;
-		PosAkt.y = pose.y;
-		PosAkt.theta = pose.theta;
-		PosAktMut.unlock();
-	}
-
 	// Interfaces for sub classes
-	virtual int PoseControlInterface(PoseV_t reference, PoseV_t actual, vPose<T> &RKSGeschw, T *CorrectingVel) = 0;
-	virtual void WheelControlInterface(T *ReferenceVel, T *ActualVel, T *CorrectingVel) = 0;
-	virtual void OdometryInterface(T *RadDeltaPhi, dPose<T> &robot_vel) = 0;
-	virtual void ManualModeInterface(vPose<T> &vRFref, vPose<T> &vRFold, Pose<T> &ManuPose) = 0;
+	virtual int PoseControlInterface(const Pose<T>& reference, const Pose<T>& actual, vPose<T>& RKSGeschw, T* vel_wheel_sp) = 0;
+	virtual void WheelControlInterface(const T* ReferenceVel, const T* ActualVel, T* CorrectingVel) = 0;
+	virtual void OdometryInterface(const T* RadDeltaPhi, dPose<T>& robot_vel) = 0;
+	virtual void ManualModeInterface(vPose<T>& vel_rframe_sp, vPose<T>& vel_rframe_old, Pose<T>& pose_manual) = 0;
 	virtual void PoseUpdate(dPose<T> Delta, unsigned int Divisor) = 0;
 	virtual void HeadingUpdate(T Delta, unsigned int Divisor) = 0;
 
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW // eigenlib 16 Byte alignement
 
-	// manual mode
+		// manual mode
 	vPose<T> GetManuRef()
 	{
 		vPose<T> vel;
@@ -158,7 +135,7 @@ public:
 		return 0;
 	}
 
-	virtual int Init(Fahrzeug_t *fz, ReglerParam_t Regler, Abtastzeit_t Ta)
+	virtual int Init(Fahrzeug_t* fz, ReglerParam_t Regler, Abtastzeit_t Ta)
 	{
 		log_message(log_info, "ControllerTask Init");
 		ControllerMode = CtrlMode::OFF;
@@ -206,10 +183,7 @@ public:
 		// probably don't need this line below
 		// vTaskPrioritySet(NULL, static_cast<osPriority_t>(MAIN_TASK_PRIORITY));
 
-		if (UseWheelControllerTask &&
-				!drehzahlregler_thread.create(call_wheel_control_task,
-					"WheelControllerTask", STACK_SIZE, this,
-					WHEEL_CONTROLLER_PRIORITY)) {
+		if (UseWheelControllerTask && !drehzahlregler_thread.create(call_wheel_control_task, "WheelControllerTask", STACK_SIZE, this, WHEEL_CONTROLLER_PRIORITY)) {
 			log_message(log_error, "Can not create drehzahlregler thread");
 			return -1;
 		}
@@ -242,15 +216,14 @@ public:
 
 	void PoseControlTask()
 	{
-		Pose<T> ManuPose; // pose for manual mode
-		vPose<T> wksSollV, RKSGeschwAlt;
+		Pose<T> pose_manual; // pose for manual mode
+		vPose<T> vel_wframe_sp, vel_rframe_old;
 		vPose<T> RKSGeschw; // Geschwindigkeiten in Roboterkoordinaten
-		vPose<T> vRFref; // reference velocity of the pose in robot frame
-		PoseV_t wksSoll = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 }; // wegen der Warnungen
-		PoseV_t aktPose = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-		//      PoseV<T> wksSollAlt;
-		vPose<T> rksSollV; // reference pose and velocity in robot frame
-		T vWheelref[4] = { 0.0, 0.0, 0.0, 0.0 }; // reference velocities for wheel control
+		vPose<T> vel_rframe_sp; // reference velocity of the pose in robot frame
+		Pose<T> pose_sp;
+		Pose<T> actual_pose;
+		//      Pose<T> wksSollAlt;
+		T vWheelref[4] = {0.0, 0.0, 0.0, 0.0}; // reference velocities for wheel control
 
 		// unsigned int wksSollinit = 0;
 		CtrlMode oldmode = CtrlMode::OFF;
@@ -275,12 +248,12 @@ public:
 								////          log_message(log_debug, "pose controller loop max calculation time: %i µs", max_elapsed_time);
 								//          log_message(log_debug, "pose controller jitter: %li µs", max_elapsed_time - 15000);
 								//        }
-			// FIXME why wait two times?
+			// ASK why wait two times?
 			LgrSchedSem.wait(); // wait for signal from wheel controller
 								//        start_time = __HAL_TIM_GET_COUNTER(&htim13); // get time in microseconds since start
 
 			// get actual pose
-			aktPose = GetPose();
+			actual_pose = getPose();
 			oldmode = controllerMode;
 			controllerMode = GetControllerMode(); // get actual controller mode from regelung.c
 
@@ -293,63 +266,59 @@ public:
 				}
 				break;
 			case CtrlMode::OFF:
-				wksSoll.x = aktPose.x;
-				wksSoll.y = aktPose.y;
-				wksSoll.theta = aktPose.theta;
-				wksSoll.vx = 0.0;
-				wksSoll.vy = 0.0;
-				wksSoll.omega = 0.0;
-				ManuPose = aktPose;
+				pose_sp.x = actual_pose.x;
+				pose_sp.y = actual_pose.y;
+				pose_sp.theta = actual_pose.theta;
+				pose_sp.vx = 0.0;
+				pose_sp.vy = 0.0;
+				pose_sp.omega = 0.0;
+				pose_manual = actual_pose;
 				/*
 				   ManuPose.x = aktPose.x;
 				   ManuPose.y = aktPose.y;
 				   ManuPose.theta = aktPose.theta;
 				   */
-				RKSGeschwAlt.vx = 0.0;
-				RKSGeschwAlt.vy = 0.0;
-				RKSGeschwAlt.omega = 0.0;
+				vel_rframe_old.vx = 0.0;
+				vel_rframe_old.vy = 0.0;
+				vel_rframe_old.omega = 0.0;
 				break;
 			case CtrlMode::TWIST:
 				/* First time after mode switch */
-				if (oldmode != CtrlMode::TWIST) {
-					ManuPose = aktPose;
-				}
+				if (oldmode != CtrlMode::TWIST)
+					pose_manual = actual_pose;
 
 				/* Manuelle Vorgabe der Geschwindiglkeiten im RKS */
 				/* Werte von manueller RKS-Vorgabe lesen */
-				vRFref = GetManuRef();
+				vel_rframe_sp = GetManuRef();
 
 				// Sollwert auf maximale Beschleunigung beschraenken
-				ManualModeInterface(vRFref, RKSGeschwAlt, ManuPose);
-
+				ManualModeInterface(vel_rframe_sp, vel_rframe_old, pose_manual);
 				if (count++ > 100) {
 					count = 0;
 					log_message(log_debug, "ManuPose x: %f, y: %f, theta: %f",
-						ManuPose.x, ManuPose.y, T(ManuPose.theta));
+						pose_manual.x, pose_manual.y, T(pose_manual.theta));
 				}
-
-				RKSGeschwAlt = vRFref; // for manual mode velocity filter
-				rksSollV = vRFref;
+				vel_rframe_old = vel_rframe_sp;
 
 				/* V von RKS -> WKS transformieren */
-				wksSollV = vRF2vWF<T>(vRFref, aktPose.theta);
+				vel_wframe_sp = vRF2vWF<T>(vel_rframe_sp, actual_pose.theta);
 
-				wksSoll.x = ManuPose.x;
-				wksSoll.y = ManuPose.y;
-				wksSoll.theta = ManuPose.theta;
-				wksSoll.vx = wksSollV.vx;
-				wksSoll.vy = wksSollV.vy;
-				wksSoll.omega = wksSollV.omega;
+				pose_sp.x = pose_manual.x;
+				pose_sp.y = pose_manual.y;
+				pose_sp.theta = pose_manual.theta;
+				pose_sp.vx = vel_wframe_sp.vx;
+				pose_sp.vy = vel_wframe_sp.vy;
+				pose_sp.omega = vel_wframe_sp.omega;
 				break;
 			case CtrlMode::POSE:
-				get_ref_pose(&wksSoll); // TODO function to be implemented
+				get_ref_pose(pose_sp); // TODO function to be implemented
 										// read reference pose from interpolator
 				break;
 			}
 
 			if ((controllerMode != CtrlMode::OFF)
 				&& (controllerMode != CtrlMode::ESTOP)) {
-				PoseControlInterface(wksSoll, aktPose, RKSGeschw, vWheelref);
+				PoseControlInterface(pose_sp, actual_pose, RKSGeschw, vWheelref);
 
 				// check if wheel controller task is active
 				if (UseWheelControllerTask) {
@@ -388,7 +357,7 @@ public:
 		T SollwAlt[4]; /* vorhergehender Sollwert in rad/s */
 		T DZRNullwert[4]; /* Nullwert fuer Drehzahlregler */
 		T Stellgroesse[4]; /* aufintegrierter Wert aus Regelabweichung  */
-		T *Sollwert; // Zeiger auf den aktuellen Sollwert-Vektor Umschalten 0, werte
+		T* Sollwert; // Zeiger auf den aktuellen Sollwert-Vektor Umschalten 0, werte
 		T radgeschw[4]; /* Current wheel speeds */
 
 		/* Make compiler happy */
@@ -410,7 +379,7 @@ public:
 		hal_encoder_read(RadDeltaPhi); // Initialisierung der Werte
 
 		// Initialisierung des Teilers fuer den Lagetakt
-		// TODO can it also be 0?
+		// ASK can it also be 0?
 		int counter = Ta.FzLageZuDreh;
 
 		size_t free_heap = xPortGetMinimumEverFreeHeapSize(); // ESP.getMinFreeHeap(); //lowest level of free heap since boot
@@ -426,12 +395,10 @@ public:
 			controllerMode = GetControllerMode();
 			// printf("WheelTask: %ld\n", uwTick);
 
-			//        // read E-Stop input
-			if (hal_get_estop()) { // E-Stop is pressed
-				if (controllerMode != CtrlMode::OFF) {
-					controllerMode = CtrlMode::ESTOP;
-					SetControllerMode(controllerMode); // switch off motors, no active stopping
-				}
+			// read E-Stop input - useless for the mecanum robot for now
+			if (hal_get_estop() && controllerMode != CtrlMode::OFF) {
+				controllerMode = CtrlMode::ESTOP;
+				SetControllerMode(controllerMode);
 			}
 
 			switch (controllerMode) {
@@ -507,10 +474,10 @@ public:
 			 * Inkrement und Mudo-Operation müssen getrennt bleiben, sonst ist das
 			 * Verhalten laut C-Standard undefiniert!
 			 */
-			counter = ++counter % Ta.FzLageZuDreh;
-			if (counter == 0) {
+			++counter;
+			counter = counter % Ta.FzLageZuDreh;
+			if (!counter)
 				LgrSchedSem.signal();
-			}
 
 			// wait for the next tick
 			WheelControllerTimer.wait();
@@ -532,24 +499,28 @@ public:
 		}
 	}
 
-	PoseV_t GetPose()
+	Pose<T> getPose()
 	{
-		auto pose = PoseV_t{};
+		auto pose = Pose<T>{};
 
 		PosAktMut.lock();
-		pose.x = PosAkt.x;
-		pose.y = PosAkt.y;
-		pose.theta = PosAkt.theta;
-		pose.vx = PosAkt.vx;
-		pose.vy = PosAkt.vy;
-		pose.omega = PosAkt.omega;
+		pose = PosAkt;
 		PosAktMut.unlock();
 
 		return pose;
 	}
 
+	void setPose(const Pose<T>& pose)
+	{
+		PosAktMut.lock();
+		PosAkt.x = pose.x;
+		PosAkt.y = pose.y;
+		PosAkt.theta = pose.theta;
+		PosAktMut.unlock();
+	}
+
 	// TODO delete: unused
-	int SetPose(Pose_t *pose, int delta)
+	int SetPose(Pose_t* pose, int delta)
 	{
 		PosAktMut.lock();
 
@@ -567,7 +538,7 @@ public:
 		return 0;
 	}
 
-	int GetOPose(Pose_t *pose)
+	int GetOPose(Pose_t* pose)
 	{
 		PosAktMut.lock();
 
@@ -579,7 +550,7 @@ public:
 		return 0;
 	}
 
-	int GetGOPose(Pose_t *pose)
+	int GetGOPose(Pose_t* pose)
 	{
 		PosAktMut.lock();
 
@@ -591,7 +562,7 @@ public:
 		return 0;
 	}
 
-	int SetOPose(Pose_t *pose)
+	int SetOPose(Pose_t* pose)
 	{
 		PosAktMut.lock();
 
@@ -604,7 +575,7 @@ public:
 		return 0;
 	}
 
-	int SetGOPose(Pose_t *pose)
+	int SetGOPose(Pose_t* pose)
 	{
 		PosAktMut.lock();
 
@@ -617,7 +588,7 @@ public:
 		return 0;
 	}
 
-	int GetRFVel(Pose_t *vel)
+	int GetRFVel(Pose_t* vel)
 	{
 		PosAktMut.lock();
 
@@ -635,7 +606,7 @@ public:
 	}
 
 	// TODO pruefen !!!
-	int getOdometryHeading(T *odoHeading)
+	int getOdometryHeading(T* odoHeading)
 	{
 		T oh;
 
@@ -670,7 +641,7 @@ public:
 		 * Verhalten laut C-Standard undefiniert!
 		 */
 		static int counter = 0;
-		counter++;
+		++counter;
 		counter = counter % Ta.FzLageZuDreh;
 		if (counter == 0) {
 			LgrSchedSem.signal();
@@ -678,7 +649,7 @@ public:
 	}
 
 private:
-	int mr_radsollwert_set(const T *sollw)
+	int mr_radsollwert_set(const T* sollw)
 	{
 		SollwMutex.lock();
 		for (int i = 0; i < NumbWheels; i++) {
@@ -688,7 +659,7 @@ private:
 		return 0;
 	}
 
-	int mr_radsollwert_get(T *sollw)
+	int mr_radsollwert_get(T* sollw)
 	{
 		SollwMutex.lock();
 		for (int i = 0; i < NumbWheels; i++) {
@@ -698,7 +669,7 @@ private:
 		return 0;
 	}
 
-	void Odometry(T *RadDeltaPhi, T timediff)
+	void Odometry(const T* RadDeltaPhi, T timediff)
 	{
 		dPose<T> wfm, robot_vel;
 
