@@ -4,6 +4,8 @@ TabWidth: 4
 UseTab: Always
 PointerAlignment: Left
 BreakBeforeBraces: Custom
+AlignAfterOpenBracket: Align
+AlignArrayOfStructures: Left
 BraceWrapping:
     AfterControlStatement: Never
     AfterCaseLabel: false

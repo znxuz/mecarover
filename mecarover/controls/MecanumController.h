@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <Eigen/Eigen/Core>
 #include <Eigen/Eigen/LU>
 #include <mecarover/mrlogger/mrlogger.h>
@@ -92,40 +93,40 @@ public:
 		return newPose;
 	}
 
-	VelRF poseControl(const Pose<T>& soll, const Pose<T>& ist) override
+	VelRF poseControl(const Pose<T>& pose_sp, const Pose<T>& actual_pose) override
 	{
-		dPose<T> Schleppabst;
-		vPose<T> WKSStellV;
+		dPose<T> pose_delta{
+			pose_sp.x - actual_pose.x,
+			pose_sp.y - actual_pose.y,
+			Heading<T>(pose_sp.theta - actual_pose.theta)};
 
-		Schleppabst.x = soll.x - ist.x;
-		Schleppabst.y = soll.y - ist.y;
-		Schleppabst.theta = soll.theta - ist.theta;
-
-		/* Wert des Schleppwinkel von Phi in den Bereich -PI .. +PI bringen */
-		Schleppabst.theta = Heading<T>(Schleppabst.theta);
-
+		using std::abs;
 		/* Uberpruefen des Schleppfehlers */
-		if ((ABS(Schleppabst.x) > Regler.LageSchleppMax.x) || (ABS(Schleppabst.y) > Regler.LageSchleppMax.y) || (ABS(Schleppabst.theta) > Regler.LageSchleppMax.theta)) {
+		if (abs(pose_delta.x) > Regler.LageSchleppMax.x ||
+				abs(pose_delta.y) > Regler.LageSchleppMax.y ||
+				abs(pose_delta.theta) > Regler.LageSchleppMax.theta) {
 			log_message(log_error, "%s, %s, deviation position controller too large: act.x: %f, ref.x: %f, act.y: %f, ref.y: %f, act.theta: %f, ref.theta: %f",
-				__FILE__, __FUNCTION__, ist.x, soll.x, ist.y, soll.y, T(ist.theta), T(soll.theta));
+				__FILE__, __FUNCTION__, actual_pose.x, pose_sp.x, actual_pose.y, pose_sp.y, T(actual_pose.theta), T(pose_sp.theta));
 			log_message(log_error, "Max. Schleppabstand: %f %f %f Schleppabstand %f %f %f", Regler.LageSchleppMax.x,
-				Regler.LageSchleppMax.y, Regler.LageSchleppMax.theta, Schleppabst.x, Schleppabst.y, Schleppabst.theta);
+				Regler.LageSchleppMax.y, Regler.LageSchleppMax.theta, pose_delta.x, pose_delta.y, pose_delta.theta);
 
 			throw MRC_LAGEERR;
 		}
 
-		/* Stellgroesse in Weltkoordinaten berechnen */
-		WKSStellV.vx = soll.vx + Regler.LageKv.x * Schleppabst.x;
-		WKSStellV.vy = soll.vy + Regler.LageKv.y * Schleppabst.y;
-		WKSStellV.omega = soll.omega + Regler.LageKv.theta * Schleppabst.theta;
+		// ASK: why multiply the pose delta with LageKv to seemingly get the
+		// velocity in world frame? Shouldn't the delta values be divided by the
+		// sampling frequency first, if the LageKv is supposed to be the
+		// proportional gain from the PID controls?
+		vPose<T> vel_wframe_sp;
+		vel_wframe_sp.vx = pose_sp.vx + pose_delta.x * Regler.LageKv.x;
+		vel_wframe_sp.vy = pose_sp.vy + pose_delta.y * Regler.LageKv.y;
+		vel_wframe_sp.omega = pose_sp.omega + pose_delta.theta * Regler.LageKv.theta;
 
-		/* Transformation in Roboterkoordinaten */
-		vPose<T> RKSGeschw;
-		RKSGeschw = vWF2vRF<T>(WKSStellV, ist.theta);
+		vPose<T> vel_rframe_sp = vWF2vRF<T>(vel_wframe_sp, actual_pose.theta);
 		VelRF v;
-		v(0) = RKSGeschw.vx;
-		v(1) = RKSGeschw.vy;
-		v(2) = RKSGeschw.omega;
+		v(0) = vel_rframe_sp.vx;
+		v(1) = vel_rframe_sp.vy;
+		v(2) = vel_rframe_sp.omega;
 		v(3) = Regler.Koppel * epsilon1; // ASK Koppel is the proportional scaler from PID?
 		return v;
 	}

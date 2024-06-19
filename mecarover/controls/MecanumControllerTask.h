@@ -37,34 +37,21 @@ public:
 	}
 
 protected:
-	int PoseControlInterface(const Pose<T>& reference, const Pose<T>& actual, vPose<T>& RKSGeschw, T* ve_wheel_sp) override
+	void PoseControlInterface(const Pose<T>& pose_sp, const Pose<T>& actual_pose, T* vel_wheel_sp) override
 	{
-		VehicleVel RFVel; // vehicle velocity in robot frame
-		WheelVel WheelRefVel; // reference velocities of the wheels
-
 		try {
-			// obtain velocity in robot frame
-			RFVel = Controller.poseControl(reference, actual);
+			VehicleVel vel_rframe_sp_mtx = Controller.poseControl(pose_sp, actual_pose);
+
+			// calculate reference velocities of the wheels
+			WheelVel vel_wheel_sp_mtx = Controller.vRF2vWheel(vel_rframe_sp_mtx);
+
+			for (int i = 0; i < CT::NumbWheels; i++)
+				vel_wheel_sp[i] = vel_wheel_sp_mtx(i);
 		} catch (mrc_stat e) { // Schleppfehler aufgetreten
 			CT::SetControllerMode(CtrlMode::OFF);
 			CT::SetControllerErrorStatus(MRC_LAGEERR);
 			log_message(log_error, "deviation position controller too large");
 		}
-
-		// convert to global native type vPose<T>
-		RKSGeschw.vx = RFVel(0);
-		RKSGeschw.vy = RFVel(1);
-		RKSGeschw.omega = RFVel(2);
-
-		// calculate reference velocities of the wheels
-		WheelRefVel = Controller.vRF2vWheel(RFVel);
-
-		// convert to global native type T*
-		for (int i = 0; i < CT::NumbWheels; i++) {
-			ve_wheel_sp[i] = WheelRefVel(i);
-		}
-
-		return 0;
 	}
 
 	void WheelControlInterface(const T* ReferenceVel, const T* ActualVel, T* CorrectingVel) override
@@ -121,14 +108,13 @@ protected:
 		CT::setPose(newPose);
 	}
 
-	void ManualModeInterface(vPose<T>& vel_rframe_sp, vPose<T>& vel_rframe_old, Pose<T>& pose_manual) override
+	void ManualModeInterface(vPose<T>& vel_rframe_sp, vPose<T>& vel_rframe_prev, Pose<T>& pose_manual) override
 	{
-		vel_rframe_sp = Controller.velocityFilter(vel_rframe_sp, vel_rframe_old);
+		vel_rframe_sp = Controller.velocityFilter(vel_rframe_sp, vel_rframe_prev);
 
 		vPose<T> vel_wframe_sp = vRF2vWF<T>(vel_rframe_sp, CT::getPose().theta);
 
-		// ASK: multiply the velocity by the sampling frequency to get the pose
-		/* Positionssollwert anpassen, Geschwindigkeit WKS einstellen */
+		// ASK: multiply the velocity with the sampling frequency to get the pose?
 		pose_manual.x += vel_wframe_sp.vx * CT::Ta.FzLage;
 		pose_manual.y += vel_wframe_sp.vy * CT::Ta.FzLage;
 		pose_manual.theta += vel_wframe_sp.omega * CT::Ta.FzLage;

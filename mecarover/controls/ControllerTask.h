@@ -71,8 +71,7 @@ protected:
 	ReglerParam_t Regler;
 	Abtastzeit_t Ta;
 
-	// Interfaces for sub classes
-	virtual int PoseControlInterface(const Pose<T>& reference, const Pose<T>& actual, vPose<T>& RKSGeschw, T* vel_wheel_sp) = 0;
+	virtual void PoseControlInterface(const Pose<T>& pose_sp, const Pose<T>& actual_pose, T* vel_wheel_sp) = 0;
 	virtual void WheelControlInterface(const T* ReferenceVel, const T* ActualVel, T* CorrectingVel) = 0;
 	virtual void OdometryInterface(const T* RadDeltaPhi, dPose<T>& robot_vel) = 0;
 	virtual void ManualModeInterface(vPose<T>& vel_rframe_sp, vPose<T>& vel_rframe_old, Pose<T>& pose_manual) = 0;
@@ -82,7 +81,6 @@ protected:
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW // eigenlib 16 Byte alignement
 
-		// manual mode
 	vPose<T> GetManuRef()
 	{
 		vPose<T> vel;
@@ -200,32 +198,15 @@ public:
 		return 0;
 	}
 
-	/*
-	   int CleanUp() {
-
-	   return 0;
-	   } // end of method CleanUp
-
-	   int Join(void **retval) {
-	   if (UseWheelControllerTask) {
-	//        pthread_join(drehzahlregler_thread, retval);
-	}
-	return; // pthread_join(lageregler_thread, retval);
-	} // end of method Join
-	*/
-
 	void PoseControlTask()
 	{
-		Pose<T> pose_manual; // pose for manual mode
-		vPose<T> vel_wframe_sp, vel_rframe_old;
-		vPose<T> RKSGeschw; // Geschwindigkeiten in Roboterkoordinaten
+		vPose<T> vel_wframe_sp, vel_rframe_prev;
 		vPose<T> vel_rframe_sp; // reference velocity of the pose in robot frame
 		Pose<T> pose_sp;
 		Pose<T> actual_pose;
-		//      Pose<T> wksSollAlt;
-		T vWheelref[4] = {0.0, 0.0, 0.0, 0.0}; // reference velocities for wheel control
+		Pose<T> pose_manual;
+		T vWheelref[4] = {0.0, 0.0, 0.0, 0.0};
 
-		// unsigned int wksSollinit = 0;
 		CtrlMode oldmode = CtrlMode::OFF;
 		CtrlMode controllerMode = CtrlMode::OFF;
 
@@ -278,9 +259,9 @@ public:
 				   ManuPose.y = aktPose.y;
 				   ManuPose.theta = aktPose.theta;
 				   */
-				vel_rframe_old.vx = 0.0;
-				vel_rframe_old.vy = 0.0;
-				vel_rframe_old.omega = 0.0;
+				vel_rframe_prev.vx = 0.0;
+				vel_rframe_prev.vy = 0.0;
+				vel_rframe_prev.omega = 0.0;
 				break;
 			case CtrlMode::TWIST:
 				/* First time after mode switch */
@@ -291,14 +272,15 @@ public:
 				/* Werte von manueller RKS-Vorgabe lesen */
 				vel_rframe_sp = GetManuRef();
 
-				// Sollwert auf maximale Beschleunigung beschraenken
-				ManualModeInterface(vel_rframe_sp, vel_rframe_old, pose_manual);
+				// set pose_manual from vel
+				ManualModeInterface(vel_rframe_sp, vel_rframe_prev, pose_manual);
+				// ASK: why count to 100 before logging
 				if (count++ > 100) {
 					count = 0;
-					log_message(log_debug, "ManuPose x: %f, y: %f, theta: %f",
+					log_message(log_debug, "manual pose via velocity x: %f, y: %f, theta: %f",
 						pose_manual.x, pose_manual.y, T(pose_manual.theta));
 				}
-				vel_rframe_old = vel_rframe_sp;
+				vel_rframe_prev = vel_rframe_sp;
 
 				/* V von RKS -> WKS transformieren */
 				vel_wframe_sp = vRF2vWF<T>(vel_rframe_sp, actual_pose.theta);
@@ -318,33 +300,14 @@ public:
 
 			if ((controllerMode != CtrlMode::OFF)
 				&& (controllerMode != CtrlMode::ESTOP)) {
-				PoseControlInterface(pose_sp, actual_pose, RKSGeschw, vWheelref);
+				PoseControlInterface(pose_sp, actual_pose, vWheelref);
 
-				// check if wheel controller task is active
 				if (UseWheelControllerTask) {
-					// set the velocities for the wheel controller
-					if (mr_radsollwert_set(vWheelref) != 0) { // TODO HAL
-															  // error in setting velocities, turn off pose control
-															  //              hal_amplifiers_disable();
-						SetControllerErrorStatus(MRC_LAGEERR);
-						SetControllerMode(CtrlMode::OFF);
-						log_message(log_error, "%s: Can not set RadSollWert",
-							__FUNCTION__);
-					}
+					mr_radsollwert_set(vWheelref);
 				} else { // no wheel controller task, set velocities via CAN
-					hal_wheel_vel_set(vWheelref); // TODO CAN-HAL
+					hal_wheel_vel_set(vWheelref);
 				}
-
-				// set RKS vel to zero if error
-				if (GetControllerErrorStatus() != MRC_NOERR) {
-					RKSGeschw.vx = RKSGeschw.vy = RKSGeschw.omega = 0;
-				}
-
-				/* Alte Werte werden das erste mal gespeichert, notwendig weil direkt von MRC_OFF in MRC_HOLD gewechselt werden kann */
-				// wksSollinit = 1;
-			} // end of if ((controllerMode != CtrlMode::OFF) && (controllerMode != CtrlMode::ESTOP))
-
-			//        wksSollAlt = wksSoll;     /* Für PositionHalten speichern */
+			}
 		}
 	}
 
@@ -649,14 +612,12 @@ public:
 	}
 
 private:
-	int mr_radsollwert_set(const T* sollw)
+	void mr_radsollwert_set(const T* sollw)
 	{
 		SollwMutex.lock();
-		for (int i = 0; i < NumbWheels; i++) {
+		for (int i = 0; i < NumbWheels; i++)
 			RadSollWert[i] = sollw[i];
-		}
 		SollwMutex.unlock();
-		return 0;
 	}
 
 	int mr_radsollwert_get(T* sollw)

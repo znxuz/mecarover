@@ -103,11 +103,8 @@ int mr_hal_wheel_vel_set_pwm(real_t *duty)
 // TODO fusion the function above to the one below
 int hal_wheel_vel_set(real_t *w)
 {
-	// convert logical rotation direction to physical direction
-	for (int i = 0; i < NumMotors; i++) {
+	for (int i = 0; i < NumMotors; i++)
 		w[i] *= motorDirection[i];
-		// printf(" Nr.: %d W = %.4f\n", i, w[i]);
-	}
 
 	return mr_hal_wheel_vel_set_pwm(w);
 }
