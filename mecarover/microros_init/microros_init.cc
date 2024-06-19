@@ -217,20 +217,15 @@ void uros_init(void *controller)
 
 	ct = reinterpret_cast<vehiclecontrol::ControllerTask<real_t> *>(controller);
 
-	// Create init_options
-	rcl_allocator_t allocater = rcl_get_default_allocator();
+	rcl_allocator_t allocator = rcl_get_default_allocator();
 	rcl_init_options_t init_options = rcl_get_zero_initialized_init_options();
-	RCCHECK(rcl_init_options_init(&init_options, allocater));
-
-	// Setup support structure.
+	size_t domain_id = 56;
+	RCCHECK(rcl_init_options_init(&init_options, allocator));
+	RCCHECK(rcl_init_options_set_domain_id(&init_options, domain_id));
 	rclc_support_t support;
-	RCCHECK(rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocater));
-
-	// Create node for Odometry and Status
-	rcl_node_t node = rcl_get_zero_initialized_node();
-	rcl_node_options_t node_ops = rcl_node_get_default_options();
-	node_ops.domain_id = 56;
-	RCCHECK(rclc_node_init_with_options(&node, "RobotNode", "", &support, &node_ops));
+	RCCHECK(rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator));
+	rcl_node_t node;
+	RCCHECK(rclc_node_init_default(&node, "test_node", "", &support));
 
 	rcl_subscription_t sub_startScan;
 	rcl_subscription_t sub_cmd_vel;
@@ -271,11 +266,11 @@ void uros_init(void *controller)
 
 	// Create executor
 	rclc_executor_t executor = rclc_executor_get_zero_initialized_executor();
-	RCCHECK(rclc_executor_init(&executor, &support.context, 3, &allocater));
+	RCCHECK(rclc_executor_init(&executor, &support.context, 3, &allocator));
 
 	// Create LaserScanner executor
 	rclc_executor_t sens_executor = rclc_executor_get_zero_initialized_executor();
-	RCCHECK(rclc_executor_init(&sens_executor, &support.context, 2, &allocater)); // 1->2
+	RCCHECK(rclc_executor_init(&sens_executor, &support.context, 2, &allocator)); // 1->2
 
 	// add participants to executor
 	geometry_msgs__msg__Twist cmd_vel;

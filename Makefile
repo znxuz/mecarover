@@ -18,7 +18,7 @@ MAP_FILES := $(BUILD_DIR)/$(NAME).map
 OBJDUMP_LIST := $(BUILD_DIR)/$(NAME).list
 SIZE_OUTPUT := $(BUILD_DIR)/default.size.stdout
 
-TGT_INCL_PATHS := \
+INCL_PATHS := \
 				  -I$(CURDIR) \
 				  -I$(LIBS) \
 				  -I$(ST_CORE)/Inc \
@@ -46,7 +46,7 @@ TGT_INCL_PATHS := \
 				  -ILWIP/App \
 				  -ILWIP/Target
 
-TGT_FLAGS = \
+FLAGS = \
 			-mcpu=cortex-m7 \
 			-g3 \
 			-DDEBUG \
@@ -67,20 +67,20 @@ TGT_FLAGS = \
 			-mfpu=fpv5-d16 \
 			-mfloat-abi=hard \
 			-mthumb \
-			$(TGT_INCL_PATHS)
+			$(INCL_PATHS)
 
-TGT_CFLAGS = \
-			 $(TGT_FLAGS) \
+CFLAGS = \
+			 $(FLAGS) \
 			 -std=gnu11
 
-TGT_CPPFLAGS = \
-			   $(TGT_FLAGS) \
+CPPFLAGS = \
+			   $(FLAGS) \
 			   -std=gnu++17 \
 			   -fexceptions \
 			   -fno-rtti \
 			   -fno-use-cxa-atexit
 
-TGT_LD_FLAGS = \
+LD_FLAGS = \
 			   $(MICROROS_LIB) \
 			   -mcpu=cortex-m7 \
 			   -TSTM32F767ZITX_FLASH.ld \
@@ -101,7 +101,7 @@ TGT_LD_FLAGS = \
 			   -lsupc++ \
 			   -Wl,--end-group
 
-TGT_STARTUP_FLAGS = \
+STARTUP_FLAGS = \
 					-mcpu=cortex-m7 \
 					-g3 \
 					-DDEBUG \
@@ -121,8 +121,11 @@ TGT_STARTUP_FLAGS = \
 C_SRCS := $(filter-out \
 		  ./micro_ros_stm32cubemx_utils/extra_sources/microros_transports/dma_transport.c \
 		  ./micro_ros_stm32cubemx_utils/extra_sources/microros_transports/it_transport.c \
+		  ./micro_ros_stm32cubemx_utils/extra_sources/microros_transports/udp_transport.c \
 		  ./micro_ros_stm32cubemx_utils/extra_sources/microros_transports/usb_cdc_transport.c \
 		  ./micro_ros_stm32cubemx_utils/sample_main.c \
+		  ./micro_ros_stm32cubemx_utils/sample_main_embeddedrtps.c \
+		  ./micro_ros_stm32cubemx_utils/sample_main_udp.c \
 		  ./$(ST_CORE)/Src/freertos.c \
 		  ./$(ST_CORE)/Src/syscalls.c \
 		  ./$(ST_CORE)/Src/sysmem.c \
@@ -139,15 +142,15 @@ all: $(BIN) $(SIZE_OUTPUT) $(OBJDUMP_LIST)
 
 $(BUILD_DIR)/%.o $(BUILD_DIR)/%.su: %.c
 	$(DIR_GUARD)
-	arm-none-eabi-gcc "$<" $(TGT_CFLAGS) -o "$@"
+	arm-none-eabi-gcc "$<" $(CFLAGS) -o "$@"
 
 $(BUILD_DIR)/%.o $(BUILD_DIR)/%.su: %.cc
 	$(DIR_GUARD)
-	arm-none-eabi-g++ "$<" $(TGT_CPPFLAGS) -o "$@"
+	arm-none-eabi-g++ "$<" $(CPPFLAGS) -o "$@"
 
 $(BUILD_DIR)/%.o: %.s
 	$(DIR_GUARD)
-	arm-none-eabi-gcc $(TGT_STARTUP_FLAGS) "$<" -o "$@"
+	arm-none-eabi-gcc $(STARTUP_FLAGS) "$<" -o "$@"
 
 flash: $(BIN)
 	st-flash --reset write $(EXECUTABLE:.elf=.bin) 0x8000000
@@ -156,7 +159,7 @@ $(BIN): $(EXECUTABLE)
 	arm-none-eabi-objcopy -O binary $(EXECUTABLE) $(EXECUTABLE:.elf=.bin)
 
 $(EXECUTABLE) $(MAP_FILES): $(OBJS) STM32F767ZITX_FLASH.ld
-	arm-none-eabi-g++ $(OBJS) $(TGT_LD_FLAGS) -o $(EXECUTABLE)
+	arm-none-eabi-g++ $(OBJS) $(LD_FLAGS) -o $(EXECUTABLE)
 	@echo "Finished building target: $@"
 
 $(SIZE_OUTPUT): $(EXECUTABLE)
@@ -178,6 +181,9 @@ fclean:
 	$(RM) $(OBJDUMP_LIST)
 
 # test
+print_cflags:
+	@echo $(CFLAGS)
+
 print_c_srcs:
 	@echo $(C_SRCS)
 

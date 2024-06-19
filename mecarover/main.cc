@@ -141,6 +141,11 @@ ex: printf("Wrong parameters value: file %s on line %d\n", file, line) */
 	/* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
+int _gettimeofday( struct timeval *tv, void *tzvp )
+{
+    return 0; // not used, thus unimplemented to satisfy the compiler
+}
 }
 
 int main()

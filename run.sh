@@ -7,12 +7,13 @@ topleft_pane()
 
 bottom_left_pane()
 {
-	echo "tmux splitw -h -b 'docker run -it --rm --net=host microros/micro-ros-agent:foxy udp4 --port 8888'"
+	echo "tmux splitw -h -b 'docker run -it --rm --net=host microros/micro-ros-agent:jazzy udp4 --port 8888'"
 }
 
 current_pane()
 {
-	echo "docker run -it --rm --net=host -e ROS_DOMAIN_ID=56 ros2-modified:latest"
+	echo "docker run -it --rm --net=host -e ROS_DOMAIN_ID=56 ros2-jazzy-mine"
 }
+
 tmux bind-key C-l send-keys -R \; clear-history
 tmux neww "$(bottom_left_pane); $(topleft_pane); tmux selectp -R; $(current_pane)"
