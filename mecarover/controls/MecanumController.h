@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cmath>
-#include <Eigen/Eigen/Core>
-#include <Eigen/Eigen/LU>
+#include <Eigen/Core>
+#include <Eigen/LU>
 #include <mecarover/mrlogger/mrlogger.h>
 
 #include "VehicleController.h"

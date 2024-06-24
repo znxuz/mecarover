@@ -7,10 +7,9 @@
 #include <stdio.h> // for vsnprintf()
 #include <string.h> // strlen
 
-#include <mrtypes.h>
-
 #include <cmsis_os2.h>
-#include <rtos_config.h>
+#include <mecarover/mrtypes.h>
+#include <mecarover/rtos_config.h>
 
 #define MSGSIZE 100 // maximum size of a message
 #define MAXMSG 10 // max number of messages
@@ -19,7 +18,7 @@ static mr_logprio_t log_level = log_debug;
 static mr_logprio_t screen_level = log_debug;
 static bool use_colors = true; // false;
 
-static void logger_server_task(void *args); // server thread function
+static void logger_server_task(void* args); // server thread function
 static TaskHandle_t logger_server = NULL; // thread for writng messages to terminal and syslogd
 static SemaphoreHandle_t msgmutex = NULL;
 static QueueHandle_t msgque = NULL;
@@ -74,7 +73,7 @@ void logger_use_colors(bool colors)
 	use_colors = colors;
 }
 
-static void logger_server_task(void *args)
+static void logger_server_task(void* args)
 {
 	mr_logger_msg msg;
 
@@ -125,7 +124,7 @@ static void logger_server_task(void *args)
 	}
 }
 
-void log_message(mr_logprio_t prio, const char *format, ...)
+void log_message(mr_logprio_t prio, const char* format, ...)
 {
 	mr_logger_msg msg;
 
@@ -154,7 +153,7 @@ void log_message(mr_logprio_t prio, const char *format, ...)
 	}
 }
 
-void ros_log_message(mr_logprio_t prio, const char *msg)
+void ros_log_message(mr_logprio_t prio, const char* msg)
 {
 	return; // do nothing, at the moment rosserial_python crashes on ros log messages
 }

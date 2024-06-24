@@ -28,7 +28,7 @@
 #include <ethernetif.h>
 
 #include <string.h>
-#include <rtos_config.h>
+#include <mecarover/rtos_config.h>
 
 /* USER CODE BEGIN 0 */
 

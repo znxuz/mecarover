@@ -29,7 +29,7 @@
 #include <dma.h>
 #include <gpio.h>
 #include <main.h>
-#include <rtos_config.h>
+#include <mecarover/rtos_config.h>
 #include <stm32f7xx_hal.h>
 #include <tim.h>
 #include <usart.h>

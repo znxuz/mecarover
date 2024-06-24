@@ -1,9 +1,9 @@
 #pragma once
 
-#include <RTOS.h>
+#include <mecarover/RTOS.h>
 #include <mecarover/hal/stm_hal.h>
-#include <mrcpptypes.h>
-#include <rtos_config.h>
+#include <mecarover/mrcpptypes.h>
+#include <mecarover/rtos_config.h>
 
 #include "VehicleController.h"
 

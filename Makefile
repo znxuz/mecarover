@@ -3,14 +3,14 @@ NAME := mecarover
 BUILD_DIR := build
 DIR_GUARD = @mkdir -p "$(@D)"
 
-ST_CORE := Core
-ST_DRIVERS := Drivers
-ST_MW := Middlewares/Third_Party
+ST_DIR_CORE := Core
+ST_DIR_DRIVERS := Drivers
+ST_DIR_MW := Middlewares/Third_Party
 
 MICROROS_DIR := micro_ros_stm32cubemx_utils/microros_static_library/libmicroros
 MICROROS_LIB := -L$(MICROROS_DIR) -lmicroros
 
-LIBS := lib
+EIGEN_DIR := eigen/Eigen
 
 BIN := $(BUILD_DIR)/$(NAME).bin
 EXECUTABLE := $(BUILD_DIR)/$(NAME).elf
@@ -19,103 +19,103 @@ OBJDUMP_LIST := $(BUILD_DIR)/$(NAME).list
 SIZE_OUTPUT := $(BUILD_DIR)/default.size.stdout
 
 INCL_PATHS := \
-				  -I$(CURDIR) \
-				  -I$(LIBS) \
-				  -I$(ST_CORE)/Inc \
-				  -I$(ST_DRIVERS)/STM32F7xx_HAL_Driver/Inc \
-				  -I$(ST_DRIVERS)/CMSIS/Device/ST/STM32F7xx/Include \
-				  -I$(ST_DRIVERS)/CMSIS/Include \
-				  -I$(ST_MW)/FreeRTOS/Source/include \
-				  -I$(ST_MW)/FreeRTOS/Source/CMSIS_RTOS_V2 \
-				  -I$(ST_MW)/FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1 \
-				  -I$(ST_MW)/LwIP/src/include \
-				  -I$(ST_MW)/LwIP/system \
-				  -I$(ST_MW)/LwIP/src/include/netif/ppp \
-				  -I$(ST_MW)/LwIP/src/include/lwip \
-				  -I$(ST_MW)/LwIP/src/include/lwip/apps \
-				  -I$(ST_MW)/LwIP/src/include/lwip/priv \
-				  -I$(ST_MW)/LwIP/src/include/lwip/prot \
-				  -I$(ST_MW)/LwIP/src/include/netif \
-				  -I$(ST_MW)/LwIP/src/include/compat/posix \
-				  -I$(ST_MW)/LwIP/src/include/compat/posix/arpa \
-				  -I$(ST_MW)/LwIP/src/include/compat/posix/net \
-				  -I$(ST_MW)/LwIP/src/include/compat/posix/sys \
-				  -I$(ST_MW)/LwIP/src/include/compat/stdc \
-				  -I$(ST_MW)/LwIP/system/arch \
-				  -I$(MICROROS_DIR)/microros_include \
-				  -ILWIP/App \
-				  -ILWIP/Target
+			  -I$(CURDIR) \
+			  -I$(EIGEN_DIR) \
+			  -I$(ST_DIR_CORE)/Inc \
+			  -I$(ST_DIR_DRIVERS)/STM32F7xx_HAL_Driver/Inc \
+			  -I$(ST_DIR_DRIVERS)/CMSIS/Device/ST/STM32F7xx/Include \
+			  -I$(ST_DIR_DRIVERS)/CMSIS/Include \
+			  -I$(ST_DIR_MW)/FreeRTOS/Source/include \
+			  -I$(ST_DIR_MW)/FreeRTOS/Source/CMSIS_RTOS_V2 \
+			  -I$(ST_DIR_MW)/FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1 \
+			  -I$(ST_DIR_MW)/LwIP/src/include \
+			  -I$(ST_DIR_MW)/LwIP/system \
+			  -I$(ST_DIR_MW)/LwIP/src/include/netif/ppp \
+			  -I$(ST_DIR_MW)/LwIP/src/include/lwip \
+			  -I$(ST_DIR_MW)/LwIP/src/include/lwip/apps \
+			  -I$(ST_DIR_MW)/LwIP/src/include/lwip/priv \
+			  -I$(ST_DIR_MW)/LwIP/src/include/lwip/prot \
+			  -I$(ST_DIR_MW)/LwIP/src/include/netif \
+			  -I$(ST_DIR_MW)/LwIP/src/include/compat/posix \
+			  -I$(ST_DIR_MW)/LwIP/src/include/compat/posix/arpa \
+			  -I$(ST_DIR_MW)/LwIP/src/include/compat/posix/net \
+			  -I$(ST_DIR_MW)/LwIP/src/include/compat/posix/sys \
+			  -I$(ST_DIR_MW)/LwIP/src/include/compat/stdc \
+			  -I$(ST_DIR_MW)/LwIP/system/arch \
+			  -I$(MICROROS_DIR)/microros_include \
+			  -ILWIP/App \
+			  -ILWIP/Target
 
 FLAGS = \
-			-mcpu=cortex-m7 \
-			-g3 \
-			-DDEBUG \
-			-DUSE_HAL_DRIVER \
-			-DSTM32F767xx \
-			-c \
-			-O0 \
-			-ffunction-sections \
-			-fdata-sections \
-			-u_printf_float \
-			-Wall \
-			-fstack-usage \
-			-MMD \
-			-MP \
-			-MF"$(@:%.o=%.d)" \
-			-MT"$@" \
-			--specs=nano.specs \
-			-mfpu=fpv5-d16 \
-			-mfloat-abi=hard \
-			-mthumb \
-			$(INCL_PATHS)
+		-mcpu=cortex-m7 \
+		-g3 \
+		-DDEBUG \
+		-DUSE_HAL_DRIVER \
+		-DSTM32F767xx \
+		-c \
+		-O0 \
+		-ffunction-sections \
+		-fdata-sections \
+		-u_printf_float \
+		-Wall \
+		-fstack-usage \
+		-MMD \
+		-MP \
+		-MF"$(@:%.o=%.d)" \
+		-MT"$@" \
+		--specs=nano.specs \
+		-mfpu=fpv5-d16 \
+		-mfloat-abi=hard \
+		-mthumb \
+		$(INCL_PATHS)
 
 CFLAGS = \
-			 $(FLAGS) \
-			 -std=gnu11
+		 $(FLAGS) \
+		 -std=gnu11
 
 CPPFLAGS = \
-			   $(FLAGS) \
-			   -std=gnu++17 \
-			   -fexceptions \
-			   -fno-rtti \
-			   -fno-use-cxa-atexit
+		   $(FLAGS) \
+		   -std=gnu++20 \
+		   -fexceptions \
+		   -fno-rtti \
+		   -fno-use-cxa-atexit
 
 LD_FLAGS = \
-			   $(MICROROS_LIB) \
-			   -mcpu=cortex-m7 \
-			   -TSTM32F767ZITX_FLASH.ld \
-			   --specs=nosys.specs \
-			   -Wl,-Map=$(MAP_FILES) \
-			   -Wl,--gc-sections \
-			   -static \
-			   $(MICROROS_LIB) \
-			   -u_printf_float \
-			   --specs=nano.specs \
-			   -mfpu=fpv5-d16 \
-			   -mfloat-abi=hard \
-			   -mthumb \
-			   -Wl,--start-group \
-			   -lc \
-			   -lm \
-			   -lstdc++ \
-			   -lsupc++ \
-			   -Wl,--end-group
+		   $(MICROROS_LIB) \
+		   -mcpu=cortex-m7 \
+		   -TSTM32F767ZITX_FLASH.ld \
+		   --specs=nosys.specs \
+		   -Wl,-Map=$(MAP_FILES) \
+		   -Wl,--gc-sections \
+		   -static \
+		   $(MICROROS_LIB) \
+		   -u_printf_float \
+		   --specs=nano.specs \
+		   -mfpu=fpv5-d16 \
+		   -mfloat-abi=hard \
+		   -mthumb \
+		   -Wl,--start-group \
+		   -lc \
+		   -lm \
+		   -lstdc++ \
+		   -lsupc++ \
+		   -Wl,--end-group
 
 STARTUP_FLAGS = \
-					-mcpu=cortex-m7 \
-					-g3 \
-					-DDEBUG \
-					-c \
-					-x \
-					assembler-with-cpp \
-					-MMD \
-					-MP \
-					-MF"$(@:%.o=%.d)" \
-					-MT"$@" \
-					--specs=nano.specs \
-					-mfpu=fpv5-d16 \
-					-mfloat-abi=hard \
-					-mthumb
+				-mcpu=cortex-m7 \
+				-g3 \
+				-DDEBUG \
+				-c \
+				-x \
+				assembler-with-cpp \
+				-MMD \
+				-MP \
+				-MF"$(@:%.o=%.d)" \
+				-MT"$@" \
+				--specs=nano.specs \
+				-mfpu=fpv5-d16 \
+				-mfloat-abi=hard \
+				-mthumb
 
 # TODO replace the blacklist with a whitelist
 C_SRCS := $(filter-out \
@@ -126,14 +126,14 @@ C_SRCS := $(filter-out \
 		  ./micro_ros_stm32cubemx_utils/sample_main.c \
 		  ./micro_ros_stm32cubemx_utils/sample_main_embeddedrtps.c \
 		  ./micro_ros_stm32cubemx_utils/sample_main_udp.c \
-		  ./$(ST_CORE)/Src/freertos.c \
-		  ./$(ST_CORE)/Src/syscalls.c \
-		  ./$(ST_CORE)/Src/sysmem.c \
+		  ./$(ST_DIR_CORE)/Src/freertos.c \
+		  ./$(ST_DIR_CORE)/Src/syscalls.c \
+		  ./$(ST_DIR_CORE)/Src/sysmem.c \
 		  , $(shell find . -type f -name "*.c"))
-CC_SRCS := $(shell find . -type f -name "*.cpp")
-S_SRC := $(ST_CORE)/Startup/startup_stm32f767zitx.s
+CPP_SRCS := $(shell find . -type f -name "*.cpp")
+S_SRC := $(ST_DIR_CORE)/Startup/startup_stm32f767zitx.s
 OBJS := $(addprefix $(BUILD_DIR)/, $(C_SRCS:.c=.o)) \
-		$(addprefix $(BUILD_DIR)/, $(CC_SRCS:.cpp=.o)) \
+		$(addprefix $(BUILD_DIR)/, $(CPP_SRCS:.cpp=.o)) \
 		$(addprefix $(BUILD_DIR)/, $(S_SRC:.s=.o))
 
 .PHONY: all clean fclean flash
@@ -180,15 +180,19 @@ fclean:
 	$(RM) $(MAP_FILES)
 	$(RM) $(OBJDUMP_LIST)
 
-# test
+# required by micro_ros_stm32cubemx_utils
 print_cflags:
 	@echo $(CFLAGS)
 
+clangd_db: clean
+	@bear --output build/compile_commands.json -- make -j
+
+# test
 print_c_srcs:
 	@echo $(C_SRCS)
 
-print_cc_srcs:
-	@echo $(CC_SRCS)
+print_cpp_srcs:
+	@echo $(CPP_SRCS)
 
 print_objs:
 	@echo $(OBJS)

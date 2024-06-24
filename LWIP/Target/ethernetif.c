@@ -33,7 +33,7 @@
 
 #include <string.h>
 #include <Drivers/BSP/Components/lan8742/lan8742.h>
-#include <rtos_config.h>
+#include <mecarover/rtos_config.h>
 
 /* Within 'USER CODE' section, code will be kept by default at each generation */
 /* USER CODE BEGIN 0 */

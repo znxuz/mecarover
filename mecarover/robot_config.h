@@ -2,8 +2,8 @@
 
 //------------ configuration of the vehicle and controller parameters
 
+#include "mrtypes.h" // definition of Fahrzeug_t
 #include <mecarover/controls/VehicleController.h> // definition of imsl::vehiclecontrol::ReglerParam_t, imsl::vehiclecontrol::Abtastzeit_t
-#include <mrtypes.h> // definition of Fahrzeug_t
 
 // ---------------------------------- OmniRob configuration
 /*
@@ -66,11 +66,10 @@ alpha = 0.5;
 // time constants
 static imsl::vehiclecontrol::Abtastzeit_t Ta = {
 	.Timer = 0.001, // 1 ms timer tick
-		   //                    0.003, // 3 ms sampling time of wheel control loop
+					//                    0.003, // 3 ms sampling time of wheel control loop
 	.FzDreh = 0.005, // 5 ms sampling time of wheel control loop
 	.FzLage = 0.015, // 15 ms sampling time of pose control loop
-	.FzLageZuDreh = 3
-}; // 15 ms / 5 ms ratio pose / wheel
+	.FzLageZuDreh = 3}; // 15 ms / 5 ms ratio pose / wheel
 
 /* FILU Roboter
 // ------------------------- FILU robot configuration
@@ -90,7 +89,7 @@ static Fahrzeug_t fz = {
 	.VBahnMax = 1000.0, /* in mm/s                         */
 	.VthetaMax = 2000.0, /* in rad/s                        */
 	.JoystickBeschl = 1000.0, // in mm/s²
-	.MaxRPM = { 5740.6, 5740.6, 7268.4, 7268.4 }
+	.MaxRPM = {5740.6, 5740.6, 7268.4, 7268.4}
 };
 
 static imsl::vehiclecontrol::ReglerParam_t Regler = {
@@ -100,15 +99,15 @@ static imsl::vehiclecontrol::ReglerParam_t Regler = {
 	.DzrTvDTa = 0.0,
 	.DzrIntMax = 30.0,
 	.DzrSchleppMax = 0.0,
-	.DzrSkalierung = { 1.0, 1.0, 1.0, 1.0 },
-	.DzrKoppel = { -0.1, 0.1, -0.1, 0.1 },
-	//                .DzrSkalierung[0] = 1.0,
+	.DzrSkalierung = {1.0, 1.0, 1.0, 1.0},
+	.DzrKoppel = {-0.1, 0.1, -0.1, 0.1},
+ //                .DzrSkalierung[0] = 1.0,
 	//                .DzrSkalierung[1] = 1.0,
 	//                .DzrSkalierung[2] = 1.0,
 	//                .DzrSkalierung[3] = 1.0,
 	//                .Rad2Volt = 1,
-	.LageKv = { 5, 5, 5 },
-	.LageSchleppMax = { 300.0, 300.0, 30.0 },
+	.LageKv = {5, 5, 5},
+	.LageSchleppMax = {300.0, 300.0, 30.0},
 	.Koppel = 0.0
 	//                .korrekturmatrix = { 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 }
 };
