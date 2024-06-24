@@ -130,10 +130,10 @@ C_SRCS := $(filter-out \
 		  ./$(ST_CORE)/Src/syscalls.c \
 		  ./$(ST_CORE)/Src/sysmem.c \
 		  , $(shell find . -type f -name "*.c"))
-CC_SRCS := $(shell find . -type f -name "*.cc")
+CC_SRCS := $(shell find . -type f -name "*.cpp")
 S_SRC := $(ST_CORE)/Startup/startup_stm32f767zitx.s
 OBJS := $(addprefix $(BUILD_DIR)/, $(C_SRCS:.c=.o)) \
-		$(addprefix $(BUILD_DIR)/, $(CC_SRCS:.cc=.o)) \
+		$(addprefix $(BUILD_DIR)/, $(CC_SRCS:.cpp=.o)) \
 		$(addprefix $(BUILD_DIR)/, $(S_SRC:.s=.o))
 
 .PHONY: all clean fclean flash
@@ -144,7 +144,7 @@ $(BUILD_DIR)/%.o $(BUILD_DIR)/%.su: %.c
 	$(DIR_GUARD)
 	arm-none-eabi-gcc "$<" $(CFLAGS) -o "$@"
 
-$(BUILD_DIR)/%.o $(BUILD_DIR)/%.su: %.cc
+$(BUILD_DIR)/%.o $(BUILD_DIR)/%.su: %.cpp
 	$(DIR_GUARD)
 	arm-none-eabi-g++ "$<" $(CPPFLAGS) -o "$@"
 

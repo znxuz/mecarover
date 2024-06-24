@@ -172,7 +172,6 @@ int main()
 	if (fz.type != MRC_VEHICLETYPE_MECANUM)
 		log_message(log_error, "Vehicle type is not mecanum");
 
-	/* Init scheduler */
 	osKernelInitialize();
 
 	auto *controller_task = new MecanumControllerTask<real_t>();

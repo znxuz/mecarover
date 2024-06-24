@@ -33,7 +33,7 @@ using namespace imsl::vehiclecontrol;
 	{                                                                 \
 		if (ret_err) {                                                \
 			printf("Failed status on line %d: %d in %s. Aborting.\n", \
-				__LINE__, static_cast<int>(ret_err), __FILE__);       \
+				   __LINE__, static_cast<int>(ret_err), __FILE__);    \
 			vTaskDelete(NULL);                                        \
 		}                                                             \
 	}
@@ -41,7 +41,7 @@ using namespace imsl::vehiclecontrol;
 	{                                                                   \
 		if (ret_err)                                                    \
 			printf("Failed status on line %d: %d in %s. Continuing.\n", \
-				__LINE__, static_cast<int>(ret_err), __FILE__);         \
+				   __LINE__, static_cast<int>(ret_err), __FILE__);      \
 	}
 #define DEG2RAD(x) ((x) * M_PI / 180.)
 
@@ -49,22 +49,22 @@ extern LaserScanner ls;
 
 extern "C"
 {
-void *microros_allocate(size_t size, void *state);
-void microros_deallocate(void *pointer, void *state);
-void *microros_reallocate(void *pointer, size_t size, void *state);
-void *microros_zero_allocate(size_t number_of_elements, size_t size_of_element,
-	void *state);
+void* microros_allocate(size_t size, void* state);
+void microros_deallocate(void* pointer, void* state);
+void* microros_reallocate(void* pointer, size_t size, void* state);
+void* microros_zero_allocate(size_t number_of_elements, size_t size_of_element,
+							 void* state);
 }
 
 namespace imsl
 {
-vehiclecontrol::ControllerTask<real_t> *ct = nullptr;
+vehiclecontrol::ControllerTask<real_t>* ct = nullptr;
 
 rcl_publisher_t tf_pub;
 rcl_publisher_t ctrl_status_pub;
 rcl_publisher_t lidar_pub;
 
-void rplidar_scan(rcl_timer_t *timer, int64_t last_call_time)
+void rplidar_scan(rcl_timer_t* timer, int64_t last_call_time)
 {
 	/* Package the data into the correct format
 	   Here is what is in the LaserScan message:
@@ -93,7 +93,7 @@ void rplidar_scan(rcl_timer_t *timer, int64_t last_call_time)
 	sensor_msgs__msg__LaserScan distance[2];
 	distance[0].header.stamp.sec = time_ms / 1000;
 	distance[0].header.stamp.nanosec = 0; // time_ns;
-	distance[0].header.frame_id.data = (char *)"scan";
+	distance[0].header.frame_id.data = (char*)"scan";
 
 	// set the angle range (start angle and end angle)
 	float startAngle = 0;
@@ -124,9 +124,9 @@ void rplidar_scan(rcl_timer_t *timer, int64_t last_call_time)
 	}
 }
 
-void start_Scan_cb(const void *start_Scan)
+void start_Scan_cb(const void* start_Scan)
 {
-	const std_msgs__msg__Bool *startScan = (const std_msgs__msg__Bool *)start_Scan;
+	const std_msgs__msg__Bool* startScan = (const std_msgs__msg__Bool*)start_Scan;
 
 	if (startScan->data) {
 		ls.Start();
@@ -136,7 +136,7 @@ void start_Scan_cb(const void *start_Scan)
 	}
 }
 
-void timer_cb(rcl_timer_t *timer, int64_t last_call_time)
+void timer_cb(rcl_timer_t* timer, int64_t last_call_time)
 {
 	// tf odom <-> base_link
 	auto p = ct->getPose();
@@ -148,8 +148,8 @@ void timer_cb(rcl_timer_t *timer, int64_t last_call_time)
 	geometry_msgs__msg__TransformStamped t[2];
 	t[0].header.stamp.sec = time_ms / 1000;
 	t[0].header.stamp.nanosec = 0; // time_ns;
-	t[0].header.frame_id.data = (char *)"/odom";
-	t[0].child_frame_id.data = (char *)"/base_link";
+	t[0].header.frame_id.data = (char*)"/odom";
+	t[0].child_frame_id.data = (char*)"/base_link";
 
 	t[0].transform.translation.x = (double)p.x / 1000.0; // 1000.0; // mm -> m
 	t[0].transform.translation.y = (double)p.y / 1000.0; // 1000.0; // mm -> m
@@ -171,11 +171,11 @@ void timer_cb(rcl_timer_t *timer, int64_t last_call_time)
 	}
 }
 
-void cmd_cb(const void *cmd_msg)
+void cmd_cb(const void* cmd_msg)
 {
-	const auto *msg = reinterpret_cast<const geometry_msgs__msg__Twist *>(cmd_msg);
-	log_message(log_debug,"cmd_vel x: %f, y: %f, theta: %f",
-			msg->linear.x, msg->linear.y, msg->angular.z);
+	const auto* msg = reinterpret_cast<const geometry_msgs__msg__Twist*>(cmd_msg);
+	log_message(log_debug, "cmd_vel x: %f, y: %f, theta: %f",
+				msg->linear.x, msg->linear.y, msg->angular.z);
 
 	imsl::vPose<real_t> v_ref;
 	v_ref.vx = msg->linear.x * 1000.0; // m/s -> mm/s
@@ -186,9 +186,9 @@ void cmd_cb(const void *cmd_msg)
 		ct->SetManuRef(v_ref);
 }
 
-void enable_topic_cb(const void *enable_topic)
+void enable_topic_cb(const void* enable_topic)
 {
-	const auto *enable = reinterpret_cast<const std_msgs__msg__Bool *>(enable_topic);
+	const auto* enable = reinterpret_cast<const std_msgs__msg__Bool*>(enable_topic);
 	if (enable->data) {
 		ct->SetControllerMode(vehiclecontrol::CtrlMode::TWIST);
 		log_message(log_info, "amplifiers enabled, set mode TWIST");
@@ -199,28 +199,30 @@ void enable_topic_cb(const void *enable_topic)
 }
 
 // micro-ROS configuration
-void uros_init(void *controller)
+void uros_init(void* controller)
 {
 	MX_LWIP_Init();
 
 	// ethernet communication, change to the local lan ip address
 	static eth_transport_params_t default_params = {
-		{ 0, 0, 0 }, { "192.168.1.228" }, { "8888" }
-	};
+		{0, 0, 0},
+		   {"192.168.1.228"},
+		  {"8888"}
+	  };
 	rmw_uros_set_custom_transport(
 		false,
-		(void *)&default_params,
+		(void*)&default_params,
 		eth_transport_open,
 		eth_transport_close,
 		eth_transport_write,
 		eth_transport_read);
 
-	ct = reinterpret_cast<vehiclecontrol::ControllerTask<real_t> *>(controller);
+	ct = reinterpret_cast<vehiclecontrol::ControllerTask<real_t>*>(controller);
 
 	rcl_allocator_t allocator = rcl_get_default_allocator();
 	rcl_init_options_t init_options = rcl_get_zero_initialized_init_options();
-	size_t domain_id = 56;
 	RCCHECK(rcl_init_options_init(&init_options, allocator));
+	size_t domain_id = 56;
 	RCCHECK(rcl_init_options_set_domain_id(&init_options, domain_id));
 	rclc_support_t support;
 	RCCHECK(rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator));
@@ -257,20 +259,20 @@ void uros_init(void *controller)
 	// Create timer.
 	rcl_timer_t timer = rcl_get_zero_initialized_timer();
 	const unsigned int timer_timeout = 500;
-	RCCHECK(rclc_timer_init_default(&timer, &support, RCL_MS_TO_NS(timer_timeout), timer_cb));
+	RCCHECK(rclc_timer_init_default2(&timer, &support, RCL_MS_TO_NS(timer_timeout), timer_cb, true));
 
 	// Create LaserScanner Timer
-	rcl_timer_t sens_timer = rcl_get_zero_initialized_timer();
-	const unsigned int sens_timer_timeout = 500;
-	RCCHECK(rclc_timer_init_default(&sens_timer, &support, RCL_MS_TO_NS(sens_timer_timeout), rplidar_scan));
+	rcl_timer_t lidar_timer = rcl_get_zero_initialized_timer();
+	const unsigned int lidar_timer_timeout = 500;
+	RCCHECK(rclc_timer_init_default2(&lidar_timer, &support, RCL_MS_TO_NS(lidar_timer_timeout), rplidar_scan, true));
 
 	// Create executor
 	rclc_executor_t executor = rclc_executor_get_zero_initialized_executor();
 	RCCHECK(rclc_executor_init(&executor, &support.context, 3, &allocator));
 
 	// Create LaserScanner executor
-	rclc_executor_t sens_executor = rclc_executor_get_zero_initialized_executor();
-	RCCHECK(rclc_executor_init(&sens_executor, &support.context, 2, &allocator)); // 1->2
+	rclc_executor_t lidar_executor = rclc_executor_get_zero_initialized_executor();
+	RCCHECK(rclc_executor_init(&lidar_executor, &support.context, 2, &allocator)); // 1->2
 
 	// add participants to executor
 	geometry_msgs__msg__Twist cmd_vel;
@@ -281,12 +283,12 @@ void uros_init(void *controller)
 
 	// add participants to LaserScanner executor
 	std_msgs__msg__Bool start_Scan;
-	RCCHECK(rclc_executor_add_timer(&sens_executor, &sens_timer));
-	RCCHECK(rclc_executor_add_subscription(&sens_executor, &sub_startScan, &start_Scan, &start_Scan_cb, ON_NEW_DATA));
+	RCCHECK(rclc_executor_add_timer(&lidar_executor, &lidar_timer));
+	RCCHECK(rclc_executor_add_subscription(&lidar_executor, &sub_startScan, &start_Scan, &start_Scan_cb, ON_NEW_DATA));
 
 	while (true) {
 		RCCHECK(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(1))); // before 1000 now 1, because microRos Task waited too long for new Task to work
-		RCCHECK(rclc_executor_spin_some(&sens_executor, RCL_MS_TO_NS(1)));
+		RCCHECK(rclc_executor_spin_some(&lidar_executor, RCL_MS_TO_NS(1)));
 	}
 
 	RCCHECK(rcl_publisher_fini(&ctrl_status_pub, &node));
@@ -296,7 +298,6 @@ void uros_init(void *controller)
 	RCCHECK(rcl_subscription_fini(&sub_startScan, &node));
 	RCCHECK(rcl_publisher_fini(&lidar_pub, &node));
 	RCCHECK(rcl_node_fini(&node));
-
 	vTaskDelete(NULL);
 }
 }
