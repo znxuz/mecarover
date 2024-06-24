@@ -23,27 +23,37 @@
 #include <mecarover/controls/ControllerTask.h>
 #include <mecarover/lidar/lidar.h>
 
+#include <experimental/source_location>
+
 #include "eth_transport.h"
 #include "microros_init.h"
 
 using namespace imsl;
 using namespace imsl::vehiclecontrol;
 
-#define RCCHECK(ret_err)                                              \
-	{                                                                 \
-		if (ret_err) {                                                \
-			printf("Failed status on line %d: %d in %s. Aborting.\n", \
-				   __LINE__, static_cast<int>(ret_err), __FILE__);    \
-			vTaskDelete(NULL);                                        \
-		}                                                             \
+static inline void rcl_ret_check(rcl_ret_t ret_code,
+		const std::experimental::source_location location =
+		std::experimental::source_location::current())
+{
+	if (ret_code) {
+		printf("Failed status on line %d: %d in %s. Aborting.\n",
+				static_cast<int>(location.line()),
+				static_cast<int>(ret_code),
+				location.file_name());
+		vTaskDelete(NULL);
 	}
-#define RCSOFTCHECK(ret_err)                                            \
-	{                                                                   \
-		if (ret_err)                                                    \
-			printf("Failed status on line %d: %d in %s. Continuing.\n", \
-				   __LINE__, static_cast<int>(ret_err), __FILE__);      \
-	}
-#define DEG2RAD(x) ((x) * M_PI / 180.)
+}
+
+static inline void rcl_ret_softcheck(rcl_ret_t ret_code,
+		const std::experimental::source_location location =
+		std::experimental::source_location::current())
+{
+	if (ret_code)
+		printf("Failed status on line %d: %d in %s. Continuing.\n",
+				static_cast<int>(location.line()),
+				static_cast<int>(ret_code),
+				location.file_name());
+}
 
 extern LaserScanner ls;
 
@@ -86,7 +96,7 @@ void rplidar_scan(rcl_timer_t* timer, int64_t last_call_time)
 	   */
 
 	// Synchronize the ROS time
-	RCSOFTCHECK(rmw_uros_sync_session(1000));
+	rcl_ret_softcheck(rmw_uros_sync_session(1000));
 	int64_t time_ms = rmw_uros_epoch_millis();
 	// int64_t time_ns = rmw_uros_epoch_nanos();
 
@@ -120,7 +130,7 @@ void rplidar_scan(rcl_timer_t* timer, int64_t last_call_time)
 
 	(void)last_call_time;
 	if (timer != NULL) {
-		RCSOFTCHECK(rcl_publish(&lidar_pub, &distance, NULL));
+		rcl_ret_softcheck(rcl_publish(&lidar_pub, &distance, NULL));
 	}
 }
 
@@ -141,7 +151,7 @@ void timer_cb(rcl_timer_t* timer, int64_t last_call_time)
 	// tf odom <-> base_link
 	auto p = ct->getPose();
 
-	RCSOFTCHECK(rmw_uros_sync_session(1000));
+	rcl_ret_softcheck(rmw_uros_sync_session(1000));
 	int64_t time_ms = rmw_uros_epoch_millis();
 	// int64_t time_ns = rmw_uros_epoch_nanos();
 
@@ -166,8 +176,8 @@ void timer_cb(rcl_timer_t* timer, int64_t last_call_time)
 	std_msgs__msg__Byte ctrl_status_msg;
 	ctrl_status_msg.data = static_cast<int>(ct->GetControllerMode());
 	if (timer != NULL) {
-		RCSOFTCHECK(rcl_publish(&ctrl_status_pub, &ctrl_status_msg, NULL));
-		RCSOFTCHECK(rcl_publish(&tf_pub, &tf, NULL));
+		rcl_ret_softcheck(rcl_publish(&ctrl_status_pub, &ctrl_status_msg, NULL));
+		rcl_ret_softcheck(rcl_publish(&tf_pub, &tf, NULL));
 	}
 }
 
@@ -221,13 +231,13 @@ void uros_init(void* controller)
 
 	rcl_allocator_t allocator = rcl_get_default_allocator();
 	rcl_init_options_t init_options = rcl_get_zero_initialized_init_options();
-	RCCHECK(rcl_init_options_init(&init_options, allocator));
+	rcl_ret_check(rcl_init_options_init(&init_options, allocator));
 	size_t domain_id = 56;
-	RCCHECK(rcl_init_options_set_domain_id(&init_options, domain_id));
+	rcl_ret_check(rcl_init_options_set_domain_id(&init_options, domain_id));
 	rclc_support_t support;
-	RCCHECK(rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator));
+	rcl_ret_check(rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator));
 	rcl_node_t node;
-	RCCHECK(rclc_node_init_default(&node, "test_node", "", &support));
+	rcl_ret_check(rclc_node_init_default(&node, "test_node", "", &support));
 
 	rcl_subscription_t sub_startScan;
 	rcl_subscription_t sub_cmd_vel;
@@ -235,69 +245,69 @@ void uros_init(void* controller)
 
 	// initialize publisher and subscriber
 	// with best effort variant
-	// RCCHECK(rclc_publisher_init_best_effort(&ctrl_status_pub, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Byte), "ctrl_status"));
-	// RCCHECK(rclc_publisher_init_best_effort(&tf_pub, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(tf2_msgs, msg, TFMessage), "tf"));
-	// RCCHECK(rclc_subscription_init_best_effort(&sub_cmd_vel, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "cmd_vel"));
-	// RCCHECK(rclc_subscription_init_best_effort(&sub_enable, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool), "enable"));
+	// rcl_ret_check(rclc_publisher_init_best_effort(&ctrl_status_pub, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Byte), "ctrl_status"));
+	// rcl_ret_check(rclc_publisher_init_best_effort(&tf_pub, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(tf2_msgs, msg, TFMessage), "tf"));
+	// rcl_ret_check(rclc_subscription_init_best_effort(&sub_cmd_vel, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "cmd_vel"));
+	// rcl_ret_check(rclc_subscription_init_best_effort(&sub_enable, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool), "enable"));
 
 	// inittialize publisher for LaserScanner, default (qos) Settings
-	RCCHECK(rclc_publisher_init_default(&lidar_pub, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, LaserScan), "scan"));
-	RCCHECK(rclc_subscription_init_default(&sub_startScan, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool), "start_scan"));
+	rcl_ret_check(rclc_publisher_init_default(&lidar_pub, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, LaserScan), "scan"));
+	rcl_ret_check(rclc_subscription_init_default(&sub_startScan, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool), "start_scan"));
 	// with deafault (qos) settings
-	RCCHECK(rclc_publisher_init_default(&ctrl_status_pub, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Byte), "ctrl_status"));
-	RCCHECK(rclc_publisher_init_default(&tf_pub, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(tf2_msgs, msg, TFMessage), "tf"));
-	RCCHECK(rclc_subscription_init_default(&sub_cmd_vel, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "cmd_vel"));
-	RCCHECK(rclc_subscription_init_default(&sub_enable, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool), "enable"));
+	rcl_ret_check(rclc_publisher_init_default(&ctrl_status_pub, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Byte), "ctrl_status"));
+	rcl_ret_check(rclc_publisher_init_default(&tf_pub, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(tf2_msgs, msg, TFMessage), "tf"));
+	rcl_ret_check(rclc_subscription_init_default(&sub_cmd_vel, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "cmd_vel"));
+	rcl_ret_check(rclc_subscription_init_default(&sub_enable, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool), "enable"));
 
 	// with qos settings
 	//	rmw_qos_profile_t qos = {RMW_QOS_POLICY_HISTORY_KEEP_LAST, 5, RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT, RMW_QOS_POLICY_DURABILITY_VOLATILE, false};
-	//	RCCHECK(rclc_publisher_init(&ctrl_status, &node, rosidl_typesupport_c__get_message_type_support_handle__std_msgs__msg__Byte(), "ctrl_status", &qos));
-	//	RCCHECK(rclc_publisher_init(&tf_publisher, &node, rosidl_typesupport_c__get_message_type_support_handle__geometry_msgs__msg__TransformStamped(), "tf", &qos));
-	//	RCCHECK(rclc_subscription_init(&sub_cmd_vel, &node, rosidl_typesupport_c__get_message_type_support_handle__geometry_msgs__msg__Twist(), "cmd_vel", &qos));
-	//	RCCHECK(rclc_subscription_init(&sub_enable, &node, rosidl_typesupport_c__get_message_type_support_handle__std_msgs__msg__Bool(), "enable", &qos));
+	//	rcl_ret_check(rclc_publisher_init(&ctrl_status, &node, rosidl_typesupport_c__get_message_type_support_handle__std_msgs__msg__Byte(), "ctrl_status", &qos));
+	//	rcl_ret_check(rclc_publisher_init(&tf_publisher, &node, rosidl_typesupport_c__get_message_type_support_handle__geometry_msgs__msg__TransformStamped(), "tf", &qos));
+	//	rcl_ret_check(rclc_subscription_init(&sub_cmd_vel, &node, rosidl_typesupport_c__get_message_type_support_handle__geometry_msgs__msg__Twist(), "cmd_vel", &qos));
+	//	rcl_ret_check(rclc_subscription_init(&sub_enable, &node, rosidl_typesupport_c__get_message_type_support_handle__std_msgs__msg__Bool(), "enable", &qos));
 
 	// Create timer.
 	rcl_timer_t timer = rcl_get_zero_initialized_timer();
 	const unsigned int timer_timeout = 500;
-	RCCHECK(rclc_timer_init_default2(&timer, &support, RCL_MS_TO_NS(timer_timeout), timer_cb, true));
+	rcl_ret_check(rclc_timer_init_default2(&timer, &support, RCL_MS_TO_NS(timer_timeout), timer_cb, true));
 
 	// Create LaserScanner Timer
 	rcl_timer_t lidar_timer = rcl_get_zero_initialized_timer();
 	const unsigned int lidar_timer_timeout = 500;
-	RCCHECK(rclc_timer_init_default2(&lidar_timer, &support, RCL_MS_TO_NS(lidar_timer_timeout), rplidar_scan, true));
+	rcl_ret_check(rclc_timer_init_default2(&lidar_timer, &support, RCL_MS_TO_NS(lidar_timer_timeout), rplidar_scan, true));
 
 	// Create executor
 	rclc_executor_t executor = rclc_executor_get_zero_initialized_executor();
-	RCCHECK(rclc_executor_init(&executor, &support.context, 3, &allocator));
+	rcl_ret_check(rclc_executor_init(&executor, &support.context, 3, &allocator));
 
 	// Create LaserScanner executor
 	rclc_executor_t lidar_executor = rclc_executor_get_zero_initialized_executor();
-	RCCHECK(rclc_executor_init(&lidar_executor, &support.context, 2, &allocator)); // 1->2
+	rcl_ret_check(rclc_executor_init(&lidar_executor, &support.context, 2, &allocator)); // 1->2
 
 	// add participants to executor
 	geometry_msgs__msg__Twist cmd_vel;
 	std_msgs__msg__Bool enable_msg;
-	RCCHECK(rclc_executor_add_timer(&executor, &timer));
-	RCCHECK(rclc_executor_add_subscription(&executor, &sub_enable, &enable_msg, &enable_topic_cb, ON_NEW_DATA));
-	RCCHECK(rclc_executor_add_subscription(&executor, &sub_cmd_vel, &cmd_vel, &cmd_cb, ON_NEW_DATA));
+	rcl_ret_check(rclc_executor_add_timer(&executor, &timer));
+	rcl_ret_check(rclc_executor_add_subscription(&executor, &sub_enable, &enable_msg, &enable_topic_cb, ON_NEW_DATA));
+	rcl_ret_check(rclc_executor_add_subscription(&executor, &sub_cmd_vel, &cmd_vel, &cmd_cb, ON_NEW_DATA));
 
 	// add participants to LaserScanner executor
 	std_msgs__msg__Bool start_Scan;
-	RCCHECK(rclc_executor_add_timer(&lidar_executor, &lidar_timer));
-	RCCHECK(rclc_executor_add_subscription(&lidar_executor, &sub_startScan, &start_Scan, &start_Scan_cb, ON_NEW_DATA));
+	rcl_ret_check(rclc_executor_add_timer(&lidar_executor, &lidar_timer));
+	rcl_ret_check(rclc_executor_add_subscription(&lidar_executor, &sub_startScan, &start_Scan, &start_Scan_cb, ON_NEW_DATA));
 
 	while (true) {
-		RCCHECK(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(1))); // before 1000 now 1, because microRos Task waited too long for new Task to work
-		RCCHECK(rclc_executor_spin_some(&lidar_executor, RCL_MS_TO_NS(1)));
+		rcl_ret_check(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(1))); // before 1000 now 1, because microRos Task waited too long for new Task to work
+		rcl_ret_check(rclc_executor_spin_some(&lidar_executor, RCL_MS_TO_NS(1)));
 	}
 
-	RCCHECK(rcl_publisher_fini(&ctrl_status_pub, &node));
-	RCCHECK(rcl_publisher_fini(&tf_pub, &node));
-	RCCHECK(rcl_subscription_fini(&sub_cmd_vel, &node));
-	RCCHECK(rcl_subscription_fini(&sub_enable, &node));
-	RCCHECK(rcl_subscription_fini(&sub_startScan, &node));
-	RCCHECK(rcl_publisher_fini(&lidar_pub, &node));
-	RCCHECK(rcl_node_fini(&node));
+	rcl_ret_check(rcl_publisher_fini(&ctrl_status_pub, &node));
+	rcl_ret_check(rcl_publisher_fini(&tf_pub, &node));
+	rcl_ret_check(rcl_subscription_fini(&sub_cmd_vel, &node));
+	rcl_ret_check(rcl_subscription_fini(&sub_enable, &node));
+	rcl_ret_check(rcl_subscription_fini(&sub_startScan, &node));
+	rcl_ret_check(rcl_publisher_fini(&lidar_pub, &node));
+	rcl_ret_check(rcl_node_fini(&node));
 	vTaskDelete(NULL);
 }
 }

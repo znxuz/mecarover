@@ -118,9 +118,8 @@ STARTUP_FLAGS = \
 				-mfloat-abi=hard \
 				-mthumb
 
-SRCS_PATHS := $(ST_DIR_CORE) $(ST_DIR_DRIVERS) $(ST_DIR_MW) $(ST_DIR_LWIP) $(MICRO_ROS_DIR) mecarover
-
 # TODO replace the blacklist with a whitelist
+SRCS_PATHS := $(ST_DIR_CORE) $(ST_DIR_DRIVERS) $(ST_DIR_MW) $(ST_DIR_LWIP) $(MICRO_ROS_DIR) mecarover
 C_SRCS := $(filter-out \
 		  $(MICRO_ROS_DIR)/extra_sources/microros_transports/dma_transport.c \
 		  $(MICRO_ROS_DIR)/extra_sources/microros_transports/it_transport.c \
