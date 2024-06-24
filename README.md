@@ -4,6 +4,8 @@
 
 # Pull/Update submodules
 
+`git submodule update --init --recursive`
+
 # Build `micro_ros_stm32cubemx_utils` static library
 
 ```sh

@@ -6,11 +6,13 @@ DIR_GUARD = @mkdir -p "$(@D)"
 ST_DIR_CORE := Core
 ST_DIR_DRIVERS := Drivers
 ST_DIR_MW := Middlewares/Third_Party
+ST_DIR_LWIP := LWIP
 
-MICROROS_DIR := micro_ros_stm32cubemx_utils/microros_static_library/libmicroros
-MICROROS_LIB := -L$(MICROROS_DIR) -lmicroros
+MICRO_ROS_DIR := micro_ros_stm32cubemx_utils
+MICRO_ROS_LIB_DIR := micro_ros_stm32cubemx_utils/microros_static_library/libmicroros
+MICRO_ROS_LIB := -L$(MICRO_ROS_LIB_DIR) -lmicroros
 
-EIGEN_DIR := eigen/Eigen
+EIGEN_DIR := eigen
 
 BIN := $(BUILD_DIR)/$(NAME).bin
 EXECUTABLE := $(BUILD_DIR)/$(NAME).elf
@@ -42,9 +44,9 @@ INCL_PATHS := \
 			  -I$(ST_DIR_MW)/LwIP/src/include/compat/posix/sys \
 			  -I$(ST_DIR_MW)/LwIP/src/include/compat/stdc \
 			  -I$(ST_DIR_MW)/LwIP/system/arch \
-			  -I$(MICROROS_DIR)/microros_include \
-			  -ILWIP/App \
-			  -ILWIP/Target
+			  -I$(MICRO_ROS_LIB_DIR)/microros_include \
+			  -I$(ST_DIR_LWIP)/App \
+			  -I$(ST_DIR_LWIP)/Target
 
 FLAGS = \
 		-mcpu=cortex-m7 \
@@ -81,14 +83,13 @@ CPPFLAGS = \
 		   -fno-use-cxa-atexit
 
 LD_FLAGS = \
-		   $(MICROROS_LIB) \
+		   $(MICRO_ROS_LIB) \
 		   -mcpu=cortex-m7 \
 		   -TSTM32F767ZITX_FLASH.ld \
 		   --specs=nosys.specs \
 		   -Wl,-Map=$(MAP_FILES) \
 		   -Wl,--gc-sections \
 		   -static \
-		   $(MICROROS_LIB) \
 		   -u_printf_float \
 		   --specs=nano.specs \
 		   -mfpu=fpv5-d16 \
@@ -117,20 +118,22 @@ STARTUP_FLAGS = \
 				-mfloat-abi=hard \
 				-mthumb
 
+SRCS_PATHS := $(ST_DIR_CORE) $(ST_DIR_DRIVERS) $(ST_DIR_MW) $(ST_DIR_LWIP) $(MICRO_ROS_DIR) mecarover
+
 # TODO replace the blacklist with a whitelist
 C_SRCS := $(filter-out \
-		  ./micro_ros_stm32cubemx_utils/extra_sources/microros_transports/dma_transport.c \
-		  ./micro_ros_stm32cubemx_utils/extra_sources/microros_transports/it_transport.c \
-		  ./micro_ros_stm32cubemx_utils/extra_sources/microros_transports/udp_transport.c \
-		  ./micro_ros_stm32cubemx_utils/extra_sources/microros_transports/usb_cdc_transport.c \
-		  ./micro_ros_stm32cubemx_utils/sample_main.c \
-		  ./micro_ros_stm32cubemx_utils/sample_main_embeddedrtps.c \
-		  ./micro_ros_stm32cubemx_utils/sample_main_udp.c \
-		  ./$(ST_DIR_CORE)/Src/freertos.c \
-		  ./$(ST_DIR_CORE)/Src/syscalls.c \
-		  ./$(ST_DIR_CORE)/Src/sysmem.c \
-		  , $(shell find . -type f -name "*.c"))
-CPP_SRCS := $(shell find . -type f -name "*.cpp")
+		  $(MICRO_ROS_DIR)/extra_sources/microros_transports/dma_transport.c \
+		  $(MICRO_ROS_DIR)/extra_sources/microros_transports/it_transport.c \
+		  $(MICRO_ROS_DIR)/extra_sources/microros_transports/udp_transport.c \
+		  $(MICRO_ROS_DIR)/extra_sources/microros_transports/usb_cdc_transport.c \
+		  $(MICRO_ROS_DIR)/sample_main.c \
+		  $(MICRO_ROS_DIR)/sample_main_embeddedrtps.c \
+		  $(MICRO_ROS_DIR)/sample_main_udp.c \
+		  $(ST_DIR_CORE)/Src/freertos.c \
+		  $(ST_DIR_CORE)/Src/syscalls.c \
+		  $(ST_DIR_CORE)/Src/sysmem.c \
+		  , $(shell find $(SRCS_PATHS) -type f -name "*.c"))
+CPP_SRCS := $(shell find $(SRCS_PATHS) -type f -name "*.cpp")
 S_SRC := $(ST_DIR_CORE)/Startup/startup_stm32f767zitx.s
 OBJS := $(addprefix $(BUILD_DIR)/, $(C_SRCS:.c=.o)) \
 		$(addprefix $(BUILD_DIR)/, $(CPP_SRCS:.cpp=.o)) \
