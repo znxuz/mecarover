@@ -1,6 +1,7 @@
 # Prerequisites
 
 - `docker`
+- `tmux`
 
 # Pull/Update submodules
 

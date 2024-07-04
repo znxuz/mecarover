@@ -12,7 +12,7 @@ bottom_left_pane()
 
 current_pane()
 {
-	echo "docker run -it --rm --net=host -e ROS_DOMAIN_ID=56 ros2-jazzy-mine"
+	echo "docker run -it --rm --net=host -e ROS_DOMAIN_ID=42 ros2-jazzy-mine"
 }
 
 tmux bind-key C-l send-keys -R \; clear-history

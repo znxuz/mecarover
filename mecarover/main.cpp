@@ -37,7 +37,7 @@
 #include <mecarover/controls/MecanumControllerTask.h>
 #include <mecarover/hal/stm_hal.h>
 #include <mecarover/lidar/lidar.h>
-#include <mecarover/microros_init/microros_init.h>
+#include <mecarover/micro_ros/micro_ros.h>
 #include <mecarover/retarget.h>
 #include <mecarover/robot_config.h>
 
@@ -50,8 +50,8 @@ extern "C"
 {
 void SystemClock_Config(void)
 {
-	RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
-	RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
+	RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+	RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
 	/** Configure LSE Drive Capability
 	 */
@@ -106,10 +106,7 @@ void configureTimerForRunTimeStats(void)
 	HAL_TIM_Base_Start_IT(&htim13);
 }
 
-unsigned long getRunTimeCounterValue(void)
-{
-	return ulHighFrequencyTimerTicks;
-}
+unsigned long getRunTimeCounterValue(void) { return ulHighFrequencyTimerTicks; }
 
 /**
  * @brief  This function is executed in case of error occurrence.
@@ -118,10 +115,10 @@ unsigned long getRunTimeCounterValue(void)
 void Error_Handler(void)
 {
 	/* USER CODE BEGIN Error_Handler_Debug */
-	/* User can add his own implementation to report the HAL error return state */
+	/* User can add his own implementation to report the HAL error return state
+	 */
 	__disable_irq();
-	while (1) {
-	}
+	while (1) { }
 	/* USER CODE END Error_Handler_Debug */
 }
 
@@ -133,18 +130,19 @@ void Error_Handler(void)
  * @param  line: assert_param error line source number
  * @retval None
  */
-void assert_failed(uint8_t *file, uint32_t line)
+void assert_failed(uint8_t* file, uint32_t line)
 {
 	/* USER CODE BEGIN 6 */
-	/* User can add his own implementation to report the file name and line number,
-ex: printf("Wrong parameters value: file %s on line %d\n", file, line) */
+	/* User can add his own implementation to report the file name and line
+number, ex: printf("Wrong parameters value: file %s on line %d\n", file, line)
+*/
 	/* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
 
-int _gettimeofday( struct timeval *tv, void *tzvp )
+int _gettimeofday(struct timeval* tv, void* tzvp)
 {
-    return 0; // not used, thus unimplemented to satisfy the compiler
+	return 0; // not used, thus unimplemented to satisfy the compiler
 }
 }
 
@@ -174,22 +172,21 @@ int main()
 
 	osKernelInitialize();
 
-	auto *controller_task = new MecanumControllerTask<real_t>();
+	auto* controller_task = new MecanumControllerTask<real_t>();
 	controller_task->Init(&fz, Regler, Ta);
 	ls.init_LaserScanner();
 
-	xTaskCreate(uros_init, "executor", STACK_SIZE, controller_task,
-			(osPriority_t)MICRO_ROS_TASK_PRIORITY, NULL);
+	xTaskCreate(micro_ros, "executor", STACK_SIZE, controller_task,
+				MICRO_ROS_TASK_PRIORITY, NULL);
 
 	osKernelStart();
 
 	/* code unreachable due to the scheduler never returning
-	log_message(log_error, "ERROR: the program counter should never reach here\n");
-	// RT_PeriodicTimer loopTimer(500); // wait period 500 ms = 2 Hz loop frequency
-	RT_PeriodicTimer loopTimer(Ta.FzLage * 1000); // wait period is pose controller period
-	loopTimer.init();
-	int loopCounter = 0;
-	real_t test;
+	log_message(log_error, "ERROR: the program counter should never reach
+	here\n");
+	// RT_PeriodicTimer loopTimer(500); // wait period 500 ms = 2 Hz loop
+	frequency RT_PeriodicTimer loopTimer(Ta.FzLage * 1000); // wait period is
+	pose controller period loopTimer.init(); int loopCounter = 0; real_t test;
 	while (true) {
 		log_message(log_info, "main while Log Message Test\n");
 
