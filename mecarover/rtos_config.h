@@ -9,6 +9,6 @@
 #define LOGGER_TASK_PRIORITY 25
 #define ETH_TASK_PRIORITY 24 //defined ethernetif.c
 #define LWIP_TASK_PRIORITY 23 //defined lwip.c, lowest Priority, Normal Prio - 56 is max, Priority defined in cmsis_os2.h
-#define STACK_SIZE 7500	//20000 Stack Size - Specified in words, so 1 Word = 4 Bytes ->7000
+#define STACK_SIZE 7500 //20000 Stack Size - Specified in words, 1 word = 4 bytes
 #define ETH_SIZE 1500
 //StackSize can be set in STMCubeMX and FreeRTOSConfig.h at configTOTAL_HEAP_SIZE

@@ -148,6 +148,7 @@ int _gettimeofday(struct timeval* tv, void* tzvp)
 
 int main()
 {
+	retarget_init(&huart3);
 	logger_init();
 	HAL_Init();
 	SystemClock_Config();
@@ -164,7 +165,6 @@ int main()
 	MX_TIM13_Init();
 	MX_USART2_UART_Init();
 	MX_USART3_UART_Init();
-	retarget_init(&huart3);
 	hal_init(&fz);
 
 	if (fz.type != MRC_VEHICLETYPE_MECANUM)
@@ -176,7 +176,7 @@ int main()
 	controller_task->Init(&fz, Regler, Ta);
 	ls.init_LaserScanner();
 
-	xTaskCreate(micro_ros, "executor", STACK_SIZE, controller_task,
+	xTaskCreate(micro_ros, "micro_ros", STACK_SIZE, controller_task,
 				MICRO_ROS_TASK_PRIORITY, NULL);
 
 	osKernelStart();
