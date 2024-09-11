@@ -6,9 +6,10 @@
  */
 
 #include "stm_counter.h"
+#include "mecarover/mrlogger/mrlogger.h"
 #include "stm_hal.h"
 
-// ASK ask why the initial value for the encoders are 32767 = 2^15 - 1
+// QUESTION: ask why the initial value for the encoders are 32767 = 2^15 - 1
 #define New_Zero 32767
 #define Max_Value 65535
 // #define Max_Value 100
@@ -42,6 +43,7 @@ bool STMCounter::init(TIM_HandleTypeDef *htim, int id)
 	timer[id] = *htim;
 
 	is_init = true;
+	log_message(log_info, "encoder %d initialization: %s", id, (is_init ? "true" : "false"));
 	return is_init;
 }
 

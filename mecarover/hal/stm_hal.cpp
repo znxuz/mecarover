@@ -90,7 +90,6 @@ int hal_encoder_read(real_t *DeltaPhi)
 int mr_hal_wheel_vel_set_pwm(real_t *duty)
 {
 	for (int i = 0; i < NumMotors; i++) {
-		// ASK wtf does this line even do?
 		duty[i] *= 1; // Rad2PWM
 
 		MotorPWM[i].setPWM(duty[i], Tim_Pwm[i],

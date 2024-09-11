@@ -23,6 +23,8 @@ static TaskHandle_t logger_server = NULL; // thread for writng messages to termi
 static SemaphoreHandle_t msgmutex = NULL;
 static QueueHandle_t msgque = NULL;
 
+static size_t counter = 0;
+
 typedef struct {
 	mr_logprio_t prio;
 	char msg[MSGSIZE];
@@ -128,11 +130,14 @@ void log_message(mr_logprio_t prio, const char* format, ...)
 {
 	mr_logger_msg msg;
 
+	char numbering[20];
+	snprintf(numbering, sizeof(numbering), "%d. ", counter++);
+	strcpy(msg.msg, numbering);
+
 	msg.prio = prio;
 	va_list arglist;
-
 	va_start(arglist, format);
-	int ret = vsnprintf(msg.msg, sizeof(msg.msg), format, arglist);
+	int ret = vsnprintf(msg.msg + strlen(numbering), sizeof(msg.msg), format, arglist);
 	va_end(arglist);
 
 	// Abort if printf gave an error or no message is to be logged

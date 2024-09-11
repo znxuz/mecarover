@@ -14,7 +14,6 @@ void call_wheel_control_task(void* arg);
 
 static inline int get_ref_pose(Pose_t p)
 {
-	// ASK has to be implemented
 	// get reference pose from interpolator
 	return 0;
 }
@@ -229,7 +228,7 @@ public:
 								////          log_message(log_debug, "pose controller loop max calculation time: %i µs", max_elapsed_time);
 								//          log_message(log_debug, "pose controller jitter: %li µs", max_elapsed_time - 15000);
 								//        }
-			// ASK why wait two times?
+			// QUESTION: why wait two times?
 			LgrSchedSem.wait(); // wait for signal from wheel controller
 								//        start_time = __HAL_TIM_GET_COUNTER(&htim13); // get time in microseconds since start
 
@@ -274,7 +273,6 @@ public:
 
 				// set pose_manual from vel
 				ManualModeInterface(vel_rframe_sp, vel_rframe_prev, pose_manual);
-				// ASK: why count to 100 before logging
 				if (count++ > 100) {
 					count = 0;
 					log_message(log_debug, "manual pose via velocity x: %f, y: %f, theta: %f",

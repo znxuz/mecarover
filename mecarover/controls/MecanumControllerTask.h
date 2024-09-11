@@ -26,7 +26,7 @@ public:
 		CT::DegFreed = 4;
 		Controller.Init(fz, Regler, Ta);
 
-		// ASK why commented out?? the mutex is used all over the place
+		// QUESTION: why commented out?? the mutex is used all over the place
 		// if (!ContrMutex.create()) {
 		//   log_message(log_error, "%s: Can init mutex: %s", __FUNCTION__,
 		//   strerror(errno));
@@ -90,8 +90,6 @@ protected:
 		for (int i = 0; i < CT::NumbWheels; i++)
 			wheel_rotation_delta_matrix(i) = RadDeltaPhi[i];
 
-		// multiply the wheel rotation delta to the inverse jacobi matrix to
-		// get the robot velocity
 		VehicleVel matrix_robot_vel = Controller.vWheel2vRF(wheel_rotation_delta_matrix);
 
 		// convert vm to global type dPose<T>
@@ -114,12 +112,10 @@ protected:
 
 		vPose<T> vel_wframe_sp = vRF2vWF<T>(vel_rframe_sp, CT::getPose().theta);
 
-		// ASK: multiply the velocity with the sampling frequency to get the pose?
 		pose_manual.x += vel_wframe_sp.vx * CT::Ta.FzLage;
 		pose_manual.y += vel_wframe_sp.vy * CT::Ta.FzLage;
 		pose_manual.theta += vel_wframe_sp.omega * CT::Ta.FzLage;
 
-		// ASK: why count to 100 before logging?
 		/*
 		   static int count = 0;
 		   if (count++ > 100) {
@@ -129,7 +125,7 @@ protected:
 		   */
 	}
 
-	// ASK functions below are not used, ask what they are for
+	// QUESTION: functions below are not used, ask what they are for
 	/*
 	   int CleanUp() override {
 	   ContrMutex.Delete();

@@ -33,6 +33,7 @@
 #include <stm32f7xx_hal.h>
 #include <tim.h>
 #include <usart.h>
+#include <lwip.h>
 
 #include <mecarover/controls/MecanumControllerTask.h>
 #include <mecarover/hal/stm_hal.h>

@@ -58,7 +58,6 @@ FLAGS = \
 		-O0 \
 		-ffunction-sections \
 		-fdata-sections \
-		-u_printf_float \
 		-Wall \
 		-fstack-usage \
 		-MMD \

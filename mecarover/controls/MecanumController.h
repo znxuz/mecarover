@@ -57,25 +57,21 @@ public:
 			1.0 / LplusBhalbe, -1.0 / LplusBhalbe, -1.0 / LplusBhalbe, 1.0 / LplusBhalbe,
 			4.0 / Radradius, 4.0 / Radradius, -4.0 / Radradius, -4.0 / Radradius;
 		this->inv_j *= Radradius / 4.0;
-
-		//            std::cerr << "J: " << J << std::endl;
-		//            std::cerr << "iJ: " << iJ << std::endl;
 	}
 
 	Pose<T> odometry(const Pose<T>& oldPose, const VelWheel &rad_delta_phi_matrix) override
 	{
-		VelRF rframe_vel = this->vWheel2vRF(rad_delta_phi_matrix);
+		VelRF vel_rframe = this->vWheel2vRF(rad_delta_phi_matrix);
 
-		// ASK: why are delta velocity assigned to delta pose
-		dPose<T> rframe_delta;
-		rframe_delta.x = rframe_vel(0); // movement in x direction
-		rframe_delta.y = rframe_vel(1); // movement in y direction
-		rframe_delta.theta = rframe_vel(2); // rotation around z axis (theta)
-		epsilon1 += rframe_vel(3); // coupling error (delta)
+		dPose<T> delta_pose_rframe;
+		delta_pose_rframe.x = vel_rframe(0); // movement in x direction
+		delta_pose_rframe.y = vel_rframe(1); // movement in y direction
+		delta_pose_rframe.theta = vel_rframe(2); // rotation around z axis (theta)
+		epsilon1 += vel_rframe(3); // coupling error (delta)
 
-		dPose<T> wframe_delta = dRF2dWF<T>(rframe_delta, oldPose.theta + rframe_delta.theta / static_cast<T>(2));
+		dPose<T> delta_pose_wframe = dRF2dWF<T>(delta_pose_rframe, oldPose.theta + delta_pose_rframe.theta / static_cast<T>(2));
 
-		auto newPose = oldPose + wframe_delta;
+		auto newPose = oldPose + delta_pose_wframe;
 
 		// unused because both the counter and the delta
 		// are never updated
@@ -113,10 +109,6 @@ public:
 			throw MRC_LAGEERR;
 		}
 
-		// ASK: why multiply the pose delta with LageKv to seemingly get the
-		// velocity in world frame? Shouldn't the delta values be divided by the
-		// sampling frequency first, if the LageKv is supposed to be the
-		// proportional gain from the PID controls?
 		vPose<T> vel_wframe_sp;
 		vel_wframe_sp.vx = pose_sp.vx + pose_delta.x * Regler.LageKv.x;
 		vel_wframe_sp.vy = pose_sp.vy + pose_delta.y * Regler.LageKv.y;
@@ -127,7 +119,7 @@ public:
 		v(0) = vel_rframe_sp.vx;
 		v(1) = vel_rframe_sp.vy;
 		v(2) = vel_rframe_sp.omega;
-		v(3) = Regler.Koppel * epsilon1; // ASK Koppel is the proportional scaler from PID?
+		v(3) = Regler.Koppel * epsilon1; // ASK: Koppel is the proportional scaler from PID?
 		return v;
 	}
 
@@ -193,7 +185,7 @@ public:
 		return vel_rframe;
 	}
 
-	// ASK functions below are not used, ask what they are for
+	// QUESTION: functions below are not used, ask what they are for
 	void poseUpdate(dPose<T> delta, unsigned int divisor) override
 	{
 		DeltaPoseCounter = divisor;

@@ -47,11 +47,13 @@ public:
 
 	VehicleController() = default;
 
+	// forward kinematic from wheel velocity to robot velocity
 	VelRF vWheel2vRF(const VelWheel &u) const
 	{
 		return inv_j * u;
 	}
 
+	// backward kinematic from robot velocity to wheel velocity
 	VelWheel vRF2vWheel(const VelRF &v) const
 	{
 		return j * v;
