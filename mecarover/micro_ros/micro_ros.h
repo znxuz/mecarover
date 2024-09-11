@@ -61,10 +61,9 @@ odometry: ros2 topic echo /tf
 
 #include <mecarover/micro_ros/eth_transport.h>
 
-static inline constexpr size_t ROS_DOMAIN_ID = 42;
-
 extern "C"
 {
+static inline constexpr size_t ROS_DOMAIN_ID = 42;
 static eth_transport_params_t TRANSPORT_PARAMS
 	= {{0, 0, 0}, {"192.168.1.228"}, {"8888"}};
 };

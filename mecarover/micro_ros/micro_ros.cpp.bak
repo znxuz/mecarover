@@ -1,3 +1,5 @@
+#include <experimental/source_location>
+
 #include <geometry_msgs/msg/transform_stamped.h>
 #include <geometry_msgs/msg/twist.h>
 #include <sensor_msgs/msg/detail/laser_scan__struct.h>
@@ -7,7 +9,6 @@
 #include <std_msgs/msg/byte.h>
 #include <tf2_msgs/msg/tf_message.h>
 
-// micro-ros headers
 #include <rcl/allocator.h>
 #include <rcl/rcl.h>
 #include <rclc/executor.h>
@@ -16,14 +17,13 @@
 #include <rmw_microros/rmw_microros.h>
 #include <uxr/client/config.h>
 
-// nav2
 #include <nav_msgs/msg/odometry.h>
 
 #include <lwip.h>
 #include <mecarover/controls/ControllerTask.h>
 #include <mecarover/lidar/lidar.h>
-
-#include <experimental/source_location>
+#include <mecarover/mrlogger/mrlogger.h>
+#include <mecarover/hal/stm_hal.h>
 
 #include "eth_transport.h"
 #include "micro_ros.h"
@@ -76,26 +76,7 @@ rcl_publisher_t lidar_pub;
 
 void rplidar_scan(rcl_timer_t* timer, int64_t last_call_time)
 {
-	/* Package the data into the correct format
-	 * Here is what is in the LaserScan message:
-	 * Header header
-	 * timestamp in the header is the acquisition time of the first ray in the
-	 * scan. in frame frame_id, angles are measured around the positive Z axis
-	 * (counterclockwise, if Z is up) with zero angle being forward along the x
-	 * axis
-
-	 * float32 angle_min        # start angle of the scan [rad]
-	 * float32 angle_max        # end angle of the scan [rad]
-	 * float32 angle_increment  # angular distance between measurements [rad]
-	 * float32 time_increment   # time between measurements [seconds] - if your
-	 * scanner is moving, this will be used in interpolating position of 3d
-	 * points float32 scan_time        # time between scans [seconds] float32
-	 * range_min        # minimum range value [m] float32 range_max        #
-	 * maximum range value [m] float32[] ranges         # range data [m] (Note:
-	 * values < range_min or > range_max should be discarded) float32[]
-	 * intensities    # intensity data [device-specific units].  If your device
-	 * does not provide intensities, please leave the array empty.
-	 */
+	// more info at `ros2 interface show sensor_msgs/msg/LaserScan`
 
 	// Synchronize the ROS time
 	rcl_ret_softcheck(rmw_uros_sync_session(1000));
@@ -189,7 +170,7 @@ void cmd_cb(const void* cmd_msg)
 {
 	const auto* msg
 		= reinterpret_cast<const geometry_msgs__msg__Twist*>(cmd_msg);
-	log_message(log_debug, "cmd_vel x: %f, y: %f, theta: %f", msg->linear.x,
+	log_message(log_info, "cmd_vel x: %f, y: %f, theta: %f", msg->linear.x,
 				msg->linear.y, msg->angular.z);
 
 	imsl::vPose<real_t> v_ref;
@@ -199,6 +180,9 @@ void cmd_cb(const void* cmd_msg)
 
 	if (controller) [[unlikely]]
 		controller->SetManuRef(v_ref);
+
+	real_t encoder_delta[4];
+	hal_encoder_read(encoder_delta);
 }
 
 void enable_topic_cb(const void* enable_topic)
