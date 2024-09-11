@@ -25,8 +25,8 @@
 #include <mecarover/mrlogger/mrlogger.h>
 #include <mecarover/hal/stm_hal.h>
 
-#include "eth_transport.h"
-#include "micro_ros.h"
+#include "micro_ros.hpp"
+#include "eth_transport.hpp"
 
 using namespace imsl;
 using namespace imsl::vehiclecontrol;
@@ -66,8 +66,6 @@ void* microros_zero_allocate(size_t number_of_elements, size_t size_of_element,
 
 extern LaserScanner ls;
 
-namespace imsl
-{
 vehiclecontrol::ControllerTask<real_t>* controller = nullptr;
 
 rcl_publisher_t tf_pub;
@@ -306,5 +304,4 @@ void micro_ros(void* arg)
 	rcl_ret_check(rcl_publisher_fini(&lidar_pub, &node));
 	rcl_ret_check(rcl_node_fini(&node));
 	vTaskDelete(NULL);
-}
 }

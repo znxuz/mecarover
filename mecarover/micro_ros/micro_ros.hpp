@@ -59,15 +59,15 @@ odometry: ros2 topic echo /tf
 
 #include <cstddef>
 
-#include <mecarover/micro_ros/eth_transport.h>
+#include <mecarover/micro_ros/eth_transport.hpp>
 
 extern "C"
 {
+
 static inline constexpr size_t ROS_DOMAIN_ID = 42;
 static eth_transport_params_t TRANSPORT_PARAMS
 	= {{0, 0, 0}, {"192.168.1.228"}, {"8888"}};
-};
 
-namespace imsl {
-	void micro_ros(void *ct);
-}
+void micro_ros(void *ct);
+
+};

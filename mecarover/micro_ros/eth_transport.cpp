@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "eth_transport.h"
+#include "eth_transport.hpp"
 
 bool eth_transport_open(struct uxrCustomTransport* transport)
 {

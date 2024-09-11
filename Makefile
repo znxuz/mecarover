@@ -127,7 +127,8 @@ C_SRCS_EXCLS :=  \
 		  $(MICRO_ROS_DIR)/sample_main_udp.c \
 		  $(ST_DIR_CORE)/Src/freertos.c \
 		  $(ST_DIR_CORE)/Src/syscalls.c \
-		  $(ST_DIR_CORE)/Src/sysmem.c
+		  $(ST_DIR_CORE)/Src/sysmem.c \
+		  mecarover/micro_ros/micro_ros.cpp.bak
 SRCS_PATHS := $(ST_DIR_CORE) $(ST_DIR_DRIVERS) $(ST_DIR_MW) $(ST_DIR_LWIP) $(MICRO_ROS_DIR) mecarover
 C_SRCS := $(filter-out $(C_SRCS_EXCLS), $(shell find $(SRCS_PATHS) -type f -name "*.c"))
 CPP_SRCS_EXCLS :=

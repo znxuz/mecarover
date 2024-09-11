@@ -38,7 +38,7 @@
 #include <mecarover/controls/MecanumControllerTask.h>
 #include <mecarover/hal/stm_hal.h>
 #include <mecarover/lidar/lidar.h>
-#include <mecarover/micro_ros/micro_ros.h>
+#include <mecarover/micro_ros/micro_ros.hpp>
 #include <mecarover/retarget.h>
 #include <mecarover/robot_config.h>
 

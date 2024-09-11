@@ -31,8 +31,8 @@
 
 #include <experimental/source_location>
 
-#include "eth_transport.h"
-#include "micro_ros.h"
+#include "eth_transport.hpp"
+#include "micro_ros.hpp"
 #include "wheel_vel_msg.h"
 
 using namespace imsl;
@@ -69,9 +69,6 @@ extern "C"
 rclc_support_t support;
 rcl_allocator_t allocator;
 rcl_init_options_t init_options;
-
-namespace imsl
-{
 
 void init()
 {
@@ -122,11 +119,11 @@ void odometry_callback(rcl_timer_t* timer, int64_t last_call_time)
 void wheel_vel_callback(const void* arg)
 {
 	const auto* wheel_vel_msg
-		= reinterpret_cast<const std_msgs__msg__Float64MultiArray*>(arg);
-	// log_message(log_info,
-		// "wheel_vel_callback wheel velocities: [%.2f], [%.2f], [%.2f], [%.2f]",
-		// wheel_vel_msg->data.data[0], wheel_vel_msg->data.data[1],
-		// wheel_vel_msg->data.data[2], wheel_vel_msg->data.data[3]);
+		= reinterpret_cast<const struct wheel_vel_msg*>(arg);
+	log_message(log_info,
+		"wheel_vel_callback wheel velocities: [%.2f], [%.2f], [%.2f], [%.2f]",
+		wheel_vel_msg->operator[](0), wheel_vel_msg->operator[](1),
+		wheel_vel_msg->operator[](2), wheel_vel_msg->operator[](3));
 }
 
 void micro_ros(void* arg)
@@ -149,7 +146,9 @@ void micro_ros(void* arg)
 	rclc_executor_add_timer(&odometry_exe, &timer);
 
 	auto interpolate_exe = rclc_executor_get_zero_initialized_executor();
-	rclc_executor_init(&interpolate_exe, &support.context, 2, &allocator);
+	rclc_executor_init(
+		&interpolate_exe, &support.context, 2,
+		&allocator); // TODO: number of handles is given here, extract as config
 
 	rcl_subscription_t sub_odometry;
 	rclc_subscription_init_default(
@@ -169,7 +168,8 @@ void micro_ros(void* arg)
 
 	rclc_publisher_init_default(
 		&pub_wheel_vel, &node,
-		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float64MultiArray), "wheel_vel");
+		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float64MultiArray),
+		"wheel_vel");
 
 	rcl_subscription_t sub_wheel_vel;
 	rclc_subscription_init_default(
@@ -180,8 +180,8 @@ void micro_ros(void* arg)
 	rclc_executor_init(&action_exe, &support.context, 1, &allocator);
 
 	wheel_vel_msg msg;
-	rclc_executor_add_subscription(&action_exe, &sub_wheel_vel,
-			&msg.msg, &wheel_vel_callback, ON_NEW_DATA);
+	rclc_executor_add_subscription(&action_exe, &sub_wheel_vel, &msg.msg,
+								   &wheel_vel_callback, ON_NEW_DATA);
 
 	log_message(log_info, "debug: starting the loop");
 	for (;;) {
@@ -191,34 +191,4 @@ void micro_ros(void* arg)
 	}
 }
 
-/*void bak()
-{
-	auto executor = rclc_executor_get_zero_initialized_executor();
-	rcl_ret_check(
-		rclc_executor_init(&executor, &support.context, 2, &allocator));
-
-	auto timer = rcl_get_zero_initialized_timer();
-	const unsigned int timer_timeout = 1000;
-	rcl_ret_check(rclc_timer_init_default2(
-		&timer, &support, RCL_MS_TO_NS(timer_timeout), timer_callback, true));
-
-	rcl_ret_check(rclc_executor_add_timer(&executor, &timer));
-
-	rcl_node_t node;
-	rcl_ret_check(rclc_node_init_default(&node, "cmd_vel_sub", "", &support));
-
-	rcl_subscription_t sub_cmd_vel;
-	init_sub_cmd_vel(&sub_cmd_vel, &node, &executor);
-
-	while (true) {
-		rcl_ret_check(rclc_executor_spin_some(
-			&executor,
-			RCL_MS_TO_NS(1))); // before 1000 now 1, because microRos Task
-							   // waited too long for new Task to work
-	}
 }
-*/
-
-}
-
-};
