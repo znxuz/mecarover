@@ -27,7 +27,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <mecarover/mecarover.hpp>
 #include <mecarover/hal/stm_counter.hpp>
 /* USER CODE END Includes */
 
@@ -126,7 +125,6 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  mecarover_start();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

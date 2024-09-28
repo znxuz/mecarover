@@ -25,6 +25,8 @@
  *
  */
 
+// FIXME: change to uint32_t because timer registers are 32bit
+// TODO: why new_Zero, why flow
 int64_t flow[NumMotors] = { -New_Zero, -New_Zero, -New_Zero, -New_Zero };
 int64_t akt_pos[NumMotors] = { 0, 0, 0, 0 };
 TIM_HandleTypeDef timer[NumMotors];
@@ -47,10 +49,12 @@ bool STMCounter::init(TIM_HandleTypeDef *htim, int id)
 	return is_init;
 }
 
-uint64_t STMCounter::getCount(int id)
+uint64_t STMCounter::getCount(uint8_t id)
 {
-	if (!is_init) [[unlikely]]
+	if (!is_init) [[unlikely]] {
+		log_message(log_error, "encoder not initialized");
 		return 0;
+	}
 
 	akt_pos[id] = __HAL_TIM_GET_COUNTER(&timer[id]);
 	return akt_pos[id] + flow[id];

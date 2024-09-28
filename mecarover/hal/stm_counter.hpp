@@ -7,7 +7,7 @@ class STMCounter {
 public:
 	STMCounter() = default;
 	bool init(TIM_HandleTypeDef* htim, int id);
-	uint64_t getCount(int id);
+	uint64_t getCount(uint8_t id);
 
 private:
 	bool is_init = false;

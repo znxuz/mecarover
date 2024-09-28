@@ -44,13 +44,7 @@ private:
 	RT_Semaphore LgrSchedSem; // Semphore zum Wecken des Lagereglers
 
 	Pose<T> PosAkt; /* Aktuelle Position des Roboters, alle Sensoren */
-	Pose<T> OPosAkt; /* Aktuelle Position nur Odometrie */
-	Pose<T> GOPosAkt; /* Aktuelle Position Odometrie mit Gyroskop Fusion */
-	vPose<T> rframe_vel_actual; /* Aktuelle Geschwindigkeit in Roboterkoordinaten */
 	RT_Mutex PosAktMut; // Mutex fuer die Posen
-
-	Heading<T> OdoHeading; // Heading of the vehicle calculated by odometry only
-	RT_Mutex OdoHeadingMutex; // Mutex fuer OdoHeading
 
 	bool UseWheelControllerTask = false;
 
@@ -143,11 +137,6 @@ public:
 		UseWheelControllerTask = Ta.FzDreh > 0.0;
 
 		if (!PosAktMut.create()) {
-			log_message(log_error, "%s: Can init mutex", __FUNCTION__);
-			return -1;
-		}
-
-		if (!OdoHeadingMutex.create()) {
 			log_message(log_error, "%s: Can init mutex", __FUNCTION__);
 			return -1;
 		}
@@ -344,7 +333,7 @@ public:
 		// ASK can it also be 0?
 		int counter = Ta.FzLageZuDreh;
 
-		size_t free_heap = xPortGetMinimumEverFreeHeapSize(); // ESP.getMinFreeHeap(); //lowest level of free heap since boot
+		size_t free_heap = xPortGetMinimumEverFreeHeapSize();
 		uint32_t free_stack = lageregler_thread.getStackHighWaterMark();
 		log_message(log_info, "wheel controller initialized running into control loop, free heap: %d, free stack: %ld",
 			free_heap, free_stack);
@@ -481,135 +470,6 @@ public:
 		PosAktMut.unlock();
 	}
 
-	// TODO delete: unused
-	int SetPose(Pose_t* pose, int delta)
-	{
-		PosAktMut.lock();
-
-		if (delta) { // relative pose
-			PosAkt.x -= pose->x;
-			PosAkt.y -= pose->y;
-			PosAkt.theta -= pose->theta;
-		} else { // absolute pose
-			PosAkt.x = pose->x;
-			PosAkt.y = pose->y;
-			PosAkt.theta = pose->theta;
-		}
-
-		PosAktMut.unlock();
-		return 0;
-	}
-
-	int GetOPose(Pose_t* pose)
-	{
-		PosAktMut.lock();
-
-		pose->x = OPosAkt.x;
-		pose->y = OPosAkt.y;
-		pose->theta = OPosAkt.theta;
-
-		PosAktMut.unlock();
-		return 0;
-	}
-
-	int GetGOPose(Pose_t* pose)
-	{
-		PosAktMut.lock();
-
-		pose->x = GOPosAkt.x;
-		pose->y = GOPosAkt.y;
-		pose->theta = GOPosAkt.theta;
-
-		PosAktMut.unlock();
-		return 0;
-	}
-
-	int SetOPose(Pose_t* pose)
-	{
-		PosAktMut.lock();
-
-		OPosAkt.x = pose->x;
-		OPosAkt.y = pose->y;
-		OPosAkt.theta = pose->theta;
-
-		PosAktMut.unlock();
-
-		return 0;
-	}
-
-	int SetGOPose(Pose_t* pose)
-	{
-		PosAktMut.lock();
-
-		GOPosAkt.x = pose->x;
-		GOPosAkt.y = pose->y;
-		GOPosAkt.theta = pose->theta;
-
-		PosAktMut.unlock();
-
-		return 0;
-	}
-
-	int GetRFVel(Pose_t* vel)
-	{
-		PosAktMut.lock();
-
-		vel->x = rframe_vel_actual.vx;
-		vel->y = rframe_vel_actual.vy;
-		vel->theta = rframe_vel_actual.omega;
-
-		PosAktMut.unlock();
-		return 0;
-	}
-
-	T GetSamplingTime(void)
-	{
-		return Ta.FzLage;
-	}
-
-	// TODO pruefen !!!
-	int getOdometryHeading(T* odoHeading)
-	{
-		T oh;
-
-		OdoHeadingMutex.lock();
-		oh = OdoHeading;
-		OdoHeadingMutex.unlock();
-
-		*odoHeading = oh;
-		return 0;
-	}
-
-	// unused
-	void OdometrieCallback()
-	{
-		T RadDeltaPhi[4]; /* Geschwindigkeits-Istwert der Raeder in Rad  */
-		T timediff = Ta.FzLage / Ta.FzLageZuDreh; // calculate cycle time of odometry
-
-		if (hal_encoder_read(RadDeltaPhi) < 0) {
-			SetControllerMode(CtrlMode::OFF);
-			log_message(log_error, "%s/%s: Can not read encoder values",
-				__FILE__, __FUNCTION__);
-			// log_message(log_error, "error reading encoder values, switching controller off");
-			// Fehlerbehandlung: Keine Encoder-Werte über CAN-Bus empfangen
-		}
-
-		Odometry(RadDeltaPhi, timediff);
-
-		// wake up pose controller
-		/*
-		 * Den Lageregler im Teilerverhaeltnis Lage/Dreh mittels Event wecken
-		 * Inkrement und Mudo-Operation müssen getrennt bleiben, sonst ist das
-		 * Verhalten laut C-Standard undefiniert!
-		 */
-		static int counter = 0;
-		++counter;
-		counter = counter % Ta.FzLageZuDreh;
-		if (counter == 0) {
-			LgrSchedSem.signal();
-		}
-	}
-
 private:
 	void mr_radsollwert_set(const T* sollw)
 	{
@@ -629,45 +489,19 @@ private:
 		return 0;
 	}
 
-	void Odometry(const T* RadDeltaPhi, T timediff)
+	void Odometry(const T* RadDeltaPhi, T timediff) // timediff = Fz.Dreh
 	{
 		dPose<T> wfm, robot_vel;
 
 		// call subclass
 		OdometryInterface(RadDeltaPhi, robot_vel);
 
-		rframe_vel_actual.vx = robot_vel.x / timediff;
-		rframe_vel_actual.vy = robot_vel.y / timediff;
-		rframe_vel_actual.omega = robot_vel.theta / timediff;
-
-		// update odometry heading
-		OdoHeadingMutex.lock();
-		OdoHeading += robot_vel.theta;
-		OdoHeadingMutex.unlock();
-
 		PosAktMut.lock();
-
-		// new odometry pose
-		// movements in world frame with odo pose
-		wfm = dRF2dWF<T>(robot_vel, OPosAkt.theta + robot_vel.theta / T(2.0));
-		OPosAkt.x += wfm.x;
-		OPosAkt.y += wfm.y;
-		OPosAkt.theta += wfm.theta;
-
-		// new gyro odo pose
-		// movements in world frame with gyro odo pose
-		wfm = dRF2dWF<T>(robot_vel, GOPosAkt.theta + robot_vel.theta / T(2.0));
-		GOPosAkt.x += wfm.x;
-		GOPosAkt.y += wfm.y;
-		GOPosAkt.theta += wfm.theta;
-
 		// movement with actual heading
 		wfm = dRF2dWF<T>(robot_vel, PosAkt.theta + robot_vel.theta / T(2.0));
-
 		PosAkt.vx = wfm.x / timediff;
 		PosAkt.vy = wfm.y / timediff;
 		PosAkt.omega = wfm.theta / timediff;
-
 		PosAktMut.unlock();
 	}
 };

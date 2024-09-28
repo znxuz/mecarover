@@ -85,10 +85,11 @@ alpha = 0.5;
 // time constants
 static constexpr inline Abtastzeit_t Ta = {
 	.Timer = 0.001, // 1 ms timer tick
-					//                    0.003, // 3 ms sampling time of wheel control loop
 	.FzDreh = 0.005, // 5 ms sampling time of wheel control loop
+	//		0.003, // 3 ms sampling time of wheel control loop
 	.FzLage = 0.015, // 15 ms sampling time of pose control loop
-	.FzLageZuDreh = 3}; // 15 ms / 5 ms ratio pose / wheel
+	.FzLageZuDreh = 3 // 15 ms / 5 ms ratio pose / wheel
+};
 
 /* FILU Roboter
 // ------------------------- FILU robot configuration

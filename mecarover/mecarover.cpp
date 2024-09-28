@@ -1,3 +1,4 @@
+#include "mecarover/mrlogger/mrlogger.h"
 #include <tim.h>
 #include <usart.h>
 
@@ -34,12 +35,11 @@ void mecarover_start(void)
 	logger_init();
 	hal_init(&fz);
 
+	log_message(log_info, "mecarover start");
 	if (fz.type != MRC_VEHICLETYPE_MECANUM) {
 		log_message(log_error, "Vehicle type is not mecanum");
 		Error_Handler();
 	}
-
-	osKernelInitialize();
 
 	auto* controller_task
 		= new imsl::vehiclecontrol::MecanumControllerTask<real_t>();
@@ -54,5 +54,6 @@ void mecarover_start(void)
 	osThreadNew(micro_ros, NULL, &executor_attributes);
 
 	osKernelStart();
+	Error_Handler(); // because osKernelStart should never return
 }
 }

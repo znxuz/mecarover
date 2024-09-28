@@ -1,7 +1,9 @@
+#include "stm_hal.hpp"
+
+#include <cstdint>
 #include <tim.h>
 #include <stm32f7xx_hal_tim.h> //Für Kontrollausgaben bsp. __HAL_TIM_SET_Compare -> Pwm testen
 
-#include "stm_hal.hpp"
 #include "stm_counter.hpp"
 #include "stm_motor_pwm.hpp"
 
@@ -70,6 +72,20 @@ void hal_init(const Fahrzeug_t *fz)
 	real_t zero[4] = { 0.0, 0.0, 0.0, 0.0 };
 	hal_wheel_vel_set(zero);
 	hal_is_init = true;
+}
+
+std::array<uint64_t, NumMotors> hal_encoder_getval()
+{
+	auto encoder_val = std::array<uint64_t, 4>{};
+	for (int i = 0; i < NumMotors; i++) {
+		uint64_t val = Encoder[i].getCount(i); // get Encoder Counter
+
+		// Deltawerte der Raeder in rad fuer Odometrie
+		encoder_val[i] = Ink2Rad * static_cast<real_t>(val - old_encodervalue[i])
+			* encoderDirection[i] * encoderScaling[i];
+		old_encodervalue[i] = val;
+	}
+	return encoder_val;
 }
 
 int hal_encoder_read(real_t *DeltaPhi)
