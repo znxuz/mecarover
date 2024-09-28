@@ -26,17 +26,14 @@
 #include "netif/etharp.h"
 #include "lwip/ethip6.h"
 #include "ethernetif.h"
+#include "lan8742.h"
+#include <string.h>
 #include "cmsis_os.h"
 #include "lwip/tcpip.h"
 
-#include "cmsis_os.h"
-
-#include <string.h>
-#include <Drivers/BSP/Components/lan8742/lan8742.h>
-#include <mecarover/rtos_config.h>
-
 /* Within 'USER CODE' section, code will be kept by default at each generation */
 /* USER CODE BEGIN 0 */
+#include <mecarover/rtos_config.h> // TODO: extract ETH_SIZE to a dedicated file
 /* USER CODE END 0 */
 
 /* Private define ------------------------------------------------------------*/
@@ -62,9 +59,9 @@
 /* Private variables ---------------------------------------------------------*/
 /*
 @Note: This interface is implemented to operate in zero-copy mode only:
-        - Rx buffers will be allocated from LwIP stack memory heap,
+        - Rx Buffers will be allocated from LwIP stack Rx memory pool,
           then passed to ETH HAL driver.
-        - Tx buffers will be allocated from LwIP stack memory heap,
+        - Tx Buffers will be allocated from LwIP stack memory heap,
           then passed to ETH HAL driver.
 
 @Notes:
@@ -264,10 +261,10 @@ static void low_level_init(struct netif *netif)
   #endif /* LWIP_ARP */
 
   /* create a binary semaphore used for informing ethernetif of frame reception */
-  RxPktSemaphore = osSemaphoreNew(1, 1, NULL);
+  RxPktSemaphore = osSemaphoreNew(1, 0, NULL);
 
   /* create a binary semaphore used for informing ethernetif of frame transmission */
-  TxPktSemaphore = osSemaphoreNew(1, 1, NULL);
+  TxPktSemaphore = osSemaphoreNew(1, 0, NULL);
 
   /* create the task that handles the ETH_MAC */
 /* USER CODE BEGIN OS_THREAD_NEW_CMSIS_RTOS_V2 */
@@ -293,7 +290,12 @@ static void low_level_init(struct netif *netif)
   LAN8742_RegisterBusIO(&LAN8742, &LAN8742_IOCtx);
 
   /* Initialize the LAN8742 ETH PHY */
-  LAN8742_Init(&LAN8742);
+  if(LAN8742_Init(&LAN8742) != LAN8742_STATUS_OK)
+  {
+    netif_set_link_down(netif);
+    netif_set_down(netif);
+    return;
+  }
 
   if (hal_eth_init_status == HAL_OK)
   {
@@ -356,6 +358,7 @@ static void low_level_init(struct netif *netif)
 /* USER CODE BEGIN LOW_LEVEL_INIT */
 
 /* USER CODE END LOW_LEVEL_INIT */
+
 }
 
 /**
@@ -410,13 +413,16 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 
   pbuf_ref(p);
 
-  HAL_ETH_Transmit_IT(&heth, &TxConfig);
-  while(osSemaphoreAcquire(TxPktSemaphore, TIME_WAITING_FOR_INPUT)!=osOK)
+  if (HAL_ETH_Transmit_IT(&heth, &TxConfig) == HAL_OK) {
+    while(osSemaphoreAcquire(TxPktSemaphore, TIME_WAITING_FOR_INPUT)!=osOK)
 
-  {
+    {
+    }
+
+    HAL_ETH_ReleaseTxPacket(&heth);
+  } else {
+    pbuf_free(p);
   }
-
-  HAL_ETH_ReleaseTxPacket(&heth);
 
   return errval;
 }

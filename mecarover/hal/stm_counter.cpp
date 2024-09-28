@@ -56,19 +56,10 @@ uint64_t STMCounter::getCount(int id)
 	return akt_pos[id] + flow[id];
 }
 
-/**
- * @brief  Period elapsed callback in non blocking mode
- * @note   This function is called  when TIM6 interrupt took place, inside
- * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
- * a global variable "uwTick" used as application time base.
- * @param  htim : TIM handle
- * @retval None
- */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+extern "C"
 {
-	if (htim->Instance == TIM12)
-		HAL_IncTick();
-
+void stm_counter_cb(TIM_HandleTypeDef* htim)
+{
 	if (hal_is_init) {
 		// hinzu: ob Rad sich vor- oder rückwärts dreht
 		if (htim->Instance == TIM3) {
@@ -115,4 +106,5 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			}
 		}
 	}
+}
 }

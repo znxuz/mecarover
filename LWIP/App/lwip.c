@@ -19,19 +19,17 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include <lwip.h>
-#include <lwip/init.h>
-#include <lwip/netif.h>
+#include "lwip.h"
+#include "lwip/init.h"
+#include "lwip/netif.h"
 #if defined ( __CC_ARM )  /* MDK ARM Compiler */
-#include <lwip/sio.h>
+#include "lwip/sio.h"
 #endif /* MDK ARM Compiler */
-#include <ethernetif.h>
-
+#include "ethernetif.h"
 #include <string.h>
-#include <mecarover/rtos_config.h>
 
 /* USER CODE BEGIN 0 */
-
+#include <mecarover/rtos_config.h> // TODO: extract ETH_SIZE to a dedicated file
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
 static void ethernet_link_status_updated(struct netif *netif);
@@ -61,7 +59,7 @@ osThreadAttr_t attributes;
   */
 void MX_LWIP_Init(void)
 {
-  /* Initilialize the LwIP stack with RTOS */
+  /* Initialize the LwIP stack with RTOS */
   tcpip_init( NULL, NULL );
 
   /* IP addresses initialization with DHCP (IPv4) */
@@ -75,16 +73,8 @@ void MX_LWIP_Init(void)
   /* Registers the default network interface */
   netif_set_default(&gnetif);
 
-  if (netif_is_link_up(&gnetif))
-  {
-    /* When the netif is fully configured this function must be called */
-    netif_set_up(&gnetif);
-  }
-  else
-  {
-    /* When the netif link is down this function must be called */
-    netif_set_down(&gnetif);
-  }
+  /* We must always bring the network interface up connection or not... */
+  netif_set_up(&gnetif);
 
   /* Set the link callback function, this function is called on change of link status*/
   netif_set_link_callback(&gnetif, ethernet_link_status_updated);

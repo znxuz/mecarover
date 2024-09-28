@@ -110,7 +110,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* creation of executor */
-  executorHandle = osThreadNew(rosinit, (void*) controllerTasks, &executor_attributes);
+  executorHandle = osThreadNew(rosinit, NULL, &executor_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -135,10 +135,7 @@ void rosinit(void *argument)
   MX_LWIP_Init();
   /* USER CODE BEGIN rosinit */
   /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+  vTaskDelete(NULL);
   /* USER CODE END rosinit */
 }
 

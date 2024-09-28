@@ -27,6 +27,7 @@ INCL_PATHS := \
 			  -I$(ST_DIR_DRIVERS)/STM32F7xx_HAL_Driver/Inc \
 			  -I$(ST_DIR_DRIVERS)/CMSIS/Device/ST/STM32F7xx/Include \
 			  -I$(ST_DIR_DRIVERS)/CMSIS/Include \
+			  -I$(ST_DIR_DRIVERS)/BSP/Components/lan8742 \
 			  -I$(ST_DIR_MW)/FreeRTOS/Source/include \
 			  -I$(ST_DIR_MW)/FreeRTOS/Source/CMSIS_RTOS_V2 \
 			  -I$(ST_DIR_MW)/FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1 \
@@ -84,7 +85,7 @@ CPPFLAGS = \
 LD_FLAGS = \
 		   $(MICRO_ROS_LIB) \
 		   -mcpu=cortex-m7 \
-		   -TSTM32F767ZITX_FLASH.ld \
+		   -T$(LD_FILE) \
 		   --specs=nosys.specs \
 		   -Wl,-Map=$(MAP_FILES) \
 		   -Wl,--gc-sections \
@@ -125,7 +126,6 @@ C_SRCS_EXCLS :=  \
 		  $(MICRO_ROS_DIR)/sample_main.c \
 		  $(MICRO_ROS_DIR)/sample_main_embeddedrtps.c \
 		  $(MICRO_ROS_DIR)/sample_main_udp.c \
-		  $(ST_DIR_CORE)/Src/freertos.c \
 		  $(ST_DIR_CORE)/Src/syscalls.c \
 		  $(ST_DIR_CORE)/Src/sysmem.c \
 		  mecarover/micro_ros/micro_ros.cpp.bak
@@ -133,7 +133,8 @@ SRCS_PATHS := $(ST_DIR_CORE) $(ST_DIR_DRIVERS) $(ST_DIR_MW) $(ST_DIR_LWIP) $(MIC
 C_SRCS := $(filter-out $(C_SRCS_EXCLS), $(shell find $(SRCS_PATHS) -type f -name "*.c"))
 CPP_SRCS_EXCLS :=
 CPP_SRCS := $(filter-out $(CPP_SRCS_EXCLS), $(shell find $(SRCS_PATHS) -type f -name "*.cpp"))
-S_SRC := $(ST_DIR_CORE)/Startup/startup_stm32f767zitx.s
+S_SRC := startup_stm32f767xx.s
+LD_FILE := STM32F767ZITx_FLASH.ld
 OBJS := $(addprefix $(BUILD_DIR)/, $(C_SRCS:.c=.o)) \
 		$(addprefix $(BUILD_DIR)/, $(CPP_SRCS:.cpp=.o)) \
 		$(addprefix $(BUILD_DIR)/, $(S_SRC:.s=.o))
@@ -160,7 +161,7 @@ flash: $(BIN)
 $(BIN): $(EXECUTABLE)
 	arm-none-eabi-objcopy -O binary $(EXECUTABLE) $(EXECUTABLE:.elf=.bin)
 
-$(EXECUTABLE) $(MAP_FILES): $(OBJS) STM32F767ZITX_FLASH.ld
+$(EXECUTABLE) $(MAP_FILES): $(OBJS) $(LD_FILE)
 	arm-none-eabi-g++ $(OBJS) $(LD_FLAGS) -o $(EXECUTABLE)
 	@echo "Finished building target: $@"
 

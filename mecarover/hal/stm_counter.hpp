@@ -1,21 +1,24 @@
-/*
- * STM_counter.h
- *
- *  Created on: Nov 13, 2021
- *      Author: Fabia
- */
 #pragma once
 
 #include <tim.h>
-#include "stm32f7xx_hal_tim.h"
 
+#ifdef __cplusplus
 class STMCounter {
 public:
 	STMCounter() = default;
-	bool init(TIM_HandleTypeDef *htim, int id);
+	bool init(TIM_HandleTypeDef* htim, int id);
 	uint64_t getCount(int id);
 
 private:
 	bool is_init = false;
 };
 
+extern "C"
+{
+#endif
+
+void stm_counter_cb(TIM_HandleTypeDef* htim);
+
+#ifdef __cplusplus
+}
+#endif
