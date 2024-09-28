@@ -5,7 +5,7 @@
  *      Author: Fabia
  */
 
-#include "stm_motor_pwm.h"
+#include "stm_motor_pwm.hpp"
 
 bool STMMotorPWM::init(int motor, TIM_HandleTypeDef *htim,
 	uint32_t Channel_PwmA, uint32_t Channel_PwmB)

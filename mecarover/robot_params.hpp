@@ -2,8 +2,27 @@
 
 //------------ configuration of the vehicle and controller parameters
 
-#include "mrtypes.h" // definition of Fahrzeug_t
-#include <mecarover/controls/VehicleController.h> // definition of imsl::vehiclecontrol::ReglerParam_t, imsl::vehiclecontrol::Abtastzeit_t
+#include "mrtypes.h"
+
+struct ReglerParam_t {
+	double DzrKv;
+	double DzrTaDTn;
+	double DzrTvDTa;
+	double DzrIntMax;
+	double DzrSchleppMax;
+	double DzrSkalierung[4];
+	double DzrKoppel[4];
+	Pose_t LageKv;
+	Pose_t LageSchleppMax;
+	double Koppel; /* Faktor für Ausregelung des Verkopplungsfehlers */
+};
+
+struct Abtastzeit_t {
+	double Timer;
+	double FzDreh;
+	double FzLage;
+	uint32_t FzLageZuDreh;
+};
 
 // ---------------------------------- OmniRob configuration
 /*
@@ -64,7 +83,7 @@ alpha = 0.5;
 //                        };
 
 // time constants
-static imsl::vehiclecontrol::Abtastzeit_t Ta = {
+static constexpr inline Abtastzeit_t Ta = {
 	.Timer = 0.001, // 1 ms timer tick
 					//                    0.003, // 3 ms sampling time of wheel control loop
 	.FzDreh = 0.005, // 5 ms sampling time of wheel control loop
@@ -74,7 +93,7 @@ static imsl::vehiclecontrol::Abtastzeit_t Ta = {
 /* FILU Roboter
 // ------------------------- FILU robot configuration
 */
-static Fahrzeug_t fz = {
+static constexpr inline Fahrzeug_t fz = {
 	.type = MRC_VEHICLETYPE_MECANUM,
 	.Inkremente = 48.0, // 4 x 1024 //4096
 	.Uebersetzung = 64.0, // gear ration //68
@@ -92,7 +111,7 @@ static Fahrzeug_t fz = {
 	.MaxRPM = {5740.6, 5740.6, 7268.4, 7268.4}
 };
 
-static imsl::vehiclecontrol::ReglerParam_t Regler = {
+static constexpr inline ReglerParam_t Regler = {
 	//                .MaxRPM = {5740.6, 5740.6, 7268.4, 7268.4},
 	.DzrKv = 0.3,
 	.DzrTaDTn = 0.1,
@@ -170,5 +189,4 @@ typedef struct {
 		mr_logprio_t ScreenLevel;
 	} log;
 } Fahrzeug_t;
-
 #endif

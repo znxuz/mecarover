@@ -19,7 +19,7 @@ public:
 	using WheelVel = Eigen::Matrix<T, 4, 1>;
 	using VehicleVel = Eigen::Matrix<T, 4, 1>;
 
-	int Init(Fahrzeug_t* fz, ReglerParam_t Regler, Abtastzeit_t Ta) override
+	int Init(const Fahrzeug_t* fz, ReglerParam_t Regler, Abtastzeit_t Ta) override
 	{
 		log_message(log_info, "MecanumControllerTask init");
 		CT::NumbWheels = 4;

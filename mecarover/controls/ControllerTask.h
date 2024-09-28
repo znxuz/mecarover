@@ -1,11 +1,12 @@
 #pragma once
 
+#include <Eigen/Core>
+#include <Eigen/LU>
 #include <mecarover/RTOS.h>
-#include <mecarover/hal/stm_hal.h>
+#include <mecarover/hal/stm_hal.hpp>
 #include <mecarover/mrcpptypes.h>
+#include <mecarover/robot_params.hpp>
 #include <mecarover/rtos_config.h>
-
-#include "VehicleController.h"
 
 extern "C"
 {
@@ -132,7 +133,7 @@ public:
 		return 0;
 	}
 
-	virtual int Init(Fahrzeug_t* fz, ReglerParam_t Regler, Abtastzeit_t Ta)
+	virtual int Init(const Fahrzeug_t* fz, ReglerParam_t Regler, Abtastzeit_t Ta)
 	{
 		log_message(log_info, "ControllerTask Init");
 		ControllerMode = CtrlMode::OFF;

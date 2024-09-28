@@ -1,9 +1,9 @@
 #include <tim.h>
 #include <stm32f7xx_hal_tim.h> //Für Kontrollausgaben bsp. __HAL_TIM_SET_Compare -> Pwm testen
 
-#include "stm_hal.h"
-#include "stm_counter.h"
-#include "stm_motor_pwm.h"
+#include "stm_hal.hpp"
+#include "stm_counter.hpp"
+#include "stm_motor_pwm.hpp"
 
 constexpr real_t PWMmax = 100.0; // output value for 100% duty cycle
 constexpr real_t VoltMax = 10.0; // maximum positive output voltage
@@ -37,7 +37,7 @@ static int64_t old_encodervalue[NumMotors];
 
 bool hal_is_init = false;
 
-void hal_init(Fahrzeug_t *fz)
+void hal_init(const Fahrzeug_t *fz)
 {
 	Rad2PWM = PWMmax * 60.0 * fz->Uebersetzung / (2.0 * M_PI * fz->OmegaMax); // OmegaMax is in revolutions / min
 	Rad2Volt = VoltMax * 60.0 * fz->Uebersetzung / (2.0 * M_PI * fz->OmegaMax);

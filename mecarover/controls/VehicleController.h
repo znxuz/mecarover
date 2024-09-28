@@ -7,28 +7,6 @@
 namespace imsl::vehiclecontrol
 {
 
-/*-------         Beschreibung der Reglerparameter                -----*/
-struct ReglerParam_t {
-	double DzrKv;
-	double DzrTaDTn;
-	double DzrTvDTa;
-	double DzrIntMax;
-	double DzrSchleppMax;
-	double DzrSkalierung[4];
-	double DzrKoppel[4];
-	Pose_t LageKv;
-	Pose_t LageSchleppMax;
-	double Koppel; /* Faktor für Ausregelung des Verkopplungsfehlers */
-};
-
-/*-------             Beschreibung der Zeitgroessen               -----*/
-struct Abtastzeit_t {
-	double Timer;
-	double FzDreh;
-	double FzLage;
-	uint32_t FzLageZuDreh;
-};
-
 template <typename T, unsigned int N_WHEEL, unsigned int DOF>
 class VehicleController {
 public:

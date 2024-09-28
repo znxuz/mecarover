@@ -4,6 +4,7 @@
 #include <Eigen/Core>
 #include <Eigen/LU>
 #include <mecarover/mrlogger/mrlogger.h>
+#include <mecarover/robot_params.hpp>
 
 #include "VehicleController.h"
 
@@ -37,7 +38,7 @@ public:
 
 	MecanumController() = default;
 
-	void Init(Fahrzeug_t *Fz, ReglerParam_t Regler, Abtastzeit_t Ta)
+	void Init(const Fahrzeug_t *Fz, ReglerParam_t Regler, Abtastzeit_t Ta)
 	{
 		LplusBhalbe = Fz->LplusBhalbe;
 		Radradius = Fz->Radradius;

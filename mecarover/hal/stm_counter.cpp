@@ -5,9 +5,9 @@
  *      Author: Fabia
  */
 
-#include "stm_counter.h"
+#include "stm_counter.hpp"
 #include "mecarover/mrlogger/mrlogger.h"
-#include "stm_hal.h"
+#include "stm_hal.hpp"
 
 // QUESTION: ask why the initial value for the encoders are 32767 = 2^15 - 1
 #define New_Zero 32767

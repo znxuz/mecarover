@@ -36,11 +36,11 @@
 #include <lwip.h>
 
 #include <mecarover/controls/MecanumControllerTask.h>
-#include <mecarover/hal/stm_hal.h>
+#include <mecarover/hal/stm_hal.hpp>
 #include <mecarover/lidar/lidar.h>
 #include <mecarover/micro_ros/micro_ros.hpp>
 #include <mecarover/retarget.h>
-#include <mecarover/robot_config.h>
+#include <mecarover/robot_params.hpp>
 
 LaserScanner ls;
 
