@@ -27,7 +27,6 @@ int _gettimeofday(struct timeval* tv, void* tzvp)
 {
 	return 0; // not used, thus unimplemented to satisfy the compiler
 }
-}
 
 void mecarover_start(void)
 {
@@ -47,8 +46,13 @@ void mecarover_start(void)
 	controller_task->Init(&fz, Regler, Ta);
 	ls.init_LaserScanner();
 
-	xTaskCreate(micro_ros, "micro_ros", STACK_SIZE, controller_task,
-				MICRO_ROS_TASK_PRIORITY, NULL);
+	const osThreadAttr_t executor_attributes = {
+		.name = "micro_ros",
+		.stack_size = STACK_SIZE,
+		.priority = (osPriority_t)MICRO_ROS_TASK_PRIORITY,
+	};
+	osThreadNew(micro_ros, NULL, &executor_attributes);
 
 	osKernelStart();
+}
 }
