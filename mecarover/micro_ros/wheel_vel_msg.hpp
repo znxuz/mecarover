@@ -3,8 +3,7 @@
 #include <cstring>
 #include <std_msgs/msg/float64_multi_array.h>
 
-struct wheel_vel_msg
-{
+struct wheel_vel_msg {
 	wheel_vel_msg()
 	{
 		std_msgs__msg__Float64MultiArray__init(&this->msg);
@@ -24,7 +23,8 @@ struct wheel_vel_msg
 		this->msg.data.capacity = this->dim.size;
 	}
 
-	wheel_vel_msg(double o0,double o1, double o2, double o3) : wheel_vel_msg()
+	wheel_vel_msg(double o0, double o1, double o2, double o3)
+		: wheel_vel_msg()
 	{
 		this->msg.data.data[0] = o0;
 		this->msg.data.data[1] = o1;
@@ -32,15 +32,9 @@ struct wheel_vel_msg
 		this->msg.data.data[3] = o3;
 	}
 
-	~wheel_vel_msg()
-	{
-		delete[] this->msg.data.data;
-	}
+	~wheel_vel_msg() { delete[] this->msg.data.data; }
 
-	double& operator[](size_t i)
-	{
-		return this->msg.data.data[i];
-	}
+	double& operator[](size_t i) { return this->msg.data.data[i]; }
 
 	const double& operator[](size_t i) const
 	{
@@ -51,5 +45,5 @@ struct wheel_vel_msg
 	std_msgs__msg__MultiArrayDimension dim;
 	const uint8_t size = 4;
 	const uint8_t stride = 1;
-	const char *label = "mecanum wheel velocity array";
+	const char* label = "mecanum wheel velocity array";
 };
