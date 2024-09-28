@@ -23,10 +23,10 @@
 #include <mecarover/controls/ControllerTask.h>
 #include <mecarover/lidar/lidar.h>
 #include <mecarover/mrlogger/mrlogger.h>
-#include <mecarover/hal/stm_hal.h>
+#include <mecarover/hal/stm_hal.hpp>
 
 #include "micro_ros.hpp"
-#include "eth_transport.hpp"
+#include "eth_transport.h"
 
 using namespace imsl;
 using namespace imsl::vehiclecontrol;

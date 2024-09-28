@@ -199,7 +199,6 @@ static void low_level_init(struct netif *netif)
 {
   HAL_StatusTypeDef hal_eth_init_status = HAL_OK;
 /* USER CODE BEGIN OS_THREAD_ATTR_CMSIS_RTOS_V2 */
-  osThreadAttr_t attributes;
 /* USER CODE END OS_THREAD_ATTR_CMSIS_RTOS_V2 */
   uint32_t duplex, speed = 0;
   int32_t PHYLinkState = 0;
@@ -268,6 +267,7 @@ static void low_level_init(struct netif *netif)
 
   /* create the task that handles the ETH_MAC */
 /* USER CODE BEGIN OS_THREAD_NEW_CMSIS_RTOS_V2 */
+// osThreadAttr_t attributes;
 //  memset(&attributes, 0x0, sizeof(osThreadAttr_t));
 //  attributes.name = "EthIf";
 //  attributes.stack_size = STACK_SIZE;//INTERFACE_THREAD_STACK_SIZE;

@@ -14,19 +14,20 @@
 
 #include <experimental/source_location>
 
-#include "eth_transport.hpp"
+#include "eth_transport.h"
 #include "interpolation.hpp"
 #include "odometry.hpp"
 #include "rcl_ret_check.hpp"
 #include "wheel_ctrl.hpp"
 
-using namespace imsl;
-using namespace imsl::vehiclecontrol;
-
 extern LaserScanner ls;
 
 extern "C"
 {
+// transport params cannot be const, because the middleware will change it
+static eth_transport_params_t TRANSPORT_PARAMS
+	= {{0, 0, 0}, {MICRO_ROS_AGENT_IP}, {MICRO_ROS_AGENT_PORT}};
+
 static rcl_node_t node;
 static rclc_support_t support;
 static rcl_allocator_t allocator;
