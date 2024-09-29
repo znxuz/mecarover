@@ -2,6 +2,8 @@
 
 #include <experimental/source_location>
 #include <rcl/types.h>
+#include <FreeRTOS.h>
+#include <task.h>
 
 static inline void
 rcl_ret_check(rcl_ret_t ret_code,
@@ -12,5 +14,6 @@ rcl_ret_check(rcl_ret_t ret_code,
 		printf("Failed status on line %d: %d in %s",
 			   static_cast<int>(location.line()), static_cast<int>(ret_code),
 			   location.file_name());
+		vTaskDelete(NULL);
 	}
 }

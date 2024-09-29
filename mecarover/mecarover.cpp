@@ -6,6 +6,7 @@
 #include <mecarover/hal/stm_hal.hpp>
 #include <mecarover/lidar/lidar.h>
 #include <mecarover/micro_ros/micro_ros.hpp>
+#include <mecarover/micro_ros/micro_ros_bak.hpp>
 #include <mecarover/retarget.h>
 #include <mecarover/robot_params.hpp>
 
@@ -51,7 +52,7 @@ void mecarover_start(void)
 		.stack_size = STACK_SIZE,
 		.priority = (osPriority_t)MICRO_ROS_TASK_PRIORITY,
 	};
-	osThreadNew(micro_ros, NULL, &executor_attributes);
+	osThreadNew(micro_ros_bak, controller_task, &executor_attributes);
 
 	osKernelStart();
 	Error_Handler(); // because osKernelStart should never return

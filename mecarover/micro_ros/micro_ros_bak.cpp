@@ -25,7 +25,6 @@
 #include <mecarover/mrlogger/mrlogger.h>
 #include <mecarover/hal/stm_hal.hpp>
 
-#include "micro_ros.hpp"
 #include "eth_transport.h"
 
 using namespace imsl;
@@ -197,7 +196,7 @@ void enable_topic_cb(const void* enable_topic)
 }
 
 // micro-ROS configuration
-void micro_ros(void* arg)
+void micro_ros_bak(void* arg)
 {
 	MX_LWIP_Init();
 

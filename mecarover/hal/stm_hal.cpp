@@ -35,7 +35,7 @@ const int motorDirection[4] = { +1, +1, -1, -1 }; // rotation direction of the m
 
 static STMCounter Encoder[NumMotors];
 static STMMotorPWM MotorPWM[NumMotors];
-static int64_t old_encodervalue[NumMotors];
+static int64_t prev_encoder_val[NumMotors];
 
 bool hal_is_init = false;
 
@@ -49,7 +49,7 @@ void hal_init(const Fahrzeug_t *fz)
 		if (!Encoder[i].init(Tim_Enc[i], i))
 			log_message(log_error, "Failed to initialize encoders");
 
-		old_encodervalue[i] = Encoder[i].getCount(i);
+		prev_encoder_val[i] = Encoder[i].getCount(i);
 
 		if (!MotorPWM[i].init(i, Tim_Pwm[i], Channel_PwmA[i], Channel_PwmB[i]))
 			log_message(log_error, "Failed to initialize encoders");
@@ -74,18 +74,18 @@ void hal_init(const Fahrzeug_t *fz)
 	hal_is_init = true;
 }
 
-std::array<uint64_t, NumMotors> hal_encoder_getval()
+std::array<uint64_t, NumMotors> hal_encoder_delta()
 {
-	auto encoder_val = std::array<uint64_t, 4>{};
-	for (int i = 0; i < NumMotors; i++) {
-		uint64_t val = Encoder[i].getCount(i); // get Encoder Counter
+	auto encoder_delta = std::array<uint64_t, 4>{};
 
-		// Deltawerte der Raeder in rad fuer Odometrie
-		encoder_val[i] = Ink2Rad * static_cast<real_t>(val - old_encodervalue[i])
+	for (int i = 0; i < NumMotors; i++) {
+		auto encoder_val = Encoder[i].getCount(i);
+		encoder_delta[i] = Ink2Rad * static_cast<real_t>(encoder_val - prev_encoder_val[i])
 			* encoderDirection[i] * encoderScaling[i];
-		old_encodervalue[i] = val;
+		prev_encoder_val[i] = encoder_val;
 	}
-	return encoder_val;
+
+	return encoder_delta;
 }
 
 int hal_encoder_read(real_t *DeltaPhi)
@@ -94,9 +94,9 @@ int hal_encoder_read(real_t *DeltaPhi)
 		int64_t val = Encoder[i].getCount(i); // get Encoder Counter
 
 		// Deltawerte der Raeder in rad fuer Odometrie
-		DeltaPhi[i] = Ink2Rad * static_cast<real_t>(val - old_encodervalue[i])
+		DeltaPhi[i] = Ink2Rad * static_cast<real_t>(val - prev_encoder_val[i])
 			* encoderDirection[i] * encoderScaling[i];
-		old_encodervalue[i] = val;
+		prev_encoder_val[i] = val;
 		// TODO check over- and underflow 16 Bit
 		// log_message(log_info, "encoder[%d] delta: %f\n", i, DeltaPhi[i]);
 	}

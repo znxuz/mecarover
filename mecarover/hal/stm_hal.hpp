@@ -12,4 +12,4 @@ bool hal_get_estop();
 
 static constexpr int NumMotors = 4;
 
-std::array<uint64_t, NumMotors> hal_encoder_getval();
+std::array<uint64_t, NumMotors> hal_encoder_delta();

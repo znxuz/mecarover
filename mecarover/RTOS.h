@@ -18,19 +18,6 @@ public:
 		return retval;
 	}
 
-	bool createPinnedToCore(TaskFunction_t pvTaskCode, const char *const pcName, uint32_t usStackDepth,
-		void *pvParameters, UBaseType_t uxPriority, BaseType_t xCoreID)
-	{
-		//  BaseType_t retval = xTaskCreatePinnedToCore(pvTaskCode, pcName, usStackDepth, pvParameters, uxPriority, &handle, xCoreID);
-		//
-		//    if (retval == pdPASS) {
-		//      return true;
-		//    }
-
-		handle = nullptr; // just to be sure
-		return false;
-	}
-
 	void del()
 	{
 		if (handle) {

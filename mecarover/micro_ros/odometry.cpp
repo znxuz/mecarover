@@ -26,7 +26,7 @@ static rcl_publisher_t pub_odometry;
 
 static void odometry_callback(rcl_timer_t* timer, int64_t last_call_time)
 {
-	// auto encoder_val = hal_encoder_getval();
+	// auto encoder_delta = hal_encoder_delta();
 	// TODO: continue
 
 	pose_msg.linear.x = 1;
