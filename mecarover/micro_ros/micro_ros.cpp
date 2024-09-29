@@ -60,7 +60,7 @@ void micro_ros(void* arg)
 	auto* interpolation_exe = interpolation_init(&node, &support, &allocator);
 	auto* wheel_ctrl_exe = wheel_ctrl_init(&node, &support, &allocator);
 
-	log_message(log_info, "debug: starting the loop");
+	log_message(log_info, "micro_ros starting the loop");
 	for (;;) {
 		rclc_executor_spin_some(odometry_exe, RCL_MS_TO_NS(1));
 		rclc_executor_spin_some(interpolation_exe, RCL_MS_TO_NS(1));

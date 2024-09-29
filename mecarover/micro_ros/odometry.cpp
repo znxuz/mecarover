@@ -19,7 +19,7 @@
 extern "C"
 {
 static rclc_executor_t odometry_exe;
-static inline const unsigned int TIMER_TIMEOUT = 5000; // TODO: probably will be Fz.Dreh
+static inline const unsigned int TIMER_TIMEOUT = 5000; // TODO: probably will be FzDreh
 static auto timer = rcl_get_zero_initialized_timer();
 static geometry_msgs__msg__Twist pose_msg{};
 static rcl_publisher_t pub_odometry;
@@ -27,7 +27,8 @@ static rcl_publisher_t pub_odometry;
 static void odometry_callback(rcl_timer_t* timer, int64_t last_call_time)
 {
 	// auto encoder_delta = hal_encoder_delta();
-	// TODO: continue
+	// for (auto d : encoder_delta)
+		// log_message(log_info, "encoder delta: %f", d);
 
 	pose_msg.linear.x = 1;
 	pose_msg.linear.y = 2;

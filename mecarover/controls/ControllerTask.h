@@ -265,7 +265,7 @@ public:
 				ManualModeInterface(vel_rframe_sp, vel_rframe_prev, pose_manual);
 				if (count++ > 100) {
 					count = 0;
-					log_message(log_debug, "manual pose via velocity x: %f, y: %f, theta: %f",
+					log_message(log_info, "manual pose via velocity x: %f, y: %f, theta: %f",
 						pose_manual.x, pose_manual.y, T(pose_manual.theta));
 				}
 				vel_rframe_prev = vel_rframe_sp;

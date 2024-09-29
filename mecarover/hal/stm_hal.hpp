@@ -1,15 +1,27 @@
 #pragma once
 
-#include <array>
+#include <tim.h>
 
 #include <mecarover/mrtypes.h>
 
+#ifdef __cplusplus
+#include <array>
+
+static constexpr int NUM_MOTORS = 4;
+
 void hal_init(const Fahrzeug_t* fz);
 int hal_wheel_vel_set(real_t* w);
+std::array<real_t, NUM_MOTORS> hal_encoder_delta();
 int hal_encoder_read(real_t* DeltaPhi);
 int mr_hal_wheel_vel_set_pwm(float* duty);
 bool hal_get_estop();
 
-static constexpr int NumMotors = 4;
+extern "C"
+{
+#endif
 
-std::array<uint64_t, NumMotors> hal_encoder_delta();
+void stm_encoder_cb(TIM_HandleTypeDef* htim);
+
+#ifdef __cplusplus
+}
+#endif
