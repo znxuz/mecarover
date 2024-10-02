@@ -93,6 +93,26 @@ static constexpr inline Abtastzeit_t Ta = {
 
 /* FILU Roboter
 // ------------------------- FILU robot configuration
+ *
+In the context of a 4-wheeled robot with a Mecanum wheel drive, the values for
+Uebersetzung (gear ratio) and Inkremente (encoder increments) can depend on the
+specific hardware, such as the motor and encoder.
+
+Uebersetzung (gear ratio): This value reflects how many times the motor rotates
+for one full wheel rotation. For Mecanum wheels, the gear ratio might vary based
+on the design. In this case, it's set to 64, which could indicate a motor spins
+64 times for each wheel rotation. You can adjust this depending on your specific
+hardware.
+
+Inkremente (increments): This is typically based on the resolution of the
+encoder. For example, 48 might indicate an encoder that generates 48 pulses per
+revolution (which could be multiplied further based on quadrature decoding). If
+your encoder has higher resolution, this value should be adjusted accordingly.
+
+For a Mecanum drive, these values influence how well you can control the
+movement and how accurately the robot responds to commands. If you know the gear
+ratio of the motors and the number of pulses the encoders generate per
+revolution, you can set these values to match your robot's configuration.
 */
 static constexpr inline Fahrzeug_t fz = {
 	.type = MRC_VEHICLETYPE_MECANUM,

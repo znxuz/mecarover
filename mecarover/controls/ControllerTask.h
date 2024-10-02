@@ -293,7 +293,7 @@ public:
 				if (UseWheelControllerTask) {
 					mr_radsollwert_set(vWheelref);
 				} else { // no wheel controller task, set velocities via CAN
-					hal_wheel_vel_set(vWheelref);
+					hal_wheel_vel_set_pwm(vWheelref);
 				}
 			}
 		}
@@ -409,11 +409,11 @@ public:
 			}
 
 			//			printf("Stellgroesse2: %.2f\n", Stellgroesse[1]);
-			hal_wheel_vel_set(Stellgroesse);
+			hal_wheel_vel_set_pwm(Stellgroesse);
 
 			// Bei allen Stoerungen Steller aus
 			if (GetControllerErrorStatus()) {
-				hal_wheel_vel_set(DZRNullwert);
+				hal_wheel_vel_set_pwm(DZRNullwert);
 				//          hal_amplifiers_disable();
 			}
 
