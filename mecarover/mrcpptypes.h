@@ -1,35 +1,16 @@
 #pragma once
 
-/* C++ header files */
-#include <exception> // for std::exception
-#include <limits> // for std::numeric_limits
-#include <string> // for std::string
+#include <limits>
 
-/* local header file */
-#include "mrtypes.h" // datatypes for C
+#include "mrtypes.h"
 
 namespace imsl
 {
-// error: variable templates only available with -std=c++14 or -std=gnu++14 [-Werror]
-// template<class T>
-// constexpr T PI_T = T(3.14159265358979323846L);  // PI template
-// constexpr real_t eps = DBL_EPSILON;
-// constexpr real_t inf = INFINITY;
+
 constexpr double inf = std::numeric_limits<double>::infinity();
 constexpr double eps = std::numeric_limits<double>::epsilon();
 
-template<class T>
-int signum(T t)
-{
-	if (t < T(0)) {
-		return -1;
-	}
-	return 1;
-}
-
-/* movement (dx, dy, dtheta) of a mobile robot in 2D */
-template<typename T>
-class dPose {
+template<typename T> class dPose {
 public:
 	T x{};
 	T y{};
@@ -74,9 +55,9 @@ public:
 	}
 };
 
-/* velocity (vx = dx/dt, vy = dy/dt, omega = dtheta/dt) of a mobile robot in 2D */
-template<typename T>
-class vPose {
+/* velocity (vx = dx/dt, vy = dy/dt, omega = dtheta/dt) of a mobile robot in 2D
+ */
+template<typename T> class vPose {
 public:
 	T vx{};
 	T vy{};
@@ -125,8 +106,7 @@ public:
 };
 
 /* transformation of small movements from robot frame into world frame  */
-template<typename T>
-dPose<T> dRF2dWF(dPose<T> dRF, T theta)
+template<typename T> dPose<T> dRF2dWF(dPose<T> dRF, T theta)
 {
 	dPose<T> dWF;
 	dWF.x = dRF.x * cos(theta) - dRF.y * sin(theta);
@@ -136,8 +116,7 @@ dPose<T> dRF2dWF(dPose<T> dRF, T theta)
 }
 
 /* transformation of small movements from world frame into robot frame  */
-template<typename T>
-dPose<T> dWF2dRF(dPose<T> dWF, T theta)
+template<typename T> dPose<T> dWF2dRF(dPose<T> dWF, T theta)
 {
 	dPose<T> dRF;
 	dRF.x = dWF.x * cos(theta) + dWF.y * sin(theta);
@@ -147,8 +126,7 @@ dPose<T> dWF2dRF(dPose<T> dWF, T theta)
 }
 
 /* transformation of velocities from robot frame into world frame  */
-template<typename T>
-vPose<T> vRF2vWF(vPose<T> vRF, T theta)
+template<typename T> vPose<T> vRF2vWF(vPose<T> vRF, T theta)
 {
 	vPose<T> vWF;
 	vWF.vx = vRF.vx * cos(theta) - vRF.vy * sin(theta);
@@ -158,8 +136,7 @@ vPose<T> vRF2vWF(vPose<T> vRF, T theta)
 }
 
 /* transformation of velocities from world frame into robot frame  */
-template<typename T>
-vPose<T> vWF2vRF(vPose<T> vWF, T theta)
+template<typename T> vPose<T> vWF2vRF(vPose<T> vWF, T theta)
 {
 	vPose<T> vRF;
 	vRF.vx = vWF.vx * cos(theta) + vWF.vy * sin(theta);
@@ -169,8 +146,7 @@ vPose<T> vWF2vRF(vPose<T> vWF, T theta)
 }
 
 /* Heading of a mobile robot in the range of -pi ... +pi */
-template<typename T>
-class Heading {
+template<typename T> class Heading {
 private:
 	T th{};
 
@@ -186,10 +162,7 @@ private:
 public:
 	Heading() = default;
 
-	Heading(T theta)
-	{
-		th = maxPI(theta);
-	}
+	Heading(T theta) { th = maxPI(theta); }
 
 	Heading& operator=(const T& theta)
 	{
@@ -221,15 +194,12 @@ public:
 		return *this;
 	}
 
-	operator T() const
-	{
-		return th;
-	}
+	operator T() const { return th; }
 };
 
-/* Pose (x, y, theta) and velocity (vx, vy, omega) of a mobile robot, theta is in the range of -pi ... +pi */
-template<typename T>
-class Pose {
+/* Pose (x, y, theta) and velocity (vx, vy, omega) of a mobile robot, theta is
+ * in the range of -pi ... +pi */
+template<typename T> class Pose {
 public:
 	T x{};
 	T y{};
@@ -288,19 +258,15 @@ public:
 
 	bool operator==(const Pose<T>& rhs) const
 	{
-		if (this->x != rhs.x ||
-				this->y != rhs.y ||
-				this->theta != rhs.theta ||
-				this->vx != rhs.vx ||
-				this->vy != rhs.vx ||
-				this->omega != rhs.omega)
+		if (this->x != rhs.x || this->y != rhs.y || this->theta != rhs.theta
+			|| this->vx != rhs.vx || this->vy != rhs.vx
+			|| this->omega != rhs.omega)
 			return false;
 		return true;
 	}
 };
 
-template<typename T>
-dPose<T> operator-(const Pose<T>& p1, const Pose<T>& p2)
+template<typename T> dPose<T> operator-(const Pose<T>& p1, const Pose<T>& p2)
 {
 	dPose<T> p;
 	p.x = p1.x - p2.x;
@@ -319,8 +285,7 @@ dPose<T> operator/(const dPose<T>& p1, const unsigned int divisor)
 	return p;
 }
 
-template<typename T>
-Pose<T> operator+(const Pose<T>& p, const dPose<T>& d)
+template<typename T> Pose<T> operator+(const Pose<T>& p, const dPose<T>& d)
 {
 	Pose<T> n;
 	n.x = p.x + d.x;
@@ -329,8 +294,7 @@ Pose<T> operator+(const Pose<T>& p, const dPose<T>& d)
 	return n;
 }
 
-template<typename T>
-Pose<T> operator-(const Pose<T>& p, const dPose<T>& d)
+template<typename T> Pose<T> operator-(const Pose<T>& p, const dPose<T>& d)
 {
 	Pose<T> n;
 	n.x = p.x - d.x;
@@ -338,29 +302,5 @@ Pose<T> operator-(const Pose<T>& p, const dPose<T>& d)
 	n.theta = p.theta - d.theta; // MAXPI(p.theta - d.theta);
 	return n;
 }
-
-class IMSLex : public std::exception {
-private:
-	std::string s;
-	int err;
-
-public:
-	IMSLex() { }
-
-	IMSLex(int err, std::string s)
-	{
-		this->s = s;
-		this->err = err;
-	}
-
-	virtual ~IMSLex() throw() { }
-
-	virtual const char* what() const throw()
-	{
-		return s.c_str();
-	}
-
-	int geterrno() { return err; }
-};
 
 }

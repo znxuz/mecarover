@@ -9,8 +9,8 @@
 
 #include <stdint.h>
 
-#include <mecarover/RTOS.h>
 #include <mecarover/rtos_config.h>
+#include <mecarover/rtos_utils.h>
 
 #include <mecarover/mrlogger/mrlogger.h>
 

@@ -1,11 +1,11 @@
 #pragma once
 
-#include <mecarover/RTOS.h>
+#include <mecarover/controls/MecanumController.h>
 #include <mecarover/hal/stm_hal.hpp>
 #include <mecarover/mrcpptypes.h>
 #include <mecarover/robot_params.hpp>
 #include <mecarover/rtos_config.h>
-#include <mecarover/controls/MecanumController.h>
+#include <mecarover/rtos_utils.h>
 
 extern "C"
 {
@@ -277,11 +277,10 @@ public:
 			return -1;
 		}
 
-		// log_message(log_debug, "main task old priority: %li", uxTaskPriorityGet(NULL));
-		// probably don't need this line below
-		// vTaskPrioritySet(NULL, static_cast<osPriority_t>(MAIN_TASK_PRIORITY));
-
-		if (UseWheelControllerTask && !drehzahlregler_thread.create(call_wheel_control_task, "WheelControllerTask", STACK_SIZE, this, WHEEL_CONTROLLER_PRIORITY)) {
+		if (UseWheelControllerTask
+			&& !drehzahlregler_thread.create(call_wheel_control_task,
+											 "WheelControllerTask", STACK_SIZE,
+											 this, WHEEL_CONTROLLER_PRIORITY)) {
 			log_message(log_error, "Can not create drehzahlregler thread");
 			return -1;
 		}
