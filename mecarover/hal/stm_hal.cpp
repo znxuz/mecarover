@@ -20,8 +20,10 @@ TIM_HandleTypeDef *encoder_timer[4] = { &htim3, &htim1, &htim2, &htim4 };
 
 // Pwm Timer und Channels
 TIM_HandleTypeDef *pwm_timer[4] = { &htim8, &htim5, &htim9, &htim8 };
-const uint32_t Channel_PwmA[4] = { TIM_CHANNEL_4, TIM_CHANNEL_1, TIM_CHANNEL_1, TIM_CHANNEL_1 };
-const uint32_t Channel_PwmB[4] = { TIM_CHANNEL_3, TIM_CHANNEL_2, TIM_CHANNEL_2, TIM_CHANNEL_2 }; // FIXME: htim5 isn't configured to use channel 1 & 2 but rather channel 1 & 4
+const uint32_t Channel_PwmA[4]
+	= {TIM_CHANNEL_4, TIM_CHANNEL_1, TIM_CHANNEL_1, TIM_CHANNEL_1};
+const uint32_t Channel_PwmB[4]
+	= {TIM_CHANNEL_3, TIM_CHANNEL_4, TIM_CHANNEL_2, TIM_CHANNEL_2};
 
 // conversion of physical rotation direction to logical rotation direction
 int encoder_direction[NUM_MOTORS] = { +1, +1, +1, +1 }; // rotation direction of the wheel encoders: +1 or -1
