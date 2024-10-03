@@ -152,30 +152,6 @@ static constexpr inline ReglerParam_t Regler = {
 	//                .korrekturmatrix = { 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 }
 };
 
-/*
-   typedef struct {
-   double DzrKv;
-   double DzrTaDTn;
-   double DzrTvDTa;
-   double DzrIntMax;
-   double DzrSchleppMax;
-   FourReal_t DzrSkalierung;
-   FourReal_t DzrKoppel;
-   Pose_t LageKv;
-   Pose_t LageSchleppMax;
-   double Koppel;
-   } ReglerParam_t;
-   */
-
-/*
-   typedef struct {
-   double Timer;
-   double FzDreh;
-   double FzLage;
-   uint32_t FzLageZuDreh;
-   } Abtastzeit_t;
-   */
-
 #if 0
 typedef struct {
 	mrc_vehicletype_t type;	/* Fahrzeug-Typ                    */

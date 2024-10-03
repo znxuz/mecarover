@@ -199,7 +199,7 @@ void enable_topic_cb(const void* enable_topic)
 void micro_ros_bak(void* arg)
 {
 	MX_LWIP_Init();
-	vTaskDelay(100);
+	vTaskDelay(1000);
 
 	controller = reinterpret_cast<vehiclecontrol::ControllerTask<real_t>*>(arg);
 

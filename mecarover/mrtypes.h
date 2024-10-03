@@ -1,12 +1,11 @@
 #pragma once
 
-/* std C header files */
-#include <math.h>     /* for M_PI */
-#include <stdint.h>   /* for uint32_t, uint8_t, uint16_t */
+#include <math.h>
+#include <stdint.h>
 #include <sys/time.h> /* for struct timeval */
 
-/* local header files */
 #include "mrclient.h"
+
 #include <mecarover/mrlogger/mrlogger.h>
 
 #if __cplusplus
@@ -54,7 +53,6 @@ extern "C" {
 #endif
 
 typedef double real_t;
-typedef double FourReal_t[4];
 
 typedef struct {
 	double x;

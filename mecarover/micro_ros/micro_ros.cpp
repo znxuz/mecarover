@@ -1,7 +1,9 @@
-#include <mecarover/controls/ControllerTask.h>
+#include <mecarover/controls/MecanumControllerTask.h> // FIXME: has to be before micro_ros.hpp
+
 #include "micro_ros.hpp"
 
 #include <lwip.h>
+#include <stm32f7xx_hal.h>
 
 // micro-ros headers
 #include <rcl/allocator.h>
@@ -12,9 +14,9 @@
 
 #include <experimental/source_location>
 
+#include <mecarover/controls/ControllerTask.h>
 #include <mecarover/lidar/lidar.h>
 #include <mecarover/mrlogger/mrlogger.h>
-#include <mecarover/controls/MecanumControllerTask.h>
 
 #include "eth_transport.h"
 #include "interpolation.hpp"
@@ -38,6 +40,8 @@ static rcl_init_options_t init_options;
 void init()
 {
 	MX_LWIP_Init();
+	HAL_Delay(1000);
+
 	rmw_uros_set_custom_transport(false, (void*)&TRANSPORT_PARAMS,
 								  eth_transport_open, eth_transport_close,
 								  eth_transport_write, eth_transport_read);

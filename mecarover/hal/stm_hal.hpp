@@ -10,9 +10,9 @@
 static constexpr int NUM_MOTORS = 4;
 
 void hal_init(const Fahrzeug_t* fz);
-int hal_wheel_vel_set_pwm(real_t* duty);
+void hal_wheel_vel_set_pwm(const real_t* duty);
 std::array<real_t, NUM_MOTORS> hal_encoder_delta();
-int hal_encoder_read(real_t* DeltaPhi);
+void hal_encoder_read(real_t* DeltaPhi);
 bool hal_get_estop();
 
 extern "C"
