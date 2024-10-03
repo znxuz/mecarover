@@ -78,9 +78,9 @@ CFLAGS = \
 CPPFLAGS = \
 		   $(FLAGS) \
 		   -std=gnu++20 \
+		   -fexceptions \
 		   -fno-rtti \
 		   -fno-use-cxa-atexit
-		   # -fexceptions \
 
 LD_FLAGS = \
 		   $(MICRO_ROS_LIB) \

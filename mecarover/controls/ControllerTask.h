@@ -1,38 +1,34 @@
 #pragma once
 
-#include <Eigen/Core>
-#include <Eigen/LU>
 #include <mecarover/RTOS.h>
 #include <mecarover/hal/stm_hal.hpp>
 #include <mecarover/mrcpptypes.h>
 #include <mecarover/robot_params.hpp>
 #include <mecarover/rtos_config.h>
+#include <mecarover/controls/MecanumController.h>
 
 extern "C"
 {
 void call_pose_control_task(void* arg);
 void call_wheel_control_task(void* arg);
-
-static inline int get_ref_pose(Pose_t p)
-{
-	// get reference pose from interpolator
-	return 0;
-}
 }
 
 namespace imsl::vehiclecontrol
 {
 
-enum class CtrlMode : int {
-	OFF, // disable motors
-	ESTOP, // enable motors, v = 0
-	TWIST, // cmd_vel: velocity command from ros
-	POSE // cmd_pose: pose command from ros
+enum class CtrlMode {
+	OFF,
+	TWIST,
 };
 
 template<typename T>
 class ControllerTask {
 private:
+	using VelWheel = typename MecanumController<T>::VelWheel;
+	using VelRF = typename MecanumController<T>::VelRF;
+	MecanumController<T> controller;
+	RT_Mutex ContrMutex; // Mutex for controller object
+
 	/* Uebergabe der Drehzahlsollwerte -> Drehzahlregler in rad/s */
 	T RadSollWert[4] = {0.0, 0.0, 0.0, 0.0};
 	RT_Mutex SollwMutex; // Mutex fuer Drehzahlsollwert Lageregler -> Drehzahlregler
@@ -59,18 +55,131 @@ private:
 	RT_Mutex ManuRefVelMut;
 	vPose<T> ManuRefVel;
 
-protected:
-	int NumbWheels = 0;
-	int DegFreed = 0;
 	ReglerParam_t Regler;
 	Abtastzeit_t Ta;
 
-	virtual void PoseControlInterface(const Pose<T>& pose_sp, const Pose<T>& actual_pose, T* vel_wheel_sp) = 0;
-	virtual void WheelControlInterface(const T* ReferenceVel, const T* ActualVel, T* CorrectingVel) = 0;
-	virtual void OdometryInterface(const T* RadDeltaPhi, dPose<T>& robot_vel) = 0;
-	virtual void ManualModeInterface(vPose<T>& vel_rframe_sp, vPose<T>& vel_rframe_old, Pose<T>& pose_manual) = 0;
-	virtual void PoseUpdate(dPose<T> Delta, unsigned int Divisor) = 0;
-	virtual void HeadingUpdate(T Delta, unsigned int Divisor) = 0;
+	void pose_control(const Pose<T>& pose_sp,
+							  const Pose<T>& actual_pose,
+							  T* vel_wheel_sp)
+	{
+		try {
+			VelRF vel_rframe_sp_mtx
+				= controller.poseControl(pose_sp, actual_pose);
+
+			// calculate reference velocities of the wheels
+			VelWheel vel_wheel_sp_mtx
+				= controller.vRF2vWheel(vel_rframe_sp_mtx);
+
+			for (int i = 0; i < controller.N_WHEEL; i++)
+				vel_wheel_sp[i] = vel_wheel_sp_mtx(i);
+		} catch (mrc_stat e) { // Schleppfehler aufgetreten
+			SetControllerMode(CtrlMode::OFF);
+			SetControllerErrorStatus(MRC_LAGEERR);
+			log_message(log_error, "deviation position controller too large");
+		}
+	}
+
+	void wheel_control(const T* ReferenceVel, const T* ActualVel,
+							   T* CorrectingVel)
+	{
+		VelWheel RefVel = VelWheel::Zero(), ActVel = VelWheel::Zero(),
+				 CorrVel = VelWheel::Zero();
+
+		// convert to specific type VelWheel
+		for (int i = 0; i < controller.N_WHEEL; i++) {
+			RefVel(i) = ReferenceVel[i];
+			ActVel(i) = ActualVel[i];
+		}
+
+		// call wheel control algorithm
+		try {
+			CorrVel = controller.wheelControl(RefVel, ActVel);
+
+			// convert correcting variable to native type T*
+			for (int i = 0; i < controller.N_WHEEL; i++) {
+				CorrectingVel[i] = CorrVel(i);
+			}
+		} // end of try
+		catch (mrc_stat e) {
+			//        hal_amplifiers_disable();
+			SetControllerMode(CtrlMode::OFF);
+
+			SetControllerErrorStatus(MRC_DRZERR);
+			log_message(log_error, "Schleppfehler Drehzahlregler");
+		}
+	}
+
+	void ManualModeInterface(vPose<T>& vel_rframe_sp, vPose<T>& vel_rframe_prev,
+							 Pose<T>& pose_manual)
+	{
+		vel_rframe_sp
+			= controller.velocityFilter(vel_rframe_sp, vel_rframe_prev);
+
+		vPose<T> vel_wframe_sp = vRF2vWF<T>(vel_rframe_sp, getPose().theta);
+
+		pose_manual.x += vel_wframe_sp.vx * Ta.FzLage;
+		pose_manual.y += vel_wframe_sp.vy * Ta.FzLage;
+		pose_manual.theta += vel_wframe_sp.omega * Ta.FzLage;
+
+		/*
+		   static int count = 0;
+		   if (count++ > 100) {
+		   count = 0;
+		   log_message(log_debug,"vWFref x: %f, y: %f, theta: %f", vWFref.vx,
+		   vWFref.vy, vWFref.omega);
+		   }
+		   */
+	}
+
+	void mr_radsollwert_set(const T* sollw)
+	{
+		SollwMutex.lock();
+		for (int i = 0; i < controller.N_WHEEL; i++)
+			RadSollWert[i] = sollw[i];
+		SollwMutex.unlock();
+	}
+
+	int mr_radsollwert_get(T* sollw)
+	{
+		SollwMutex.lock();
+		for (int i = 0; i < controller.N_WHEEL; i++) {
+			sollw[i] = RadSollWert[i];
+		}
+		SollwMutex.unlock();
+		return 0;
+	}
+
+	void Odometry(const T* RadDeltaPhi, T timediff) // timediff = Fz.Dreh
+	{
+		// TODO: search if eigen matrix really can be assigned directly with a
+		// raw array
+		VelWheel wheel_rotation_delta_matrix;
+		for (int i = 0; i < controller.N_WHEEL; i++)
+			wheel_rotation_delta_matrix(i) = RadDeltaPhi[i];
+
+		VelRF matrix_robot_vel
+			= controller.vWheel2vRF(wheel_rotation_delta_matrix);
+
+		dPose<T> vel_rframe;
+		vel_rframe.x = matrix_robot_vel(0);
+		vel_rframe.y = matrix_robot_vel(1);
+		vel_rframe.theta = matrix_robot_vel(2);
+
+		auto oldPose = getPose();
+		ContrMutex.lock();
+		Pose<T> newPose
+			= controller.odometry(oldPose, wheel_rotation_delta_matrix);
+		ContrMutex.unlock();
+		setPose(newPose);
+
+		PosAktMut.lock();
+		dPose<T> delta_wframe = dRF2dWF<T>(
+			vel_rframe, PosAkt.theta + vel_rframe.theta / static_cast<T>(2.0));
+		PosAkt.vx = delta_wframe.x / timediff;
+		PosAkt.vy = delta_wframe.y / timediff;
+		PosAkt.omega = delta_wframe.theta / timediff;
+		PosAktMut.unlock();
+	}
 
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW // eigenlib 16 Byte alignement
@@ -127,10 +236,12 @@ public:
 		return 0;
 	}
 
-	virtual int Init(const Fahrzeug_t* fz, ReglerParam_t Regler, Abtastzeit_t Ta)
+	int Init(const Fahrzeug_t* fz, ReglerParam_t Regler, Abtastzeit_t Ta)
 	{
-		log_message(log_info, "ControllerTask Init");
-		ControllerMode = CtrlMode::OFF;
+		log_message(log_info, "MecanumControllerTask init");
+
+		this->controller.init(fz, Regler, Ta);
+		this->ControllerMode = CtrlMode::OFF;
 		this->Regler = Regler;
 		this->Ta = Ta;
 
@@ -228,13 +339,6 @@ public:
 			controllerMode = GetControllerMode(); // get actual controller mode from regelung.c
 
 			switch (controllerMode) {
-			case CtrlMode::ESTOP:
-				//          hal_amplifiers_enable(); // active stopping !
-				// set wheel velocities to zero
-				for (int i = 0; i < 4; i++) {
-					vWheelref[i] = 0;
-				}
-				break;
 			case CtrlMode::OFF:
 				pose_sp.x = actual_pose.x;
 				pose_sp.y = actual_pose.y;
@@ -280,15 +384,10 @@ public:
 				pose_sp.vy = vel_wframe_sp.vy;
 				pose_sp.omega = vel_wframe_sp.omega;
 				break;
-			case CtrlMode::POSE:
-				get_ref_pose(pose_sp); // TODO function to be implemented
-										// read reference pose from interpolator
-				break;
 			}
 
-			if ((controllerMode != CtrlMode::OFF)
-				&& (controllerMode != CtrlMode::ESTOP)) {
-				PoseControlInterface(pose_sp, actual_pose, vWheelref);
+			if (controllerMode != CtrlMode::OFF) {
+				pose_control(pose_sp, actual_pose, vWheelref);
 
 				if (UseWheelControllerTask) {
 					mr_radsollwert_set(vWheelref);
@@ -341,30 +440,11 @@ public:
 		//      int64_t start_time = __HAL_TIM_GET_COUNTER(&htim13); // get time in microseconds since start
 
 		RT_PeriodicTimer WheelControllerTimer(Ta.FzDreh * 1000); // periode in ms
-		int estopCounter = 0;
 		while (true) {
 			controllerMode = GetControllerMode();
 			// printf("WheelTask: %ld\n", uwTick);
 
-			// read E-Stop input - useless for the mecanum robot for now
-			if (hal_get_estop() && controllerMode != CtrlMode::OFF) {
-				controllerMode = CtrlMode::ESTOP;
-				SetControllerMode(controllerMode);
-			}
-
 			switch (controllerMode) {
-			case CtrlMode::ESTOP:
-				//            hal_amplifiers_enable(); // active stopping !
-				// set wheel velocities to zero
-				for (int i = 0; i < 4; i++) { // drehzahlregler soll arbeiten
-					Stellgroesse[i] = 0.0;
-				}
-				if (estopCounter++ > 10) {
-					SetControllerMode(CtrlMode::OFF); // switch off motors, no active stopping
-													  //            hal_amplifiers_disable();
-					estopCounter = 0;
-				}
-				break;
 			case CtrlMode::OFF:
 				for (int i = 0; i < 4; i++) {
 					Stellgroesse[i] = 0.0;
@@ -377,13 +457,9 @@ public:
 				Sollwert = DZRNullwert;
 				break;
 				//        case MRC_HOLD:
-			case CtrlMode::POSE:
 			case CtrlMode::TWIST:
-				/*
-				 * Die Drehzahlsollwerte vom Lageregler lesen.
-				 */
+				/* Die Drehzahlsollwerte vom Lageregler lesen. */
 				mr_radsollwert_get(sollw);
-
 				Sollwert = sollw; /* Sollwert-Zeiger darauf setzen */
 				//				log_message(log_info, "Sollwert: %d\n", sollw);
 
@@ -393,28 +469,24 @@ public:
 			/* Istwerte (Zaehlerstand seit dem letzten Lesen) von den Encodern lesen */
 			hal_encoder_read(RadDeltaPhi);
 
-			for (int i = 0; i < NumbWheels; i++) {
+			for (int i = 0; i < controller.N_WHEEL; i++) {
 				// Radgeschwindigkeiten in rad/s fuer Client-Programme und Drehzahlregler
 				radgeschw[i] = RadDeltaPhi[i] / Ta.FzDreh;
 			}
 
-			if ((controllerMode != CtrlMode::OFF)
-				&& (controllerMode != CtrlMode::ESTOP)) {
+			if (controllerMode != CtrlMode::OFF) {
 				/*
 				 * Drehzahlreglerfunktion aufrufen.
 				 */
-				WheelControlInterface(Sollwert, radgeschw, Stellgroesse);
-			} else if (controllerMode != CtrlMode::OFF) {
-				//          hal_amplifiers_disable();
+				wheel_control(Sollwert, radgeschw, Stellgroesse);
 			}
 
-			//			printf("Stellgroesse2: %.2f\n", Stellgroesse[1]);
+			// printf("Stellgroesse2: %.2f\n", Stellgroesse[1]);
 			hal_wheel_vel_set_pwm(Stellgroesse);
 
 			// Bei allen Stoerungen Steller aus
 			if (GetControllerErrorStatus()) {
 				hal_wheel_vel_set_pwm(DZRNullwert);
-				//          hal_amplifiers_disable();
 			}
 
 			Odometry(RadDeltaPhi, Ta.FzDreh);
@@ -434,7 +506,6 @@ public:
 			WheelControllerTimer.wait();
 
 			// measure the time needed in loop
-
 			/*
 			 * Drehzahlregler wird 5-mal aufgerufen bevor der Lageregler aufgerufen wird und neue Werte berechnet.
 			 */
@@ -470,40 +541,6 @@ public:
 		PosAktMut.unlock();
 	}
 
-private:
-	void mr_radsollwert_set(const T* sollw)
-	{
-		SollwMutex.lock();
-		for (int i = 0; i < NumbWheels; i++)
-			RadSollWert[i] = sollw[i];
-		SollwMutex.unlock();
-	}
-
-	int mr_radsollwert_get(T* sollw)
-	{
-		SollwMutex.lock();
-		for (int i = 0; i < NumbWheels; i++) {
-			sollw[i] = RadSollWert[i];
-		}
-		SollwMutex.unlock();
-		return 0;
-	}
-
-	void Odometry(const T* RadDeltaPhi, T timediff) // timediff = Fz.Dreh
-	{
-		dPose<T> wfm, robot_vel;
-
-		// call subclass
-		OdometryInterface(RadDeltaPhi, robot_vel);
-
-		PosAktMut.lock();
-		// movement with actual heading
-		wfm = dRF2dWF<T>(robot_vel, PosAkt.theta + robot_vel.theta / T(2.0));
-		PosAkt.vx = wfm.x / timediff;
-		PosAkt.vy = wfm.y / timediff;
-		PosAkt.omega = wfm.theta / timediff;
-		PosAktMut.unlock();
-	}
 };
 
 }

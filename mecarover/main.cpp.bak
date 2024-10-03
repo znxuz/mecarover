@@ -39,50 +39,5 @@ int main()
 				MICRO_ROS_TASK_PRIORITY, NULL);
 
 	osKernelStart();
-
-	/* code unreachable due to the scheduler never returning
-	log_message(log_error, "ERROR: the program counter should never reach
-	here\n");
-	// RT_PeriodicTimer loopTimer(500); // wait period 500 ms = 2 Hz loop
-	frequency RT_PeriodicTimer loopTimer(Ta.FzLage * 1000); // wait period is
-	pose controller period loopTimer.init(); int loopCounter = 0; real_t test;
-	while (true) {
-		log_message(log_info, "main while Log Message Test\n");
-
-		hal_encoder_read(&test); // Test der Encoder
-
-		char msg_buffer[100];
-		// output to terminal
-		if (loopCounter++ > 1.0 / Ta.FzLage) {
-			loopCounter = 0;
-			auto p = controllerTask->getPose();
-			CtrlMode mode = controllerTask->GetControllerMode();
-			const char *mode_str = "";
-
-			switch (mode) {
-			case CtrlMode::ESTOP:
-				mode_str = "ESTOP";
-				break;
-			case CtrlMode::OFF:
-				mode_str = "OFF";
-				break;
-			case CtrlMode::TWIST:
-				mode_str = "TWIST";
-				break;
-			case CtrlMode::POSE:
-				mode_str = "POSE";
-				break;
-			}
-
-			sprintf(msg_buffer, "x: %f, y: %f, theta: %f", p.x, p.y, p.theta);
-
-			printf("main while loop \n");
-
-			log_message(log_debug, "%s", msg_buffer); // write pose to logger
-			log_message(log_info, "ROS: Mode: %s", mode_str);
-		}
-		loopTimer.wait();
-	}
-	*/
 }
 }

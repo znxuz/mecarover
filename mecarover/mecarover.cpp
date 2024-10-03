@@ -1,14 +1,14 @@
-#include "mecarover/mrlogger/mrlogger.h"
-#include <tim.h>
-#include <usart.h>
-
-#include <mecarover/controls/MecanumControllerTask.h>
+#include <mecarover/controls/ControllerTask.h>
 #include <mecarover/hal/stm_hal.hpp>
 #include <mecarover/lidar/lidar.h>
 #include <mecarover/micro_ros/micro_ros.hpp>
 #include <mecarover/micro_ros/micro_ros_legacy.hpp>
+#include <mecarover/mrlogger/mrlogger.h>
 #include <mecarover/retarget.h>
 #include <mecarover/robot_params.hpp>
+
+#include <tim.h>
+#include <usart.h>
 
 LaserScanner ls;
 
@@ -42,8 +42,7 @@ void mecarover_start(void)
 		Error_Handler();
 	}
 
-	auto* controller_task
-		= new imsl::vehiclecontrol::MecanumControllerTask<real_t>();
+	auto* controller_task = new imsl::vehiclecontrol::ControllerTask<real_t>();
 	controller_task->Init(&fz, Regler, Ta);
 	ls.init_LaserScanner();
 

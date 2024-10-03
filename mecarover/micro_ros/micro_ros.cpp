@@ -1,22 +1,14 @@
-#include <mecarover/controls/MecanumControllerTask.h> // FIXME: has to be before micro_ros.hpp
-
 #include "micro_ros.hpp"
 
 #include <lwip.h>
-#include <stm32f7xx_hal.h>
 
 // micro-ros headers
 #include <rcl/allocator.h>
 #include <rclc/executor.h>
 #include <rclc/rclc.h>
-#include <rclc/timer.h>
 #include <rmw_microros/rmw_microros.h>
 
-#include <experimental/source_location>
-
-#include <mecarover/controls/ControllerTask.h>
 #include <mecarover/lidar/lidar.h>
-#include <mecarover/mrlogger/mrlogger.h>
 
 #include "eth_transport.h"
 #include "interpolation.hpp"

@@ -74,12 +74,6 @@ void hal_wheel_vel_set_pwm(const real_t* duty_cycle)
 	}
 }
 
-bool hal_get_estop()
-{
-	// probably no estop from the stm32 mcu; maybe the user button can be used
-	return false;
-}
-
 extern "C"
 {
 void stm_encoder_cb(TIM_HandleTypeDef* htim)
