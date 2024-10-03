@@ -26,7 +26,7 @@ extern "C"
 
 typedef struct {
 	struct pollfd poll_fd;
-	char ip[15];
+	char ip[16];
 	char port[5];
 } eth_transport_params_t;
 

@@ -205,7 +205,7 @@ void micro_ros_bak(void* arg)
 
 	// ethernet communication, change to the local lan ip address
 	eth_transport_params_t default_params
-		= {{0, 0, 0}, {"192.168.1.228"}, {"8888"}};
+		= {{0, 0, 0}, {"192.168.199.157"}, {"8888"}};
 	rmw_uros_set_custom_transport(false, (void*)&default_params,
 								  eth_transport_open, eth_transport_close,
 								  eth_transport_write, eth_transport_read);

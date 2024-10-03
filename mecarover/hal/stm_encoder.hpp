@@ -13,7 +13,8 @@ public:
 
 private:
 	TIM_HandleTypeDef* htim;
-	int32_t counter;
-	int64_t offset; /* 64-bit integer for not over or underflowing easily */
+	/* 64-bit integer for not over or underflowing easily */
+	int64_t counter;
+	int64_t offset;
 	bool is_init = false;
 };
