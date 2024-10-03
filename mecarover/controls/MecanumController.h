@@ -145,7 +145,6 @@ public:
 			} else if (Integr(i) < -(Regler.DzrIntMax)) {
 				Integr(i) = -(Regler.DzrIntMax);
 			}
-			// printf("I-Anteil für den %d. Motor: %f\n", i, Integr(i));
 
 			// D-Anteil
 			diff = Regler.DzrTvDTa * (regelAbw - RAbwAlt(i));

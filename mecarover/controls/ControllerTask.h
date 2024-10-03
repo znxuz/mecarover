@@ -195,10 +195,8 @@ public:
 
 	void SetManuRef(vPose<T> vel)
 	{
-		//      log_message(log_debug,"vel x: %f, y: %f, theta: %f", vel.vx, vel.vy, vel.omega);
 		ManuRefVelMut.lock();
 		ManuRefVel = vel;
-		// printf("SetManuRef: x: %f, y: %f, omega: %f\n", ManuRefVel.vx, ManuRefVel.vy, ManuRefVel.omega);
 		ManuRefVelMut.unlock();
 	}
 
@@ -319,7 +317,6 @@ public:
 
 		int count = 0;
 		while (true) {
-			// printf("POSETask: %ld\n", uwTick);
 			LgrSchedSem.wait(); // wait for signal from wheel controller
 								//        int64_t stop_time = __HAL_TIM_GET_COUNTER(&htim13); // get time in microseconds since start
 								//        uint32_t elapsed_time = stop_time - start_time; // time needed for control loop
@@ -441,7 +438,6 @@ public:
 		RT_PeriodicTimer WheelControllerTimer(Ta.FzDreh * 1000); // periode in ms
 		while (true) {
 			controllerMode = GetControllerMode();
-			// printf("WheelTask: %ld\n", uwTick);
 
 			switch (controllerMode) {
 			case CtrlMode::OFF:
@@ -480,7 +476,6 @@ public:
 				wheel_control(Sollwert, radgeschw, Stellgroesse);
 			}
 
-			// printf("Stellgroesse2: %.2f\n", Stellgroesse[1]);
 			hal_wheel_vel_set_pwm(Stellgroesse);
 
 			// Bei allen Stoerungen Steller aus
