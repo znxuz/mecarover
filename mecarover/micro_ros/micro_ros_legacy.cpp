@@ -196,7 +196,7 @@ void enable_topic_cb(const void* enable_topic)
 }
 
 // micro-ROS configuration
-void micro_ros_bak(void* arg)
+void micro_ros_legacy(void* arg)
 {
 	MX_LWIP_Init();
 	vTaskDelay(1000);
