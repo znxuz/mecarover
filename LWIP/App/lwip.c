@@ -29,7 +29,7 @@
 #include <string.h>
 
 /* USER CODE BEGIN 0 */
-#include <mecarover/rtos_config.h> // TODO: extract ETH_SIZE to a dedicated file
+#include <mecarover/rtos_config.h>
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
 static void ethernet_link_status_updated(struct netif *netif);
@@ -46,8 +46,6 @@ ip4_addr_t ipaddr;
 ip4_addr_t netmask;
 ip4_addr_t gw;
 /* USER CODE BEGIN OS_THREAD_ATTR_CMSIS_RTOS_V2 */
-#define INTERFACE_THREAD_STACK_SIZE ( 1350 )
-osThreadAttr_t attributes;
 /* USER CODE END OS_THREAD_ATTR_CMSIS_RTOS_V2 */
 
 /* USER CODE BEGIN 2 */
@@ -81,18 +79,12 @@ void MX_LWIP_Init(void)
 
   /* Create the Ethernet link handler thread */
 /* USER CODE BEGIN H7_OS_THREAD_NEW_CMSIS_RTOS_V2 */
+  osThreadAttr_t attributes;
   memset(&attributes, 0x0, sizeof(osThreadAttr_t));
-//  attributes.name = "EthLink";
-//  attributes.stack_size = STACK_SIZE; //INTERFACE_THREAD_STACK_SIZE;
-//  attributes.priority = LWIP_TASK_PRIORITY;
-//  osThreadNew(ethernet_link_thread, &gnetif, &attributes);
-
-	BaseType_t xReturned;
-	xReturned = xTaskCreate(ethernet_link_thread, "EthLink", ETH_SIZE, &gnetif, (osPriority_t)LWIP_TASK_PRIORITY, NULL);
-	if (xReturned != pdPASS) {
-		//    Serial.println("Error: logger_init(), xTaskCreate()");
-		printf("Error: logger_init(), xTaskCreate()\n");
-	}
+  attributes.name = "EthLink";
+  attributes.stack_size = LWIP_STACK_SIZE;
+  attributes.priority = LWIP_TASK_PRIORITY;
+  osThreadNew(ethernet_link_thread, &gnetif, &attributes);
 /* USER CODE END H7_OS_THREAD_NEW_CMSIS_RTOS_V2 */
 
   /* Start DHCP negotiation for a network interface (IPv4) */

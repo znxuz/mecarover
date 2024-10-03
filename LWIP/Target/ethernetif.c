@@ -33,15 +33,13 @@
 
 /* Within 'USER CODE' section, code will be kept by default at each generation */
 /* USER CODE BEGIN 0 */
-#include <mecarover/rtos_config.h> // TODO: extract ETH_SIZE to a dedicated file
+#include <mecarover/rtos_config.h>
 /* USER CODE END 0 */
 
 /* Private define ------------------------------------------------------------*/
 /* The time to block waiting for input. */
 #define TIME_WAITING_FOR_INPUT ( portMAX_DELAY )
 /* USER CODE BEGIN OS_THREAD_STACK_SIZE_WITH_RTOS */
-/* Stack size of the interface thread */
-#define INTERFACE_THREAD_STACK_SIZE ( 350 )
 /* USER CODE END OS_THREAD_STACK_SIZE_WITH_RTOS */
 /* Network interface name */
 #define IFNAME0 's'
@@ -267,20 +265,12 @@ static void low_level_init(struct netif *netif)
 
   /* create the task that handles the ETH_MAC */
 /* USER CODE BEGIN OS_THREAD_NEW_CMSIS_RTOS_V2 */
-// osThreadAttr_t attributes;
-//  memset(&attributes, 0x0, sizeof(osThreadAttr_t));
-//  attributes.name = "EthIf";
-//  attributes.stack_size = STACK_SIZE;//INTERFACE_THREAD_STACK_SIZE;
-//  attributes.priority = ETH_TASK_PRIORITY;
-//  osThreadNew(ethernetif_input, netif, &attributes);
-
-
-	BaseType_t xReturned;
-	xReturned = xTaskCreate(ethernetif_input, "EthIf", ETH_SIZE, netif,(osPriority_t)ETH_TASK_PRIORITY, NULL);
-	if (xReturned != pdPASS) {
-//    Serial.println("Error: logger_init(), xTaskCreate()");
-		printf("Error: logger_init(), xTaskCreate()\n");
-	}
+	osThreadAttr_t attributes;
+	memset(&attributes, 0x0, sizeof(osThreadAttr_t));
+	attributes.name = "EthIf";
+	attributes.stack_size = ETH_STACK_SIZE;
+	attributes.priority = ETH_TASK_PRIORITY;
+	osThreadNew(ethernetif_input, netif, &attributes);
 /* USER CODE END OS_THREAD_NEW_CMSIS_RTOS_V2 */
 
 /* USER CODE BEGIN PHY_PRE_CONFIG */
