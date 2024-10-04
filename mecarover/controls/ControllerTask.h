@@ -151,27 +151,16 @@ private:
 
 	void Odometry(const T* RadDeltaPhi, T timediff) // timediff = Fz.Dreh
 	{
-		// TODO: search if eigen matrix really can be assigned directly with a
-		// raw array
-		VelWheel wheel_rotation_delta_matrix;
-		for (int i = 0; i < controller.N_WHEEL; i++)
-			wheel_rotation_delta_matrix(i) = RadDeltaPhi[i];
-
-		VelRF matrix_robot_vel
-			= controller.vWheel2vRF(wheel_rotation_delta_matrix);
-
-		dPose<T> vel_rframe;
-		vel_rframe.x = matrix_robot_vel(0);
-		vel_rframe.y = matrix_robot_vel(1);
-		vel_rframe.theta = matrix_robot_vel(2);
+		VelRF vel_rframe_matrix = controller.vWheel2vRF(VelWheel(RadDeltaPhi));
 
 		auto oldPose = getPose();
 		ContrMutex.lock();
-		Pose<T> newPose
-			= controller.odometry(oldPose, wheel_rotation_delta_matrix);
+		Pose<T> newPose = controller.odometry(oldPose, vel_rframe_matrix);
 		ContrMutex.unlock();
 		setPose(newPose);
 
+		dPose<T> vel_rframe{vel_rframe_matrix(0), vel_rframe_matrix(1),
+							vel_rframe_matrix(2)};
 		PosAktMut.lock();
 		dPose<T> delta_wframe = dRF2dWF<T>(
 			vel_rframe, PosAkt.theta + vel_rframe.theta / static_cast<T>(2.0));

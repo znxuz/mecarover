@@ -23,13 +23,13 @@ public:
 
 private:
 	T epsilon1 = 0; // Verkopplungsfehler
-	T LplusBhalbe; /* in mm 0.5 * (Breite + Laenge)   */
-	T Radradius; /* in mm                           */
+	T l_b_half; /* in mm 0.5 * (Breite + Laenge)   */
+	T radius_wheel; /* in mm                           */
 	T JoystickBeschl; /* maximale Jostickbeschleunigung in mm/s/s */
 	Abtastzeit_t Ta; /* Abtastzeiten der Regler */
 	ReglerParam_t Regler;
-	Jacobian j = Jacobian::Zero();
-	InvJacobian inv_j = InvJacobian::Zero();
+	Jacobian j;
+	InvJacobian inv_j;
 	VelWheel RAbwAlt = VelWheel::Zero();
 	VelWheel Integr = VelWheel::Zero();
 
@@ -48,35 +48,33 @@ public:
 
 	void init(const Fahrzeug_t* Fz, ReglerParam_t Regler, Abtastzeit_t Ta)
 	{
-		LplusBhalbe = Fz->LplusBhalbe;
-		Radradius = Fz->Radradius;
+		l_b_half = Fz->LplusBhalbe;
+		radius_wheel = Fz->Radradius;
 
 		JoystickBeschl = Fz->JoystickBeschl;
 		this->Regler = Regler;
 		this->Ta = Ta;
 
-		this->j << 1.0, 1.0, LplusBhalbe, 1.0, 1.0, -1.0, -LplusBhalbe, 1.0,
-			1.0, 1.0, -LplusBhalbe, -1.0, 1.0, -1.0, LplusBhalbe, -1.0;
-		this->j /= Radradius;
+		this->j = Jacobian{{1.0, 1.0, l_b_half, 1.0},
+						   {1.0, -1.0, -l_b_half, 1.0},
+						   {1.0, 1.0, -l_b_half, -1.0},
+						   {1.0, -1.0, l_b_half, -1.0}};
+		this->j /= radius_wheel;
 
-		this->inv_j << 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0,
-			1.0 / LplusBhalbe, -1.0 / LplusBhalbe, -1.0 / LplusBhalbe,
-			1.0 / LplusBhalbe, 4.0 / Radradius, 4.0 / Radradius,
-			-4.0 / Radradius, -4.0 / Radradius;
-		this->inv_j *= Radradius / 4.0;
+		this->inv_j = InvJacobian{
+			{1.0, 1.0, 1.0, 1.0},
+			{1.0, -1.0, 1.0, -1.0},
+			{1.0 / l_b_half, -1.0 / l_b_half, -1.0 / l_b_half, 1.0 / l_b_half},
+			{4.0 / radius_wheel, 4.0 / radius_wheel, -4.0 / radius_wheel,
+			 -4.0 / radius_wheel}};
+		this->inv_j *= radius_wheel / 4.0;
 	}
 
-	Pose<T> odometry(const Pose<T>& oldPose,
-					 const VelWheel& rad_delta_phi_matrix)
+	Pose<T> odometry(const Pose<T>& oldPose, const VelRF& vel_rframe_matrix)
 	{
-		VelRF vel_rframe = this->vWheel2vRF(rad_delta_phi_matrix);
-
-		dPose<T> delta_pose_rframe;
-		delta_pose_rframe.x = vel_rframe(0); // movement in x direction
-		delta_pose_rframe.y = vel_rframe(1); // movement in y direction
-		delta_pose_rframe.theta
-			= vel_rframe(2); // rotation around z axis (theta)
-		epsilon1 += vel_rframe(3); // coupling error (delta)
+		dPose<T> delta_pose_rframe{vel_rframe_matrix(0), vel_rframe_matrix(1),
+								   vel_rframe_matrix(2)};
+		epsilon1 += vel_rframe_matrix(3); // coupling error (delta)
 
 		dPose<T> delta_pose_wframe = dRF2dWF<T>(
 			delta_pose_rframe,
@@ -124,8 +122,7 @@ public:
 		v(0) = vel_rframe_sp.vx;
 		v(1) = vel_rframe_sp.vy;
 		v(2) = vel_rframe_sp.omega;
-		v(3) = Regler.Koppel
-			* epsilon1; // ASK: Koppel is the proportional scaler from PID?
+		v(3) = Regler.Koppel * epsilon1;
 		return v;
 	}
 
@@ -180,7 +177,7 @@ public:
 		else if (vel_rframe_old.vy - vel_rframe.vy > v_diff)
 			vel_rframe.vy = vel_rframe_old.vy - v_diff;
 
-		v_diff /= LplusBhalbe;
+		v_diff /= l_b_half;
 
 		if (vel_rframe.omega - vel_rframe_old.omega > v_diff)
 			vel_rframe.omega = vel_rframe_old.omega + v_diff;
