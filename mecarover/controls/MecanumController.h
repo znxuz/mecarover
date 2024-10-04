@@ -92,22 +92,16 @@ public:
 							Heading<T>(pose_sp.theta - actual_pose.theta)};
 
 		using std::abs;
-		/* Uberpruefen des Schleppfehlers */
 		if (abs(pose_delta.x) > Regler.LageSchleppMax.x
 			|| abs(pose_delta.y) > Regler.LageSchleppMax.y
-			|| abs(pose_delta.theta) > Regler.LageSchleppMax.theta) {
+			|| abs(pose_delta.theta) > Regler.LageSchleppMax.theta)
+			[[unlikely]] {
 			log_message(
 				log_error,
 				"%s, %s, deviation position controller too large: act.x: %f, "
 				"ref.x: %f, act.y: %f, ref.y: %f, act.theta: %f, ref.theta: %f",
 				__FILE__, __FUNCTION__, actual_pose.x, pose_sp.x, actual_pose.y,
 				pose_sp.y, T(actual_pose.theta), T(pose_sp.theta));
-			log_message(log_error,
-						"Max. Schleppabstand: %f %f %f Schleppabstand %f %f %f",
-						Regler.LageSchleppMax.x, Regler.LageSchleppMax.y,
-						Regler.LageSchleppMax.theta, pose_delta.x, pose_delta.y,
-						pose_delta.theta);
-
 			throw MRC_LAGEERR;
 		}
 
@@ -118,12 +112,9 @@ public:
 			= pose_sp.omega + pose_delta.theta * Regler.LageKv.theta;
 
 		vPose<T> vel_rframe_sp = vWF2vRF<T>(vel_wframe_sp, actual_pose.theta);
-		VelRF v;
-		v(0) = vel_rframe_sp.vx;
-		v(1) = vel_rframe_sp.vy;
-		v(2) = vel_rframe_sp.omega;
-		v(3) = Regler.Koppel * epsilon1;
-		return v;
+
+		return VelRF{vel_rframe_sp.vx, vel_rframe_sp.vy, vel_rframe_sp.omega,
+					 Regler.Koppel * epsilon1};
 	}
 
 	VelWheel wheelControl(const VelWheel& refVel, const VelWheel& realVel)

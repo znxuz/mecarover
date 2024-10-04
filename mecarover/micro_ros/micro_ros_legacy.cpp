@@ -167,7 +167,7 @@ void cmd_cb(const void* cmd_msg)
 {
 	const auto* msg
 		= reinterpret_cast<const geometry_msgs__msg__Twist*>(cmd_msg);
-	log_message(log_info, "cmd_vel x: %f, y: %f, theta: %f", msg->linear.x,
+	log_message(log_info, "v_x: %f, v_y: %f, omega: %f", msg->linear.x,
 				msg->linear.y, msg->angular.z);
 
 	imsl::vPose<real_t> v_ref;
@@ -175,9 +175,10 @@ void cmd_cb(const void* cmd_msg)
 	v_ref.vy = msg->linear.y * 1000.0; // m/s -> mm/s
 	v_ref.omega = msg->angular.z; // rad/s
 
-	if (controller) [[unlikely]]
+	if (controller) [[ likely ]]
 		controller->SetManuRef(v_ref);
 
+	// TODO: probably just for updating the previous encoder values
 	real_t encoder_delta[4];
 	hal_encoder_read(encoder_delta);
 }

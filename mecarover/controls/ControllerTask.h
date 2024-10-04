@@ -1,12 +1,14 @@
 #pragma once
 
 #include <algorithm>
+#include <cstring>
 #include <mecarover/controls/MecanumController.h>
 #include <mecarover/hal/stm_hal.hpp>
 #include <mecarover/mrcpptypes.h>
 #include <mecarover/robot_params.hpp>
 #include <mecarover/rtos_config.h>
 #include <mecarover/rtos_utils.h>
+#include <utility>
 
 extern "C"
 {
@@ -42,8 +44,6 @@ private:
 	Pose<T> PosAkt;
 	RT_Mutex PosAktMut;
 
-	bool UseWheelControllerTask = false;
-
 	RT_Mutex ControllerModeMut;
 	//    mrc_mode ControllerMode = MRC_OFF;
 	//    MutexObject<CtrlMode> ControllerMode = CtrlMode::OFF;
@@ -58,27 +58,6 @@ private:
 	ReglerParam_t Regler;
 	Abtastzeit_t Ta;
 
-	void pose_control(const Pose<T>& pose_sp,
-							  const Pose<T>& actual_pose,
-							  T* vel_wheel_sp)
-	{
-		try {
-			VelRF vel_rframe_sp_mtx
-				= controller.poseControl(pose_sp, actual_pose);
-
-			// calculate reference velocities of the wheels
-			VelWheel vel_wheel_sp_mtx
-				= controller.vRF2vWheel(vel_rframe_sp_mtx);
-
-			for (int i = 0; i < controller.N_WHEEL; i++)
-				vel_wheel_sp[i] = vel_wheel_sp_mtx(i);
-		} catch (mrc_stat e) { // Schleppfehler aufgetreten
-			SetControllerMode(CtrlMode::OFF);
-			SetControllerErrorStatus(MRC_LAGEERR);
-			log_message(log_error, "deviation position controller too large");
-		}
-	}
-
 	void ManualModeInterface(vPose<T>& vel_rframe_sp, vPose<T>& vel_rframe_prev,
 							 Pose<T>& pose_manual)
 	{
@@ -90,15 +69,6 @@ private:
 		pose_manual.x += vel_wframe_sp.vx * Ta.FzLage;
 		pose_manual.y += vel_wframe_sp.vy * Ta.FzLage;
 		pose_manual.theta += vel_wframe_sp.omega * Ta.FzLage;
-
-		/*
-		   static int count = 0;
-		   if (count++ > 100) {
-		   count = 0;
-		   log_message(log_debug,"vWFref x: %f, y: %f, theta: %f", vWFref.vx,
-		   vWFref.vy, vWFref.omega);
-		   }
-		   */
 	}
 
 	void mr_radsollwert_set(const T* sollw)
@@ -202,8 +172,6 @@ public:
 		this->Regler = Regler;
 		this->Ta = Ta;
 
-		UseWheelControllerTask = Ta.FzDreh > 0.0;
-
 		if (!PosAktMut.create()) {
 			log_message(log_error, "%s: Can init mutex", __FUNCTION__);
 			return -1;
@@ -234,8 +202,7 @@ public:
 			return -1;
 		}
 
-		if (UseWheelControllerTask
-			&& !drehzahlregler_thread.create(call_wheel_control_task,
+		if (!drehzahlregler_thread.create(call_wheel_control_task,
 											 "WheelControllerTask", STACK_SIZE,
 											 this, WHEEL_CONTROLLER_PRIORITY)) {
 			log_message(log_error, "Can not create drehzahlregler thread");
@@ -262,7 +229,7 @@ public:
 		Pose<T> pose_sp;
 		Pose<T> actual_pose;
 		Pose<T> pose_manual;
-		T vWheelref[4] = {0.0, 0.0, 0.0, 0.0};
+		T vel_wheel_sp[4] = {};
 
 		CtrlMode oldmode = CtrlMode::OFF;
 		CtrlMode controllerMode = CtrlMode::OFF;
@@ -274,75 +241,69 @@ public:
 					"free heap: %d, free stack: %ld",
 					free_heap, free_stack);
 
-		int count = 0;
 		while (true) {
 			pose_ctrl_sem.wait();
 			pose_ctrl_sem.wait(); // TEST: why wait two times?
 
+			oldmode = std::exchange(controllerMode, GetControllerMode());
 			actual_pose = getPose();
-			oldmode = controllerMode;
-			controllerMode = GetControllerMode();
 
-			switch (controllerMode) {
-			case CtrlMode::OFF:
-				pose_sp.x = actual_pose.x;
-				pose_sp.y = actual_pose.y;
-				pose_sp.theta = actual_pose.theta;
-				pose_sp.vx = 0.0;
-				pose_sp.vy = 0.0;
-				pose_sp.omega = 0.0;
+			if (controllerMode == CtrlMode::OFF) {
+				pose_sp = actual_pose;
+				pose_sp.vx = pose_sp.vy = pose_sp.omega = 0.0;
 				pose_manual = actual_pose;
-				/*
-				   ManuPose.x = aktPose.x;
-				   ManuPose.y = aktPose.y;
-				   ManuPose.theta = aktPose.theta;
-				   */
-				vel_rframe_prev.vx = 0.0;
-				vel_rframe_prev.vy = 0.0;
-				vel_rframe_prev.omega = 0.0;
-				break;
-			case CtrlMode::TWIST:
-				/* First time after mode switch */
-				if (oldmode != CtrlMode::TWIST)
-					pose_manual = actual_pose;
-
-				/* Manuelle Vorgabe der Geschwindiglkeiten im RKS */
-				/* Werte von manueller RKS-Vorgabe lesen */
-				vel_rframe_sp = GetManuRef();
-
-				// set pose_manual from vel
-				ManualModeInterface(vel_rframe_sp, vel_rframe_prev,
-									pose_manual);
-				if (count++ > 100) {
-					count = 0;
-					log_message(
-						log_info,
-						"manual pose via velocity x: %f, y: %f, theta: %f",
-						pose_manual.x, pose_manual.y, T(pose_manual.theta));
-				}
-				vel_rframe_prev = vel_rframe_sp;
-
-				/* V von RKS -> WKS transformieren */
-				vel_wframe_sp = vRF2vWF<T>(vel_rframe_sp, actual_pose.theta);
-
-				pose_sp.x = pose_manual.x;
-				pose_sp.y = pose_manual.y;
-				pose_sp.theta = pose_manual.theta;
-				pose_sp.vx = vel_wframe_sp.vx;
-				pose_sp.vy = vel_wframe_sp.vy;
-				pose_sp.omega = vel_wframe_sp.omega;
-				break;
+				vel_rframe_prev = vPose<T>{};
+				continue;
 			}
 
-			if (controllerMode != CtrlMode::OFF) {
-				pose_control(pose_sp, actual_pose, vWheelref);
+			/* First time after mode switch */
+			if (oldmode != CtrlMode::TWIST)
+				pose_manual = actual_pose;
 
-				if (UseWheelControllerTask) {
-					mr_radsollwert_set(vWheelref);
-				} else { // no wheel controller task, set velocities via CAN
-					hal_wheel_vel_set_pwm(vWheelref);
-				}
+			vel_rframe_sp = GetManuRef();
+
+			// set pose_manual from velocity setpoint
+			vel_rframe_sp
+				= controller.velocityFilter(vel_rframe_sp, vel_rframe_prev);
+			vPose<T> vel_wframe_sp = vRF2vWF<T>(vel_rframe_sp, getPose().theta);
+			pose_manual.x += vel_wframe_sp.vx * Ta.FzLage;
+			pose_manual.y += vel_wframe_sp.vy * Ta.FzLage;
+			pose_manual.theta += vel_wframe_sp.omega * Ta.FzLage;
+
+			static int count = 0;
+			if (count++ > 100) {
+				count = 0;
+				log_message(log_info,
+							"manual pose via velocity x: %f, y: %f, theta: %f",
+							pose_manual.x, pose_manual.y, T(pose_manual.theta));
 			}
+			vel_rframe_prev = vel_rframe_sp;
+
+			/* V von RKS -> WKS transformieren */
+			vel_wframe_sp = vRF2vWF<T>(vel_rframe_sp, actual_pose.theta);
+
+			pose_sp.x = pose_manual.x;
+			pose_sp.y = pose_manual.y;
+			pose_sp.theta = pose_manual.theta;
+			pose_sp.vx = vel_wframe_sp.vx;
+			pose_sp.vy = vel_wframe_sp.vy;
+			pose_sp.omega = vel_wframe_sp.omega;
+
+			try {
+				// calculate reference velocities of the wheels
+				VelWheel vel_wheel_sp_mtx = controller.vRF2vWheel(
+					controller.poseControl(pose_sp, actual_pose));
+				std::copy(vel_wheel_sp_mtx.data(),
+						  vel_wheel_sp_mtx.data() + vel_wheel_sp_mtx.size(),
+						  vel_wheel_sp);
+			} catch (mrc_stat e) {
+				SetControllerMode(CtrlMode::OFF);
+				SetControllerErrorStatus(MRC_LAGEERR);
+				log_message(log_error,
+							"deviation position controller too large");
+			}
+
+			mr_radsollwert_set(vel_wheel_sp);
 		}
 	}
 
@@ -390,6 +351,9 @@ public:
 							  + correcting_vel_matrix.size(),
 						  Stellgroesse);
 			}
+
+			if (GetControllerErrorStatus())
+				std::memset(Stellgroesse, 0, sizeof(Stellgroesse));
 
 			hal_wheel_vel_set_pwm(Stellgroesse);
 

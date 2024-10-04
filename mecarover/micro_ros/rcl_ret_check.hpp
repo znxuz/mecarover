@@ -25,7 +25,7 @@ rcl_ret_softcheck(rcl_ret_t ret_code,
 				  = std::experimental::source_location::current())
 {
 	if (ret_code)
-		log_message(log_error,
+		log_message(log_warning,
 					"Failed status on line %d: %d in %s. Continuing.\n",
 					static_cast<int>(location.line()),
 					static_cast<int>(ret_code), location.file_name());
