@@ -81,21 +81,12 @@ private:
 
 class RT_PeriodicTimer {
 public:
-	RT_PeriodicTimer(TickType_t frec)
-	{
-		xFrequency = frec;
-		xLastWakeTime = xTaskGetTickCount();
-	}
+	RT_PeriodicTimer(TickType_t ticks)
+		: xLastWakeTime{xTaskGetTickCount()}
+		, xFrequency{ticks}
+	{ }
 
-	void init()
-	{
-		xLastWakeTime = xTaskGetTickCount();
-	}
-
-	void wait()
-	{
-		vTaskDelayUntil(&xLastWakeTime, xFrequency);
-	}
+	void wait() { vTaskDelayUntil(&xLastWakeTime, xFrequency); }
 
 private:
 	TickType_t xLastWakeTime;

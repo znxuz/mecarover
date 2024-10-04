@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <mecarover/controls/MecanumController.h>
 #include <mecarover/hal/stm_hal.hpp>
 #include <mecarover/mrcpptypes.h>
@@ -30,17 +31,16 @@ private:
 	RT_Mutex ContrMutex; // Mutex for controller object
 
 	/* Uebergabe der Drehzahlsollwerte -> Drehzahlregler in rad/s */
-	T RadSollWert[4] = {0.0, 0.0, 0.0, 0.0};
-	RT_Mutex SollwMutex; // Mutex fuer Drehzahlsollwert Lageregler -> Drehzahlregler
+	T RadSollWert[4] = {};
+	RT_Mutex SollwMutex;
 
-	// Threads, Semaphores and Mutexes
 	RT_Task lageregler_thread;
 	RT_Task drehzahlregler_thread;
 
-	RT_Semaphore LgrSchedSem; // Semphore zum Wecken des Lagereglers
+	RT_Semaphore pose_ctrl_sem;
 
-	Pose<T> PosAkt; /* Aktuelle Position des Roboters, alle Sensoren */
-	RT_Mutex PosAktMut; // Mutex fuer die Posen
+	Pose<T> PosAkt;
+	RT_Mutex PosAktMut;
 
 	bool UseWheelControllerTask = false;
 
@@ -76,36 +76,6 @@ private:
 			SetControllerMode(CtrlMode::OFF);
 			SetControllerErrorStatus(MRC_LAGEERR);
 			log_message(log_error, "deviation position controller too large");
-		}
-	}
-
-	void wheel_control(const T* ReferenceVel, const T* ActualVel,
-							   T* CorrectingVel)
-	{
-		VelWheel RefVel = VelWheel::Zero(), ActVel = VelWheel::Zero(),
-				 CorrVel = VelWheel::Zero();
-
-		// convert to specific type VelWheel
-		for (int i = 0; i < controller.N_WHEEL; i++) {
-			RefVel(i) = ReferenceVel[i];
-			ActVel(i) = ActualVel[i];
-		}
-
-		// call wheel control algorithm
-		try {
-			CorrVel = controller.wheelControl(RefVel, ActVel);
-
-			// convert correcting variable to native type T*
-			for (int i = 0; i < controller.N_WHEEL; i++) {
-				CorrectingVel[i] = CorrVel(i);
-			}
-		} // end of try
-		catch (mrc_stat e) {
-			//        hal_amplifiers_disable();
-			SetControllerMode(CtrlMode::OFF);
-
-			SetControllerErrorStatus(MRC_DRZERR);
-			log_message(log_error, "Schleppfehler Drehzahlregler");
 		}
 	}
 
@@ -149,7 +119,7 @@ private:
 		return 0;
 	}
 
-	void Odometry(const T* RadDeltaPhi, T timediff) // timediff = Fz.Dreh
+	void Odometry(const T* RadDeltaPhi)
 	{
 		VelRF vel_rframe_matrix = controller.vWheel2vRF(VelWheel(RadDeltaPhi));
 
@@ -164,9 +134,9 @@ private:
 		PosAktMut.lock();
 		dPose<T> delta_wframe = dRF2dWF<T>(
 			vel_rframe, PosAkt.theta + vel_rframe.theta / static_cast<T>(2.0));
-		PosAkt.vx = delta_wframe.x / timediff;
-		PosAkt.vy = delta_wframe.y / timediff;
-		PosAkt.omega = delta_wframe.theta / timediff;
+		PosAkt.vx = delta_wframe.x / Ta.FzDreh;
+		PosAkt.vy = delta_wframe.y / Ta.FzDreh;
+		PosAkt.omega = delta_wframe.theta / Ta.FzDreh;
 		PosAktMut.unlock();
 	}
 
@@ -239,7 +209,7 @@ public:
 			return -1;
 		}
 
-		if (!LgrSchedSem.create(10, 0)) {
+		if (!pose_ctrl_sem.create(10, 0)) {
 			log_message(log_error, "%s: Can init semaphore", __FUNCTION__);
 			return -1;
 		}
@@ -286,8 +256,9 @@ public:
 
 	void PoseControlTask()
 	{
-		vPose<T> vel_wframe_sp, vel_rframe_prev;
-		vPose<T> vel_rframe_sp; // reference velocity of the pose in robot frame
+		vPose<T> vel_rframe_sp;
+		vPose<T> vel_rframe_prev;
+		vPose<T> vel_wframe_sp;
 		Pose<T> pose_sp;
 		Pose<T> actual_pose;
 		Pose<T> pose_manual;
@@ -296,32 +267,21 @@ public:
 		CtrlMode oldmode = CtrlMode::OFF;
 		CtrlMode controllerMode = CtrlMode::OFF;
 
-		size_t free_heap = xPortGetMinimumEverFreeHeapSize(); // ESP.getMinFreeHeap(); //lowest level of free heap since boot
+		size_t free_heap = xPortGetMinimumEverFreeHeapSize();
 		uint32_t free_stack = lageregler_thread.getStackHighWaterMark();
-		//		uint32_t max_elapsed_time = 10; // time needed for control loop
-		//		int64_t start_time = __HAL_TIM_GET_COUNTER(&htim13); // get time in microseconds since start
 		log_message(log_info,
-			"pose controller initialized, running into control loop, free heap: %d, free stack: %ld",
-			free_heap, free_stack);
+					"pose controller initialized, running into control loop, "
+					"free heap: %d, free stack: %ld",
+					free_heap, free_stack);
 
 		int count = 0;
 		while (true) {
-			LgrSchedSem.wait(); // wait for signal from wheel controller
-								//        int64_t stop_time = __HAL_TIM_GET_COUNTER(&htim13); // get time in microseconds since start
-								//        uint32_t elapsed_time = stop_time - start_time; // time needed for control loop
-								//        if (elapsed_time > max_elapsed_time) {
-								//          max_elapsed_time = elapsed_time;
-								////          log_message(log_debug, "pose controller loop max calculation time: %i µs", max_elapsed_time);
-								//          log_message(log_debug, "pose controller jitter: %li µs", max_elapsed_time - 15000);
-								//        }
-			// QUESTION: why wait two times?
-			LgrSchedSem.wait(); // wait for signal from wheel controller
-								//        start_time = __HAL_TIM_GET_COUNTER(&htim13); // get time in microseconds since start
+			pose_ctrl_sem.wait();
+			pose_ctrl_sem.wait(); // TEST: why wait two times?
 
-			// get actual pose
 			actual_pose = getPose();
 			oldmode = controllerMode;
-			controllerMode = GetControllerMode(); // get actual controller mode from regelung.c
+			controllerMode = GetControllerMode();
 
 			switch (controllerMode) {
 			case CtrlMode::OFF:
@@ -351,10 +311,13 @@ public:
 				vel_rframe_sp = GetManuRef();
 
 				// set pose_manual from vel
-				ManualModeInterface(vel_rframe_sp, vel_rframe_prev, pose_manual);
+				ManualModeInterface(vel_rframe_sp, vel_rframe_prev,
+									pose_manual);
 				if (count++ > 100) {
 					count = 0;
-					log_message(log_info, "manual pose via velocity x: %f, y: %f, theta: %f",
+					log_message(
+						log_info,
+						"manual pose via velocity x: %f, y: %f, theta: %f",
 						pose_manual.x, pose_manual.y, T(pose_manual.theta));
 				}
 				vel_rframe_prev = vel_rframe_sp;
@@ -385,44 +348,19 @@ public:
 
 	void WheelControlTask()
 	{
-		T RadDeltaPhi[4]; /* DeltaPhi-Wert der Raeder in rad zwischen zwei Abtastschritten */
-		T sollw[4]; /* lokaler Drehzahlsollwert der Achsen in rad/s */
-
-		T IstwAlt[4]; /* vorhergehender Wert in rad/s */
-		T SollwAlt[4]; /* vorhergehender Sollwert in rad/s */
-		T DZRNullwert[4]; /* Nullwert fuer Drehzahlregler */
-		T Stellgroesse[4]; /* aufintegrierter Wert aus Regelabweichung  */
-		T* Sollwert; // Zeiger auf den aktuellen Sollwert-Vektor Umschalten 0, werte
-		T radgeschw[4]; /* Current wheel speeds */
-
-		/* Make compiler happy */
-		(void)SollwAlt;
-		(void)IstwAlt;
+		T RadDeltaPhi[controller.N_WHEEL];
+		T sollw[controller.N_WHEEL] = {}; /* lokaler Drehzahlsollwert der Achsen in rad/s */
+		T Stellgroesse[controller.N_WHEEL] = {}; /* aufintegrierter Wert aus Regelabweichung  */
+		T radgeschw[controller.N_WHEEL] = {};
 
 		CtrlMode controllerMode;
 
-		for (int i = 0; i < 4; i++) {
-			Stellgroesse[i] = 0.0;
-			DZRNullwert[i] = 0.0;
-			SollwAlt[i] = 0.0;
-			IstwAlt[i] = 0.0;
-		}
-
-		/* Sollwert-Zeiger auf die Nullwerte setzen */
-		Sollwert = DZRNullwert;
-
-		hal_encoder_read(RadDeltaPhi); // Initialisierung der Werte
-
-		// Initialisierung des Teilers fuer den Lagetakt
-		// ASK can it also be 0?
 		int counter = Ta.FzLageZuDreh;
 
 		size_t free_heap = xPortGetMinimumEverFreeHeapSize();
 		uint32_t free_stack = lageregler_thread.getStackHighWaterMark();
 		log_message(log_info, "wheel controller initialized running into control loop, free heap: %d, free stack: %ld",
 			free_heap, free_stack);
-		//      uint32_t max_elapsed_time = 10; // time needed for control loop
-		//      int64_t start_time = __HAL_TIM_GET_COUNTER(&htim13); // get time in microseconds since start
 
 		RT_PeriodicTimer WheelControllerTimer(Ta.FzDreh * 1000); // periode in ms
 		while (true) {
@@ -430,77 +368,40 @@ public:
 
 			switch (controllerMode) {
 			case CtrlMode::OFF:
-				for (int i = 0; i < 4; i++) {
-					Stellgroesse[i] = 0.0;
-					SollwAlt[i] = 0.0;
-					sollw[i] = 0.0;
-					IstwAlt[i] = 0.0;
-				}
-				/* kein break !!! */
-				//        case MRC_NEUTRAL:
-				Sollwert = DZRNullwert;
+				std::memset(Stellgroesse, 0, sizeof(Stellgroesse));
+				std::memset(sollw, 0, sizeof(sollw));
 				break;
-				//        case MRC_HOLD:
 			case CtrlMode::TWIST:
-				/* Die Drehzahlsollwerte vom Lageregler lesen. */
 				mr_radsollwert_get(sollw);
-				Sollwert = sollw; /* Sollwert-Zeiger darauf setzen */
-				//				log_message(log_info, "Sollwert: %d\n", sollw);
-
 				break;
 			}
 
-			/* Istwerte (Zaehlerstand seit dem letzten Lesen) von den Encodern lesen */
 			hal_encoder_read(RadDeltaPhi);
 
-			for (int i = 0; i < controller.N_WHEEL; i++) {
-				// Radgeschwindigkeiten in rad/s fuer Client-Programme und Drehzahlregler
+			for (int i = 0; i < controller.N_WHEEL; ++i)
 				radgeschw[i] = RadDeltaPhi[i] / Ta.FzDreh;
-			}
 
 			if (controllerMode != CtrlMode::OFF) {
-				/*
-				 * Drehzahlreglerfunktion aufrufen.
-				 */
-				wheel_control(Sollwert, radgeschw, Stellgroesse);
+				VelWheel correcting_vel_matrix = controller.wheelControl(
+					VelWheel(sollw), VelWheel(radgeschw));
+
+				std::copy(correcting_vel_matrix.data(),
+						  correcting_vel_matrix.data()
+							  + correcting_vel_matrix.size(),
+						  Stellgroesse);
 			}
 
 			hal_wheel_vel_set_pwm(Stellgroesse);
 
-			// Bei allen Stoerungen Steller aus
-			if (GetControllerErrorStatus()) {
-				hal_wheel_vel_set_pwm(DZRNullwert);
-			}
+			Odometry(RadDeltaPhi);
 
-			Odometry(RadDeltaPhi, Ta.FzDreh);
-
-			/* Lageregler wecken */
-			/*
-			 * Den Lageregler im Teilerverhaeltnis Lage/Dreh mittels Event wecken
-			 * Inkrement und Mudo-Operation müssen getrennt bleiben, sonst ist das
-			 * Verhalten laut C-Standard undefiniert!
-			 */
+			/* ++counter % n is undefined? */
 			++counter;
 			counter = counter % Ta.FzLageZuDreh;
 			if (!counter)
-				LgrSchedSem.signal();
+				pose_ctrl_sem.signal();
 
-			// wait for the next tick
 			WheelControllerTimer.wait();
-
-			// measure the time needed in loop
-			/*
-			 * Drehzahlregler wird 5-mal aufgerufen bevor der Lageregler aufgerufen wird und neue Werte berechnet.
-			 */
-
-			//        int64_t stop_time = __HAL_TIM_GET_COUNTER(&htim13); // get time in microseconds since start
-			//        uint32_t elapsed_time = stop_time - start_time; // time needed for control loop
-			//        if (elapsed_time > max_elapsed_time) {
-			//          max_elapsed_time = elapsed_time;
-			////          log_message(log_debug, "wheel controller loop max calculation time: %i µs", max_elapsed_time);
-			//          log_message(log_debug, "wheel jitter: %li µs", max_elapsed_time - 3000);
-			//        }
-			//        start_time = __HAL_TIM_GET_COUNTER(&htim13); // get time in microseconds since start
 		}
 	}
 
