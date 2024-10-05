@@ -104,7 +104,7 @@ public:
 
 		while (true) {
 			pose_ctrl_sem.wait();
-			pose_ctrl_sem.wait(); // TEST: why wait two times?
+			pose_ctrl_sem.wait(); // FIXME: without the second wait the vel changes too fast so that the motors get locked up
 
 			oldmode = std::exchange(controllerMode, ctrl_mode.get());
 			actual_pose = pose_current.get();

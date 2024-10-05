@@ -9,7 +9,7 @@
 class STMMotorPWM {
 public:
 	STMMotorPWM() = default;
-	bool init(TIM_HandleTypeDef* htim, uint32_t pwm_channel_a,
+	void init(TIM_HandleTypeDef* htim, uint32_t pwm_channel_a,
 			  uint32_t pwm_channel_b, int direction)
 	{
 		this->htim = htim;
@@ -20,15 +20,10 @@ public:
 		HAL_TIM_PWM_Start(this->htim, this->pwm_channel_a);
 		HAL_TIM_PWM_Start(this->htim, this->pwm_channel_b);
 		this->setPWM(0);
-
-		is_init = true;
-		return is_init;
 	}
+
 	void setPWM(real_t duty_cycle)
 	{
-		if (!is_init) [[unlikely]]
-			return;
-
 		duty_cycle = std::clamp(duty_cycle, -100.0, 100.0) * direction;
 		__HAL_TIM_SET_COMPARE(htim, this->pwm_channel_a,
 							  duty_cycle > 0 ? duty_cycle : 0);
@@ -41,5 +36,4 @@ private:
 	uint32_t pwm_channel_a;
 	uint32_t pwm_channel_b;
 	int direction;
-	bool is_init = false; // TODO: is this bool necessary? test it
 };

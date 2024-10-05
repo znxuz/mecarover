@@ -1,6 +1,5 @@
 #pragma once
 
-#include "mecarover/mrlogger/mrlogger.h"
 #include <tim.h>
 
 #define ARR_VALUE 65535
@@ -9,7 +8,7 @@ class STMEncoder {
 public:
 	STMEncoder() = default;
 
-	bool init(TIM_HandleTypeDef* htim)
+	void init(TIM_HandleTypeDef* htim)
 	{
 		this->offset = -(ARR_VALUE / 2);
 
@@ -20,18 +19,10 @@ public:
 
 		this->counter = __HAL_TIM_GET_COUNTER(htim);
 		this->htim = htim;
-
-		is_init = true;
-		return is_init;
 	}
 
 	int32_t get_val()
 	{
-		if (!is_init) [[unlikely]] {
-			log_message(log_error, "encoder not initialized");
-			return 0;
-		}
-
 		this->counter = __HAL_TIM_GET_COUNTER(this->htim);
 		return this->counter + this->offset;
 	}
@@ -49,6 +40,4 @@ private:
 	/* 64-bit integer for not over or underflowing easily */
 	int64_t counter;
 	int64_t offset;
-	bool is_init = false; // i dont know if this check if really necessary...
-						  // TODO: only one way to find out
 };

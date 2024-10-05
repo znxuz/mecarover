@@ -23,19 +23,18 @@ static STMEncoder encoders[N_WHEEL];
 static STMMotorPWM pwm_motors[N_WHEEL];
 static int32_t prev_encoder_val[N_WHEEL];
 static real_t inc2rad = 0.0;
-static bool hal_is_init = false; // TODO: necessary bool?
+static bool hal_is_init = false;
 
 void hal_init(const robot_param_t* robot_params)
 {
 	inc2rad = robot_params->Ink2Rad;
 
 	for (size_t i = 0; i < N_WHEEL; i++) {
-		if (!encoders[i].init(encoder_timer[i]))
-			log_message(log_error, "Failed to initialize encoder[%d]", i);
+		encoders[i].init(encoder_timer[i]);
+		pwm_motors[i].init(pwm_timer[i], pwm_a_channels[i], pwm_b_channels[i],
+						   motor_direction[i]);
+
 		prev_encoder_val[i] = encoders[i].get_val();
-		if (!pwm_motors[i].init(pwm_timer[i], pwm_a_channels[i],
-								pwm_b_channels[i], motor_direction[i]))
-			log_message(log_error, "Failed to initialize motor[%d]", i);
 	}
 
 	hal_wheel_vel_set_pwm({0.0, 0.0, 0.0, 0.0});
