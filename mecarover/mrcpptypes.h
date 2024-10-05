@@ -1,8 +1,7 @@
 #pragma once
 
+#include <cmath>
 #include <limits>
-
-#include "mrtypes.h"
 
 namespace imsl
 {
@@ -37,26 +36,10 @@ public:
 		theta = p.theta;
 		return *this;
 	}
-
-	dPose(Pose_t p)
-	{
-		x = p.x;
-		y = p.y;
-		theta = p.theta;
-	}
-
-	operator Pose_t() const
-	{
-		Pose_t p;
-		p.x = this->x;
-		p.y = this->y;
-		p.theta = this->theta;
-		return p;
-	}
 };
 
-/* velocity (vx = dx/dt, vy = dy/dt, omega = dtheta/dt) of a mobile robot in 2D
- */
+/* velocity (vx = dx/dt, vy = dy/dt, omega = dtheta/dt) of a mobile robot */
+// TODO embed this in Pose<T>
 template<typename T> class vPose {
 public:
 	T vx{};
@@ -82,25 +65,6 @@ public:
 		vx = vp.vx;
 		vy = vp.vy;
 		omega = vp.omega;
-		return *this;
-	}
-
-	// compatibility to old C code
-	operator Pose_t() const
-	{
-		Pose_t p;
-		p.x = this->vx;
-		p.y = this->vy;
-		p.theta = this->omega;
-		return p;
-	}
-
-	// compatibility to old C code
-	vPose& operator=(const Pose_t& p)
-	{
-		vx = p.x;
-		vy = p.y;
-		omega = p.theta;
 		return *this;
 	}
 };
@@ -238,22 +202,6 @@ public:
 		vy = p.vy;
 		omega = p.omega;
 		return *this;
-	}
-
-	Pose(const Pose_t& p)
-	{
-		x = p.x;
-		y = p.y;
-		theta = p.theta;
-	}
-
-	operator Pose_t() const
-	{
-		Pose_t p;
-		p.x = this->x;
-		p.y = this->y;
-		p.theta = MAXPI(this->theta);
-		return p;
 	}
 
 	bool operator==(const Pose<T>& rhs) const

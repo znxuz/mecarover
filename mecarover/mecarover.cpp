@@ -34,16 +34,13 @@ void mecarover_start(void)
 {
 	retarget_init(&huart3);
 	logger_init();
-	hal_init(&fz);
+	hal_init(&robot_params);
 
 	log_message(log_info, "mecarover start");
-	if (fz.type != MRC_VEHICLETYPE_MECANUM) {
-		log_message(log_error, "Vehicle type is not mecanum");
-		Error_Handler();
-	}
 
+	// TODO: find out why it must be heap allocated
 	auto* controller_task = new imsl::vehiclecontrol::ControllerTask<real_t>();
-	controller_task->Init(&fz, Regler, Ta);
+	controller_task->init(&robot_params, ctrl_params, sampling_times);
 	ls.init_LaserScanner();
 
 	const osThreadAttr_t executor_attributes = {

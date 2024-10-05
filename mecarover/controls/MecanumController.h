@@ -13,7 +13,6 @@ namespace imsl::vehiclecontrol
 template<typename T>
 class MecanumController {
 public:
-	static constexpr uint8_t N_WHEEL = 4;
 	static constexpr uint8_t DOF = 4;
 
 	using VelWheel = Eigen::Matrix<T, N_WHEEL, 1>;
@@ -26,8 +25,8 @@ private:
 	T l_b_half; /* in mm 0.5 * (Breite + Laenge)   */
 	T radius_wheel; /* in mm                           */
 	T JoystickBeschl; /* maximale Jostickbeschleunigung in mm/s/s */
-	Abtastzeit_t Ta; /* Abtastzeiten der Regler */
-	ReglerParam_t Regler;
+	sampling_time_t sampling_times; /* Abtastzeiten der Regler */
+	ctrl_param_t ctrl_params;
 	Jacobian j;
 	InvJacobian inv_j;
 	VelWheel RAbwAlt = VelWheel::Zero();
@@ -46,14 +45,15 @@ public:
 	// backward transformation robot -> wheel velocity
 	VelWheel vRF2vWheel(const VelRF& v) const { return j * v; }
 
-	void init(const Fahrzeug_t* Fz, ReglerParam_t Regler, Abtastzeit_t Ta)
+	void init(const robot_param_t* robot_params, ctrl_param_t ctrl_params,
+			  sampling_time_t sampling_times)
 	{
-		l_b_half = Fz->LplusBhalbe;
-		radius_wheel = Fz->Radradius;
+		l_b_half = robot_params->LplusBhalbe;
+		radius_wheel = robot_params->Radradius;
 
-		JoystickBeschl = Fz->JoystickBeschl;
-		this->Regler = Regler;
-		this->Ta = Ta;
+		JoystickBeschl = robot_params->JoystickBeschl;
+		this->ctrl_params = ctrl_params;
+		this->sampling_times = sampling_times;
 
 		this->j = Jacobian{{1.0, 1.0, l_b_half, 1.0},
 						   {1.0, -1.0, -l_b_half, 1.0},
@@ -85,16 +85,16 @@ public:
 		return newPose;
 	}
 
-	VelRF poseControl(const Pose<T>& pose_sp, const Pose<T>& actual_pose)
+	VelRF poseControl(const Pose<T>& pose_sp, const Pose<T>& actual_pose) const
 	{
 		dPose<T> pose_delta{pose_sp.x - actual_pose.x,
 							pose_sp.y - actual_pose.y,
 							Heading<T>(pose_sp.theta - actual_pose.theta)};
 
 		using std::abs;
-		if (abs(pose_delta.x) > Regler.LageSchleppMax.x
-			|| abs(pose_delta.y) > Regler.LageSchleppMax.y
-			|| abs(pose_delta.theta) > Regler.LageSchleppMax.theta)
+		if (abs(pose_delta.x) > ctrl_params.LageSchleppMax.x
+			|| abs(pose_delta.y) > ctrl_params.LageSchleppMax.y
+			|| abs(pose_delta.theta) > ctrl_params.LageSchleppMax.theta)
 			[[unlikely]] {
 			log_message(
 				log_error,
@@ -106,15 +106,15 @@ public:
 		}
 
 		vPose<T> vel_wframe_sp;
-		vel_wframe_sp.vx = pose_sp.vx + pose_delta.x * Regler.LageKv.x;
-		vel_wframe_sp.vy = pose_sp.vy + pose_delta.y * Regler.LageKv.y;
+		vel_wframe_sp.vx = pose_sp.vx + pose_delta.x * ctrl_params.LageKv.x;
+		vel_wframe_sp.vy = pose_sp.vy + pose_delta.y * ctrl_params.LageKv.y;
 		vel_wframe_sp.omega
-			= pose_sp.omega + pose_delta.theta * Regler.LageKv.theta;
+			= pose_sp.omega + pose_delta.theta * ctrl_params.LageKv.theta;
 
 		vPose<T> vel_rframe_sp = vWF2vRF<T>(vel_wframe_sp, actual_pose.theta);
 
 		return VelRF{vel_rframe_sp.vx, vel_rframe_sp.vy, vel_rframe_sp.omega,
-					 Regler.Koppel * epsilon1};
+					 ctrl_params.Koppel * epsilon1};
 	}
 
 	VelWheel wheelControl(const VelWheel& refVel, const VelWheel& realVel)
@@ -127,24 +127,24 @@ public:
 			regelAbw = refVel(i) - realVel(i);
 
 			// I-Anteil
-			Integr(i) += Regler.DzrTaDTn * regelAbw;
-			if (Integr(i) > Regler.DzrIntMax) {
-				Integr(i) = Regler.DzrIntMax;
-			} else if (Integr(i) < -(Regler.DzrIntMax)) {
-				Integr(i) = -(Regler.DzrIntMax);
+			Integr(i) += ctrl_params.DzrTaDTn * regelAbw;
+			if (Integr(i) > ctrl_params.DzrIntMax) {
+				Integr(i) = ctrl_params.DzrIntMax;
+			} else if (Integr(i) < -(ctrl_params.DzrIntMax)) {
+				Integr(i) = -(ctrl_params.DzrIntMax);
 			}
 
 			// D-Anteil
-			diff = Regler.DzrTvDTa * (regelAbw - RAbwAlt(i));
+			diff = ctrl_params.DzrTvDTa * (regelAbw - RAbwAlt(i));
 
 			// Stellgroesse in rad/s
-			StellV(i) = Regler.DzrKv * (regelAbw + Integr(i) + diff);
+			StellV(i) = ctrl_params.DzrKv * (regelAbw + Integr(i) + diff);
 
 			// Vorsteuerung addieren
 			StellV(i) += refVel(i);
 
 			// Anpassung an individuellen Verstaerker
-			StellV(i) *= Regler.DzrSkalierung[i];
+			StellV(i) *= ctrl_params.DzrSkalierung[i];
 
 			RAbwAlt(i) = regelAbw;
 		}
@@ -152,11 +152,11 @@ public:
 	}
 
 	vPose<T> velocityFilter(const vPose<T>& vel_rframe_sp,
-							const vPose<T>& vel_rframe_old)
+							const vPose<T>& vel_rframe_old) const
 	{
 		vPose<T> vel_rframe = vel_rframe_sp;
 
-		T v_diff = JoystickBeschl * Ta.FzLage;
+		T v_diff = JoystickBeschl * sampling_times.FzLage;
 
 		if (vel_rframe.vx - vel_rframe_old.vx > v_diff)
 			vel_rframe.vx = vel_rframe_old.vx + v_diff;

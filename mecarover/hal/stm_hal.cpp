@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <tim.h>
 
+#include <mecarover/robot_params.hpp>
+
 #include "stm_encoder.hpp"
 #include "stm_motor_pwm.hpp"
 
@@ -13,21 +15,21 @@ constexpr uint32_t pwm_a_channels[]
 constexpr uint32_t pwm_b_channels[]
 	= {TIM_CHANNEL_3, TIM_CHANNEL_4, TIM_CHANNEL_2, TIM_CHANNEL_2};
 
-constexpr int8_t motor_direction[NUM_MOTORS] = {+1, +1, -1, -1};
-constexpr int8_t encoder_direction[NUM_MOTORS] = {+1, +1, +1, +1};
-constexpr real_t encoder_scaler[NUM_MOTORS] = {1.0, 1.0, 1.0, 1.0};
+constexpr int8_t motor_direction[N_WHEEL] = {+1, +1, -1, -1};
+constexpr int8_t encoder_direction[N_WHEEL] = {+1, +1, +1, +1};
+constexpr real_t encoder_scaler[N_WHEEL] = {1.0, 1.0, 1.0, 1.0};
 
-static STMEncoder encoders[NUM_MOTORS];
-static STMMotorPWM pwm_motors[NUM_MOTORS];
-static int32_t prev_encoder_val[NUM_MOTORS];
+static STMEncoder encoders[N_WHEEL];
+static STMMotorPWM pwm_motors[N_WHEEL];
+static int32_t prev_encoder_val[N_WHEEL];
 static real_t inc2rad = 0.0;
 static bool hal_is_init = false; // TODO: necessary bool?
 
-void hal_init(const Fahrzeug_t* fz)
+void hal_init(const robot_param_t* robot_params)
 {
-	inc2rad = fz->Ink2Rad;
+	inc2rad = robot_params->Ink2Rad;
 
-	for (size_t i = 0; i < NUM_MOTORS; i++) {
+	for (size_t i = 0; i < N_WHEEL; i++) {
 		if (!encoders[i].init(encoder_timer[i]))
 			log_message(log_error, "Failed to initialize encoder[%d]", i);
 		prev_encoder_val[i] = encoders[i].get_val();
@@ -36,15 +38,16 @@ void hal_init(const Fahrzeug_t* fz)
 			log_message(log_error, "Failed to initialize motor[%d]", i);
 	}
 
-	hal_wheel_vel_set_pwm(std::array<real_t, 4>{0.0, 0.0, 0.0, 0.0}.data());
+	hal_wheel_vel_set_pwm({0.0, 0.0, 0.0, 0.0});
 	hal_is_init = true;
 }
 
-std::array<real_t, NUM_MOTORS> hal_encoder_delta()
+// TODO check over- and underflow 16 Bit
+std::array<real_t, N_WHEEL> hal_encoder_delta()
 {
 	auto encoder_delta = std::array<real_t, 4>{};
 
-	for (int i = 0; i < NUM_MOTORS; i++) {
+	for (int i = 0; i < N_WHEEL; ++i) {
 		auto encoder_val = encoders[i].get_val();
 		encoder_delta[i] = inc2rad
 			* (static_cast<real_t>(encoder_val) - prev_encoder_val[i])
@@ -56,20 +59,9 @@ std::array<real_t, NUM_MOTORS> hal_encoder_delta()
 	return encoder_delta;
 }
 
-void hal_encoder_read(real_t* DeltaPhi)
+void hal_wheel_vel_set_pwm(const std::array<real_t, N_WHEEL>& duty_cycle)
 {
-	for (int i = 0; i < NUM_MOTORS; i++) {
-		auto val = encoders[i].get_val();
-		DeltaPhi[i] = inc2rad * (static_cast<real_t>(val) - prev_encoder_val[i])
-			* encoder_direction[i] * encoder_scaler[i];
-		prev_encoder_val[i] = val;
-		// TODO check over- and underflow 16 Bit
-	}
-}
-
-void hal_wheel_vel_set_pwm(const real_t* duty_cycle)
-{
-	for (size_t i = 0; i < NUM_MOTORS; ++i) {
+	for (size_t i = 0; i < N_WHEEL; ++i) {
 		pwm_motors[i].setPWM(duty_cycle[i]);
 	}
 }
@@ -81,7 +73,7 @@ void stm_encoder_cb(TIM_HandleTypeDef* htim)
 	if (!hal_is_init) [[unlikely]]
 		return;
 
-	for (size_t i = 0; i < NUM_MOTORS; ++i) {
+	for (size_t i = 0; i < N_WHEEL; ++i) {
 		if (htim->Instance == encoder_timer[i]->Instance) {
 			encoders[i].update_offset();
 			break;

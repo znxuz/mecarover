@@ -130,7 +130,7 @@ void start_Scan_cb(const void* start_Scan)
 void timer_cb(rcl_timer_t* timer, int64_t last_call_time)
 {
 	// tf odom <-> base_link
-	auto p = controller->getPose();
+	auto p = controller->pose_current.get();
 
 	rcl_ret_softcheck(rmw_uros_sync_session(1000));
 	int64_t time_ms = rmw_uros_epoch_millis();
@@ -155,7 +155,7 @@ void timer_cb(rcl_timer_t* timer, int64_t last_call_time)
 	tf.transforms.data = t;
 
 	std_msgs__msg__Byte ctrl_status_msg;
-	ctrl_status_msg.data = static_cast<int>(controller->GetControllerMode());
+	ctrl_status_msg.data = static_cast<int>(controller->ctrl_mode.get());
 	if (timer != NULL) {
 		rcl_ret_softcheck(
 			rcl_publish(&ctrl_status_pub, &ctrl_status_msg, NULL));
@@ -176,11 +176,11 @@ void cmd_cb(const void* cmd_msg)
 	v_ref.omega = msg->angular.z; // rad/s
 
 	if (controller) [[ likely ]]
-		controller->SetManuRef(v_ref);
+		controller->ref_vel_manual.set(v_ref);
 
 	// TODO: probably just for updating the previous encoder values
-	real_t encoder_delta[4];
-	hal_encoder_read(encoder_delta);
+	// test usefulness
+	hal_encoder_delta();
 }
 
 void enable_topic_cb(const void* enable_topic)
@@ -188,10 +188,10 @@ void enable_topic_cb(const void* enable_topic)
 	const auto* enable
 		= reinterpret_cast<const std_msgs__msg__Bool*>(enable_topic);
 	if (enable->data) {
-		controller->SetControllerMode(vehiclecontrol::CtrlMode::TWIST);
+		controller->ctrl_mode.set(imsl::vehiclecontrol::CtrlMode::TWIST);
 		log_message(log_info, "amplifiers enabled, set mode TWIST");
 	} else {
-		controller->SetControllerMode(vehiclecontrol::CtrlMode::OFF);
+		controller->ctrl_mode.set(vehiclecontrol::CtrlMode::OFF);
 		log_message(log_info, "amplifiers disabled, set mode OFF");
 	}
 }
