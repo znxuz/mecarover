@@ -134,7 +134,6 @@ void timer_cb(rcl_timer_t* timer, int64_t last_call_time)
 
 	rcl_ret_softcheck(rmw_uros_sync_session(1000));
 	int64_t time_ms = rmw_uros_epoch_millis();
-	// int64_t time_ns = rmw_uros_epoch_nanos();
 
 	geometry_msgs__msg__TransformStamped t[2];
 	t[0].header.stamp.sec = time_ms / 1000;

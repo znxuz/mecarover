@@ -89,7 +89,7 @@ public:
 		vPose<T> vel_rframe_prev;
 		vPose<T> vel_wframe_sp;
 		Pose<T> pose_sp;
-		Pose<T> actual_pose;
+		Pose<T> pose_current;
 		Pose<T> pose_manual;
 
 		CtrlMode oldmode = CtrlMode::OFF;
@@ -107,19 +107,19 @@ public:
 			pose_ctrl_sem.wait(); // FIXME: without the second wait the vel changes too fast so that the motors get locked up
 
 			oldmode = std::exchange(controllerMode, ctrl_mode.get());
-			actual_pose = pose_current.get();
+			pose_current = this->pose_current.get();
 
 			if (controllerMode == CtrlMode::OFF) {
-				pose_sp = actual_pose;
+				pose_sp = pose_current;
 				pose_sp.vx = pose_sp.vy = pose_sp.omega = 0.0;
-				pose_manual = actual_pose;
+				pose_manual = pose_current;
 				vel_rframe_prev = vPose<T>{};
 				continue;
 			}
 
 			/* First time after mode switch */
 			if (oldmode != CtrlMode::TWIST)
-				pose_manual = actual_pose;
+				pose_manual = pose_current;
 
 			vel_rframe_sp = ref_vel_manual.get();
 
@@ -127,7 +127,7 @@ public:
 			vel_rframe_sp
 				= controller.velocityFilter(vel_rframe_sp, vel_rframe_prev);
 			vPose<T> vel_wframe_sp
-				= vRF2vWF<T>(vel_rframe_sp, pose_current.get().theta);
+				= vRF2vWF<T>(vel_rframe_sp, this->pose_current.get().theta);
 			pose_manual.x += vel_wframe_sp.vx * sampling_times.FzLage;
 			pose_manual.y += vel_wframe_sp.vy * sampling_times.FzLage;
 			pose_manual.theta += vel_wframe_sp.omega * sampling_times.FzLage;
@@ -142,7 +142,7 @@ public:
 			vel_rframe_prev = vel_rframe_sp;
 
 			/* V von RKS -> WKS transformieren */
-			vel_wframe_sp = vRF2vWF<T>(vel_rframe_sp, actual_pose.theta);
+			vel_wframe_sp = vRF2vWF<T>(vel_rframe_sp, pose_current.theta);
 
 			pose_sp.x = pose_manual.x;
 			pose_sp.y = pose_manual.y;
@@ -154,7 +154,7 @@ public:
 			try {
 				// calculate reference velocities of the wheels
 				VelWheel vel_wheel_sp_mtx = controller.vRF2vWheel(
-					controller.poseControl(pose_sp, actual_pose));
+					controller.poseControl(pose_sp, pose_current));
 				auto vel_wheel_sp = std::array<real_t, N_WHEEL>{};
 				std::copy(std::begin(vel_wheel_sp_mtx),
 						  std::end(vel_wheel_sp_mtx), begin(vel_wheel_sp));
@@ -225,18 +225,18 @@ public:
 			// Odometry func
 			VelRF vel_rframe_matrix
 				= controller.vWheel2vRF(VelWheel(encoder_deltas.data()));
-			auto oldPose = pose_current.get();
+			auto oldPose = this->pose_current.get();
 			auto newPose = controller.odometry(oldPose, vel_rframe_matrix);
 			pose_current.set(newPose);
 			dPose<T> vel_rframe{vel_rframe_matrix(0), vel_rframe_matrix(1),
 								vel_rframe_matrix(2)};
 
-			dPose<T> delta_wframe = dRF2dWF<T>(
-				vel_rframe,
-				pose_current.get().theta
-					+ vel_rframe.theta
-						/ static_cast<T>(
-							2.0)); // TODO: find out why divide by 2
+			// TODO: instead of dividing the omega by 2, multiply it with
+			// the sampling frequency to get theta anle
+			dPose<T> delta_wframe
+				= dRF2dWF<T>(vel_rframe,
+							 this->pose_current.get().theta
+								 + vel_rframe.theta / static_cast<T>(2.0));
 			real_t vx = delta_wframe.x / sampling_times.FzDreh;
 			real_t vy = delta_wframe.y / sampling_times.FzDreh;
 			real_t omega = delta_wframe.theta / sampling_times.FzDreh;
