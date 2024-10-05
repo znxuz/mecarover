@@ -110,10 +110,8 @@ public:
 			pose_current = this->pose_current.get();
 
 			if (controllerMode == CtrlMode::OFF) {
-				pose_sp = pose_current;
-				pose_sp.vx = pose_sp.vy = pose_sp.omega = 0.0;
-				pose_manual = pose_current;
-				vel_rframe_prev = vPose<T>{};
+				pose_sp = pose_manual = pose_current;
+				pose_sp.velocity = vel_rframe_prev = vPose<T>{};
 				continue;
 			}
 
@@ -147,15 +145,13 @@ public:
 			pose_sp.x = pose_manual.x;
 			pose_sp.y = pose_manual.y;
 			pose_sp.theta = pose_manual.theta;
-			pose_sp.vx = vel_wframe_sp.vx;
-			pose_sp.vy = vel_wframe_sp.vy;
-			pose_sp.omega = vel_wframe_sp.omega;
+			pose_sp.velocity = vel_wframe_sp;
 
 			try {
 				// calculate reference velocities of the wheels
 				VelWheel vel_wheel_sp_mtx = controller.vRF2vWheel(
 					controller.poseControl(pose_sp, pose_current));
-				auto vel_wheel_sp = std::array<real_t, N_WHEEL>{};
+				auto vel_wheel_sp = std::array<T, N_WHEEL>{};
 				std::copy(std::begin(vel_wheel_sp_mtx),
 						  std::end(vel_wheel_sp_mtx), begin(vel_wheel_sp));
 				this->vel_wheel_sp.set(vel_wheel_sp);
@@ -170,10 +166,10 @@ public:
 
 	void WheelControlTask()
 	{
-		std::array<real_t, N_WHEEL> encoder_deltas{};
-		std::array<real_t, N_WHEEL> vel_wheel_sp{};
-		std::array<real_t, N_WHEEL> vel_wheel_actual{};
-		std::array<real_t, N_WHEEL> vel_wheel_corrected{};
+		std::array<T, N_WHEEL> encoder_deltas{};
+		std::array<T, N_WHEEL> vel_wheel_sp{};
+		std::array<T, N_WHEEL> vel_wheel_actual{};
+		std::array<T, N_WHEEL> vel_wheel_corrected{};
 
 		CtrlMode controllerMode;
 
@@ -204,7 +200,7 @@ public:
 			encoder_deltas = hal_encoder_delta();
 			std::transform(begin(encoder_deltas), end(encoder_deltas),
 						   begin(vel_wheel_actual),
-						   [this](real_t encoder_delta) {
+						   [this](T encoder_delta) {
 							   return encoder_delta / sampling_times.FzDreh;
 						   });
 
@@ -236,12 +232,12 @@ public:
 			dPose<T> delta_wframe
 				= dRF2dWF<T>(vel_rframe,
 							 this->pose_current.get().theta
-								 + vel_rframe.theta / static_cast<T>(2.0));
-			real_t vx = delta_wframe.x / sampling_times.FzDreh;
-			real_t vy = delta_wframe.y / sampling_times.FzDreh;
-			real_t omega = delta_wframe.theta / sampling_times.FzDreh;
-			pose_current.set(
-				Pose<T>{newPose.x, newPose.y, newPose.theta, vx, vy, omega});
+								 + vel_rframe.d_theta / static_cast<T>(2.0));
+			T vx = delta_wframe.dx / sampling_times.FzDreh;
+			T vy = delta_wframe.dy / sampling_times.FzDreh;
+			T omega = delta_wframe.d_theta / sampling_times.FzDreh;
+			pose_current.set(Pose<T>{newPose.x, newPose.y, newPose.theta,
+									 vPose<T>{vx, vy, omega}});
 
 			/* ++counter % n is undefined? */
 			++counter;

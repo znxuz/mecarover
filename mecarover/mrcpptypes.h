@@ -11,35 +11,26 @@ constexpr double eps = std::numeric_limits<double>::epsilon();
 
 template<typename T> class dPose {
 public:
-	T x{};
-	T y{};
-	T theta{};
+	T dx{};
+	T dy{};
+	T d_theta{};
 
 	dPose() = default;
 
-	dPose(T x, T y, T theta)
-		: x{x}
-		, y{y}
-		, theta{theta}
+	dPose(T dx, T dy, T d_theta)
+		: dx{dx}
+		, dy{dy}
+		, d_theta{d_theta}
 	{ }
 
-	dPose(const dPose& p)
-		: x{p.x}
-		, y{p.y}
-		, theta{p.theta}
-	{ }
-
-	dPose& operator=(const dPose& p)
+	bool operator==(const dPose<T>& rhs) const
 	{
-		x = p.x;
-		y = p.y;
-		theta = p.theta;
-		return *this;
+		return this->dx == rhs.dx && this->dy == rhs.dy && this->d_theta ==
+			rhs.d_theta;
 	}
 };
 
 /* velocity (vx = dx/dt, vy = dy/dt, omega = dtheta/dt) of a mobile robot */
-// TODO embed this in Pose<T>
 template<typename T> class vPose {
 public:
 	T vx{};
@@ -54,18 +45,10 @@ public:
 		, omega{omega}
 	{ }
 
-	vPose(const vPose& vp)
-		: vx{vp.vx}
-		, vy{vp.vy}
-		, omega{vp.omega}
-	{ }
-
-	vPose& operator=(const vPose& vp)
+	bool operator==(const vPose<T>& rhs) const
 	{
-		vx = vp.vx;
-		vy = vp.vy;
-		omega = vp.omega;
-		return *this;
+		return this->vx == rhs.vx && this->vy == rhs.vy
+			&& this->omega == rhs.omega;
 	}
 };
 
@@ -73,9 +56,9 @@ public:
 template<typename T> dPose<T> dRF2dWF(dPose<T> dRF, T theta)
 {
 	dPose<T> dWF;
-	dWF.x = dRF.x * cos(theta) - dRF.y * sin(theta);
-	dWF.y = dRF.x * sin(theta) + dRF.y * cos(theta);
-	dWF.theta = dRF.theta;
+	dWF.dx = dRF.dx * cos(theta) - dRF.dy * sin(theta);
+	dWF.dy = dRF.dx * sin(theta) + dRF.dy * cos(theta);
+	dWF.d_theta = dRF.d_theta;
 	return dWF;
 }
 
@@ -83,9 +66,9 @@ template<typename T> dPose<T> dRF2dWF(dPose<T> dRF, T theta)
 template<typename T> dPose<T> dWF2dRF(dPose<T> dWF, T theta)
 {
 	dPose<T> dRF;
-	dRF.x = dWF.x * cos(theta) + dWF.y * sin(theta);
-	dRF.y = -dWF.x * sin(theta) + dWF.y * cos(theta);
-	dRF.theta = dWF.theta;
+	dRF.dx = dWF.dx * cos(theta) + dWF.dy * sin(theta);
+	dRF.dy = -dWF.dx * sin(theta) + dWF.dy * cos(theta);
+	dRF.d_theta = dWF.d_theta;
 	return dRF;
 }
 
@@ -168,58 +151,34 @@ public:
 	T x{};
 	T y{};
 	Heading<T> theta{};
-	T vx{};
-	T vy{};
-	T omega{};
+	vPose<T> velocity{};
 
 	Pose() = default;
 
-	Pose(T x, T y, Heading<T> theta, T vx, T vy, T omega)
+	Pose(T x, T y, Heading<T> theta, vPose<T> velocity)
 		: x{x}
 		, y{y}
 		, theta{theta}
-		, vx{vx}
-		, vy{vy}
-		, omega{omega}
+		, velocity{velocity}
 	{ }
 
-	Pose(const Pose<T>& p)
-	{
-		x = p.x;
-		y = p.y;
-		theta = p.theta;
-		vx = p.vx;
-		vy = p.vy;
-		omega = p.omega;
-	}
-
-	Pose& operator=(const Pose<T>& p)
-	{
-		x = p.x;
-		y = p.y;
-		theta = p.theta;
-		vx = p.vx;
-		vy = p.vy;
-		omega = p.omega;
-		return *this;
-	}
+	Pose(T x, T y, Heading<T> theta, T vx, T vy, T omega)
+		: Pose(x, y, theta, vPose<T>{vx, vy, omega})
+	{ }
 
 	bool operator==(const Pose<T>& rhs) const
 	{
-		if (this->x != rhs.x || this->y != rhs.y || this->theta != rhs.theta
-			|| this->vx != rhs.vx || this->vy != rhs.vx
-			|| this->omega != rhs.omega)
-			return false;
-		return true;
+		return this->x == rhs.x && this->y == rhs.y && this->theta == rhs.theta
+			&& this->velocity == rhs.velocity;
 	}
 };
 
 template<typename T> dPose<T> operator-(const Pose<T>& p1, const Pose<T>& p2)
 {
 	dPose<T> p;
-	p.x = p1.x - p2.x;
-	p.y = p1.y - p2.y;
-	p.theta = p1.theta - p2.theta;
+	p.dx = p1.x - p2.x;
+	p.dy = p1.y - p2.y;
+	p.d_theta = p1.theta - p2.theta;
 	return p;
 }
 
@@ -227,27 +186,27 @@ template<typename T>
 dPose<T> operator/(const dPose<T>& p1, const unsigned int divisor)
 {
 	dPose<T> p;
-	p.x = p1.x / divisor;
-	p.y = p1.y / divisor;
-	p.theta = p1.theta / divisor;
+	p.dx = p1.dx / divisor;
+	p.dy = p1.dy / divisor;
+	p.d_theta = p1.d_theta / divisor;
 	return p;
 }
 
 template<typename T> Pose<T> operator+(const Pose<T>& p, const dPose<T>& d)
 {
 	Pose<T> n;
-	n.x = p.x + d.x;
-	n.y = p.y + d.y;
-	n.theta = p.theta + d.theta; // MAXPI(p.theta + d.theta);
+	n.x = p.x + d.dx;
+	n.y = p.y + d.dy;
+	n.theta = p.theta + d.d_theta; // MAXPI(p.theta + d.theta);
 	return n;
 }
 
 template<typename T> Pose<T> operator-(const Pose<T>& p, const dPose<T>& d)
 {
 	Pose<T> n;
-	n.x = p.x - d.x;
-	n.y = p.y - d.y;
-	n.theta = p.theta - d.theta; // MAXPI(p.theta - d.theta);
+	n.x = p.x - d.dx;
+	n.y = p.y - d.dy;
+	n.theta = p.theta - d.d_theta; // MAXPI(p.theta - d.theta);
 	return n;
 }
 

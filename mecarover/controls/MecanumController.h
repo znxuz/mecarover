@@ -78,7 +78,7 @@ public:
 
 		dPose<T> delta_pose_wframe = dRF2dWF<T>(
 			delta_pose_rframe,
-			oldPose.theta + delta_pose_rframe.theta / static_cast<T>(2));
+			oldPose.theta + delta_pose_rframe.d_theta / static_cast<T>(2));
 
 		auto newPose = oldPose + delta_pose_wframe;
 
@@ -92,24 +92,27 @@ public:
 							Heading<T>(pose_sp.theta - actual_pose.theta)};
 
 		using std::abs;
-		if (abs(pose_delta.x) > ctrl_params.LageSchleppMax.x
-			|| abs(pose_delta.y) > ctrl_params.LageSchleppMax.y
-			|| abs(pose_delta.theta) > ctrl_params.LageSchleppMax.theta)
+		if (abs(pose_delta.dx) > ctrl_params.LageSchleppMax.x
+			|| abs(pose_delta.dy) > ctrl_params.LageSchleppMax.y
+			|| abs(pose_delta.d_theta) > ctrl_params.LageSchleppMax.theta)
 			[[unlikely]] {
 			log_message(
 				log_error,
 				"%s, %s, deviation position controller too large: act.x: %f, "
 				"ref.x: %f, act.y: %f, ref.y: %f, act.theta: %f, ref.theta: %f",
 				__FILE__, __FUNCTION__, actual_pose.x, pose_sp.x, actual_pose.y,
-				pose_sp.y, T(actual_pose.theta), T(pose_sp.theta));
+				pose_sp.y, static_cast<T>(actual_pose.theta),
+				static_cast<T>(pose_sp.theta));
 			throw MRC_LAGEERR;
 		}
 
 		vPose<T> vel_wframe_sp;
-		vel_wframe_sp.vx = pose_sp.vx + pose_delta.x * ctrl_params.LageKv.x;
-		vel_wframe_sp.vy = pose_sp.vy + pose_delta.y * ctrl_params.LageKv.y;
-		vel_wframe_sp.omega
-			= pose_sp.omega + pose_delta.theta * ctrl_params.LageKv.theta;
+		vel_wframe_sp.vx
+			= pose_sp.velocity.vx + pose_delta.dx * ctrl_params.LageKv.x;
+		vel_wframe_sp.vy
+			= pose_sp.velocity.vy + pose_delta.dy * ctrl_params.LageKv.y;
+		vel_wframe_sp.omega = pose_sp.velocity.omega
+			+ pose_delta.d_theta * ctrl_params.LageKv.theta;
 
 		vPose<T> vel_rframe_sp = vWF2vRF<T>(vel_wframe_sp, actual_pose.theta);
 
