@@ -21,11 +21,6 @@ public:
 
 private:
 	T epsilon1 = 0; // Verkopplungsfehler
-	T l_b_half; /* in mm 0.5 * (Breite + Laenge)   */
-	T radius_wheel; /* in mm                           */
-	T JoystickBeschl; /* maximale Jostickbeschleunigung in mm/s/s */
-	sampling_time_t sampling_times; /* Abtastzeiten der Regler */
-	ctrl_param_t ctrl_params;
 	Jacobian j;
 	InvJacobian inv_j;
 	VelWheel RAbwAlt = VelWheel::Zero();
@@ -36,38 +31,29 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW // eigenlib 16 Byte alignement
 
 	MecanumController()
-		= default;
+	{
+		this->j = Jacobian{{1.0, 1.0, robot_params.l_w_half, 1.0},
+						   {1.0, -1.0, -robot_params.l_w_half, 1.0},
+						   {1.0, 1.0, -robot_params.l_w_half, -1.0},
+						   {1.0, -1.0, robot_params.l_w_half, -1.0}};
+		this->j /= robot_params.wheel_radius;
+
+		this->inv_j = InvJacobian{
+			{1.0, 1.0, 1.0, 1.0},
+			{1.0, -1.0, 1.0, -1.0},
+			{1.0 / robot_params.l_w_half, -1.0 / robot_params.l_w_half,
+			 -1.0 / robot_params.l_w_half, 1.0 / robot_params.l_w_half},
+			{4.0 / robot_params.wheel_radius, 4.0 / robot_params.wheel_radius,
+			 -4.0 / robot_params.wheel_radius,
+			 -4.0 / robot_params.wheel_radius}};
+		this->inv_j *= robot_params.wheel_radius / 4.0;
+	}
 
 	// forward transformation wheel -> robot velocity
 	VelRF vWheel2vRF(const VelWheel& u) const { return inv_j * u; }
 
 	// backward transformation robot -> wheel velocity
 	VelWheel vRF2vWheel(const VelRF& v) const { return j * v; }
-
-	void init(const robot_param_t* robot_params, ctrl_param_t ctrl_params,
-			  sampling_time_t sampling_times)
-	{
-		l_b_half = robot_params->LplusBhalbe;
-		radius_wheel = robot_params->Radradius;
-
-		JoystickBeschl = robot_params->JoystickBeschl;
-		this->ctrl_params = ctrl_params;
-		this->sampling_times = sampling_times;
-
-		this->j = Jacobian{{1.0, 1.0, l_b_half, 1.0},
-						   {1.0, -1.0, -l_b_half, 1.0},
-						   {1.0, 1.0, -l_b_half, -1.0},
-						   {1.0, -1.0, l_b_half, -1.0}};
-		this->j /= radius_wheel;
-
-		this->inv_j = InvJacobian{
-			{1.0, 1.0, 1.0, 1.0},
-			{1.0, -1.0, 1.0, -1.0},
-			{1.0 / l_b_half, -1.0 / l_b_half, -1.0 / l_b_half, 1.0 / l_b_half},
-			{4.0 / radius_wheel, 4.0 / radius_wheel, -4.0 / radius_wheel,
-			 -4.0 / radius_wheel}};
-		this->inv_j *= radius_wheel / 4.0;
-	}
 
 	Pose<T> odometry(const Pose<T>& oldPose, const VelRF& vel_rframe_matrix)
 	{
@@ -158,7 +144,7 @@ public:
 	{
 		vPose<T> vel_rframe = vel_rframe_sp;
 
-		T v_diff = JoystickBeschl * sampling_times.FzLage;
+		T v_diff = robot_params.JoystickBeschl * sampling_times.FzLage;
 
 		if (vel_rframe.vx - vel_rframe_old.vx > v_diff)
 			vel_rframe.vx = vel_rframe_old.vx + v_diff;
@@ -170,7 +156,7 @@ public:
 		else if (vel_rframe_old.vy - vel_rframe.vy > v_diff)
 			vel_rframe.vy = vel_rframe_old.vy - v_diff;
 
-		v_diff /= l_b_half;
+		v_diff /= robot_params.l_w_half;
 
 		if (vel_rframe.omega - vel_rframe_old.omega > v_diff)
 			vel_rframe.omega = vel_rframe_old.omega + v_diff;

@@ -10,7 +10,7 @@
 
 static constexpr int NUM_MOTORS = 4;
 
-void hal_init(const robot_param_t* robot_params);
+void hal_init();
 void hal_wheel_vel_set_pwm(const std::array<real_t, N_WHEEL>& duty_cycle);
 std::array<real_t, NUM_MOTORS> hal_encoder_delta();
 bool hal_get_estop();

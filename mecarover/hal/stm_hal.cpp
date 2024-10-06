@@ -24,13 +24,9 @@ constexpr static std::array encoder_scaler{1.0, 1.0, 1.0, 1.0};
 static std::array<STMEncoder, N_WHEEL> encoders;
 static std::array<STMMotorPWM, N_WHEEL> pwm_motors;
 static std::array<int32_t, N_WHEEL> prev_encoder_val{};
-static real_t inc2rad = 0.0;
-static bool hal_is_init = false;
 
-void hal_init(const robot_param_t* robot_params)
+void hal_init()
 {
-	inc2rad = robot_params->Ink2Rad;
-
 	for (size_t i = 0; i < N_WHEEL; i++) {
 		encoders[i].init(encoder_timer[i]);
 		pwm_motors[i].init(pwm_timer[i], pwm_channels_a[i], pwm_channels_b[i],
@@ -38,7 +34,6 @@ void hal_init(const robot_param_t* robot_params)
 	}
 
 	hal_wheel_vel_set_pwm({0.0, 0.0, 0.0, 0.0});
-	hal_is_init = true;
 }
 
 std::array<real_t, N_WHEEL> hal_encoder_delta()
@@ -47,7 +42,7 @@ std::array<real_t, N_WHEEL> hal_encoder_delta()
 
 	for (int i = 0; i < N_WHEEL; ++i) {
 		auto encoder_val = encoders[i].get_val();
-		encoder_delta[i] = inc2rad
+		encoder_delta[i] = robot_params.inc2rad
 			* (static_cast<real_t>(encoder_val) - prev_encoder_val[i])
 			* encoder_direction[i] * encoder_scaler[i];
 
@@ -67,9 +62,6 @@ extern "C"
 {
 void stm_encoder_cb(TIM_HandleTypeDef* htim)
 {
-	if (!hal_is_init) [[unlikely]]
-		return;
-
 	for (size_t i = 0; i < N_WHEEL; ++i) {
 		if (htim->Instance == encoder_timer[i]->Instance) {
 			encoders[i].update_offset();

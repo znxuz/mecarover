@@ -32,9 +32,7 @@ private:
 	using VelWheel = typename MecanumController<T>::VelWheel;
 	using VelRF = typename MecanumController<T>::VelRF;
 
-	MecanumController<T> controller;
-	ctrl_param_t ctrl_params;
-	sampling_time_t sampling_times;
+	MecanumController<T> controller{};
 
 	RT_Task lageregler_thread{call_pose_control_task, "PoseControllerTask",
 							  MAIN_TASK_STACK_SIZE, this,
@@ -51,16 +49,6 @@ public:
 	MutexObject<CtrlMode> ctrl_mode;
 	MutexObject<Pose<T>> pose_current;
 	MutexObject<vPose<T>> ref_vel_manual;
-
-	void init(const robot_param_t* robot_params, ctrl_param_t ctrl_params,
-			  sampling_time_t sampling_times)
-	{
-		log_message(log_info, "controller tasks init");
-
-		this->controller.init(robot_params, ctrl_params, sampling_times);
-		this->ctrl_params = ctrl_params;
-		this->sampling_times = sampling_times;
-	}
 
 	void PoseControlTask()
 	{

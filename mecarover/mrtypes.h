@@ -38,20 +38,20 @@ typedef enum {
 } mrc_stat;
 
 typedef struct {
-	double Inkremente; /* Geberinkremente (4 * Striche)   */
-	double Uebersetzung; /* Getriebeuebersetzung            */
-	double OmegaMax; /* Motornenndrehzahl in U/min      */
-	double Rad2RPM; /* rad/s --> RPM                   */
-	double Ink2Rad; /* Ink --> rad                     */
-	double Laenge; /* in mm Abstand der Achsen        */
-	double Breite; /* in mm Abstand der Achsen        */
-	double LplusBhalbe; /* in mm 0.5 * (Breite + Laenge)   */
-	double Radradius; /* in mm                           */
-	double Rollenradius; /* in mm                           */
-	double VBahnMax; /* in mm/s                         */
-	double VthetaMax; /* in rad/s                        */
+	double increments; /* Geberinkremente (4 * Striche)   */
+	double gear_ratio; /* Getriebeuebersetzung            */
+	double inc2rad; /* Ink --> rad                     */
+	double length; /* in mm Abstand der Achsen        */
+	double width; /* in mm Abstand der Achsen        */
+	double l_w_half; /* in mm 0.5 * (Breite + Laenge)   */
+	double wheel_radius; /* in mm                           */
 	double JoystickBeschl; /* maximale Jostickbeschleunigung in mm/s/s */
-	double MaxRPM[4]; /* Maximum Umdrehungen pro Minute Motor */
+	// double rad2prm; /* rad/s --> RPM                   */
+	// double omega_max; /* Motornenndrehzahl in U/min      */
+	// double roll_radius; /* in mm                           */
+	// double VBahnMax; /* in mm/s                         */
+	// double VthetaMax; /* in rad/s                        */
+	// double MaxRPM[4]; /* Maximum Umdrehungen pro Minute Motor */
 } robot_param_t;
 
 #if __cplusplus

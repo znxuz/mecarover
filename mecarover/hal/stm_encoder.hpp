@@ -29,7 +29,10 @@ public:
 
 	void update_offset()
 	{
-		if (__HAL_TIM_GET_COUNTER(this->htim) < this->counter)
+		auto cnt = __HAL_TIM_GET_COUNTER(this->htim);
+		if (cnt == this->counter)
+			return;
+		if (cnt < this->counter)
 			this->offset += ARR_VALUE + 1;
 		else
 			this->offset -= ARR_VALUE - 1;

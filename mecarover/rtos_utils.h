@@ -106,6 +106,6 @@ public:
 	}
 
 private:
-	T object;
-	RT_Mutex mutex;
+	T object{};
+	RT_Mutex mutex{};
 };

@@ -35,12 +35,11 @@ void mecarover_start(void)
 {
 	retarget_init(&huart3);
 	logger_init();
-	hal_init(&robot_params);
+	hal_init();
 
 	log_message(log_info, "mecarover start");
 
 	auto* controller_task = new imsl::vehiclecontrol::ControllerTask<real_t>();
-	controller_task->init(&robot_params, ctrl_params, sampling_times);
 	laser_scanner.init();
 
 	const osThreadAttr_t executor_attributes = {
