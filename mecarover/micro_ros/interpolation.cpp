@@ -17,6 +17,9 @@
 
 extern "C"
 {
+// TODO: extract as config
+static constexpr uint8_t N_HANDLE = 2;
+
 static rclc_executor_t interpolation_exe;
 static rcl_subscription_t sub_odometry;
 static rcl_subscription_t sub_cmd_vel;
@@ -42,9 +45,8 @@ static void pose_callback(const void* arg)
 rclc_executor_t* interpolation_init(rcl_node_t* node, rclc_support_t* support,
 									const rcl_allocator_t* allocator)
 {
-	rclc_executor_init(
-		&interpolation_exe, &support->context, 2,
-		allocator); // TODO: number of handles is given here, extract as config
+	rclc_executor_init(&interpolation_exe, &support->context, N_HANDLE,
+					   allocator);
 
 	rclc_subscription_init_default(
 		&sub_odometry, node,

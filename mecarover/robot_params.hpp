@@ -13,12 +13,12 @@ struct ctrl_param_t {
 	double DzrTaDTn;
 	double DzrTvDTa;
 	double DzrIntMax;
-	double DzrSchleppMax;
 	double DzrSkalierung[4];
-	double DzrKoppel[4];
 	Pose_t LageKv;
 	Pose_t LageSchleppMax;
 	double Koppel; /* Faktor für Ausregelung des Verkopplungsfehlers */
+	// double DzrSchleppMax;
+	// double DzrKoppel[4];
 };
 
 struct sampling_time_t {
@@ -57,10 +57,10 @@ static constexpr inline ctrl_param_t ctrl_params = {
 	.DzrTaDTn = 0.1,
 	.DzrTvDTa = 0.0,
 	.DzrIntMax = 30.0,
-	.DzrSchleppMax = 0.0,
 	.DzrSkalierung = {1.0, 1.0, 1.0, 1.0},
-	.DzrKoppel = {-0.1, 0.1, -0.1, 0.1},
 	.LageKv = {5, 5, 5},
 	.LageSchleppMax = {300.0, 300.0, 30.0},
 	.Koppel = 0.0
+	// .DzrSchleppMax = 0.0,
+	// .DzrKoppel = {-0.1, 0.1, -0.1, 0.1},
 };

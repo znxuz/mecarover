@@ -49,25 +49,16 @@ public:
 		this->inv_j *= robot_params.wheel_radius / 4.0;
 	}
 
-	// forward transformation wheel -> robot velocity
+	/* forward transformation wheel -> robot velocity */
 	VelRF vWheel2vRF(const VelWheel& u) const { return inv_j * u; }
 
-	// backward transformation robot -> wheel velocity
+	/* backward transformation robot -> wheel velocity */
 	VelWheel vRF2vWheel(const VelRF& v) const { return j * v; }
 
-	Pose<T> odometry(const Pose<T>& oldPose, const VelRF& vel_rframe_matrix)
+	/* no idea what this epsilon is */
+	void update_epsilon(T epsilon1)
 	{
-		dPose<T> delta_pose_rframe{vel_rframe_matrix(0), vel_rframe_matrix(1),
-								   vel_rframe_matrix(2)};
-		epsilon1 += vel_rframe_matrix(3); // coupling error (delta)
-
-		dPose<T> delta_pose_wframe = dRF2dWF<T>(
-			delta_pose_rframe,
-			oldPose.theta + delta_pose_rframe.d_theta / static_cast<T>(2));
-
-		auto newPose = oldPose + delta_pose_wframe;
-
-		return newPose;
+		this->epsilon1 = epsilon1;
 	}
 
 	VelRF poseControl(const Pose<T>& pose_sp, const Pose<T>& actual_pose) const

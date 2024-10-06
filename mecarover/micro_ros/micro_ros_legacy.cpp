@@ -148,10 +148,6 @@ void cmd_cb(const void* cmd_msg)
 
 	if (controller) [[likely]]
 		controller->ref_vel_manual.set(v_ref);
-
-	// TODO: probably just for updating the previous encoder values
-	// test usefulness
-	hal_encoder_delta();
 }
 
 void enable_topic_cb(const void* enable_topic)
