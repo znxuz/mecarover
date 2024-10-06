@@ -28,6 +28,7 @@ static void logger_server_task(void* args)
 {
 	static mr_logger_msg msg;
 
+	log_message(log_info, "Starting Logger");
 	while (true) {
 		BaseType_t ret = xQueueReceive(msg_queue, &msg, portMAX_DELAY);
 
@@ -93,8 +94,5 @@ void logger_init()
 	osThreadAttr_t attr = {.name = "logger server",
 						   .stack_size = MAIN_TASK_STACK_SIZE,
 						   .priority = (osPriority_t)LOGGER_TASK_PRIORITY};
-	if (!osThreadNew(logger_server_task, NULL, &attr))
-		perror("Error: logger task cannot be created");
-
-	log_message(log_info, "Starting Logger");
+	osThreadNew(logger_server_task, NULL, &attr);
 }

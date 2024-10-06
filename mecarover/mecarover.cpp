@@ -11,7 +11,7 @@
 #include <tim.h>
 #include <usart.h>
 
-LaserScanner ls;
+LaserScanner laser_scanner;
 
 extern "C"
 {
@@ -39,10 +39,9 @@ void mecarover_start(void)
 
 	log_message(log_info, "mecarover start");
 
-	// TODO: find out why it must be heap allocated
 	auto* controller_task = new imsl::vehiclecontrol::ControllerTask<real_t>();
 	controller_task->init(&robot_params, ctrl_params, sampling_times);
-	ls.init_LaserScanner();
+	laser_scanner.init();
 
 	const osThreadAttr_t executor_attributes = {
 		.name = "micro_ros",

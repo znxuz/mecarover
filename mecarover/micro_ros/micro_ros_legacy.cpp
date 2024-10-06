@@ -63,7 +63,7 @@ void* microros_zero_allocate(size_t number_of_elements, size_t size_of_element,
 							 void* state);
 }
 
-extern LaserScanner ls;
+extern LaserScanner laser_scanner;
 
 vehiclecontrol::ControllerTask<real_t>* controller = nullptr;
 
@@ -99,14 +99,14 @@ void rplidar_scan(rcl_timer_t* timer, int64_t last_call_time)
 	distance[0].range_max = 12;
 
 	float er[360];
-	ls.invert(ls.adjustedScan, er, 360);
+	laser_scanner.invert(laser_scanner.adjustedScan, er, 360);
 
 	distance[0].ranges.size = 360;
 	distance[0].ranges.data = er;
 
 	// output the quality
 	distance[0].intensities.size = 360;
-	distance[0].intensities.data = ls.quality;
+	distance[0].intensities.data = laser_scanner.quality;
 
 	(void)last_call_time;
 	if (timer != NULL) {
@@ -120,9 +120,9 @@ void start_Scan_cb(const void* start_Scan)
 		= (const std_msgs__msg__Bool*)start_Scan;
 
 	if (startScan->data) {
-		ls.Start();
+		laser_scanner.Start();
 	} else {
-		ls.Stop();
+		laser_scanner.stop();
 		log_message(log_info, "LaserScanner Stop");
 	}
 }

@@ -16,13 +16,13 @@
 
 extern "C"
 {
-void LaserScannerTaskFunction(void *arg);
+void call_laser_scanner_task(void *arg);
 };
 
 class LaserScanner {
 private:
 	RT_Mutex sensMut;
-	RT_Task laserscanner_thread{LaserScannerTaskFunction, "LaserScanner",
+	RT_Task laserscanner_thread{call_laser_scanner_task, "LaserScanner",
 								SCAN_STACK_SIZE, this, SCAN_TASK_PRIORITY};
 
 public:
@@ -39,9 +39,9 @@ public:
 	uint8_t rplidar_stop_scan[2] = { 0xA5, 0x25 };
 	uint8_t rplidar_get_Health[2] = { 0xA5, 0x52 };
 
-	void LaserScannerTask();
-	void init_LaserScanner();
-	void Stop();
+	void laser_scanner_task();
+	void init();
+	void stop();
 	void Start();
 	void invert(float arr[], float erg[], int n);
 };

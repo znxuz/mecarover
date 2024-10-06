@@ -16,7 +16,7 @@
 #include "rcl_ret_check.hpp"
 #include "wheel_PID.hpp"
 
-extern LaserScanner ls;
+extern LaserScanner laser_scanner;
 
 extern "C"
 {
@@ -32,7 +32,7 @@ static rcl_init_options_t init_options;
 void init()
 {
 	MX_LWIP_Init();
-	HAL_Delay(1000);
+	osDelay(pdMS_TO_TICKS(200));
 
 	rmw_uros_set_custom_transport(false, (void*)&TRANSPORT_PARAMS,
 								  eth_transport_open, eth_transport_close,

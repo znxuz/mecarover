@@ -17,27 +17,27 @@
 #define Checkbit 0x01
 
 extern UART_HandleTypeDef huart2;
-extern LaserScanner ls;
+extern LaserScanner laser_scanner;
 
-uint8_t start[2] = { 0xA5, 0x20 };
-uint8_t stop[2] = { 0xA5, 0x25 };
-uint8_t reset[2] = { 0xA5, 0x40 };
-uint8_t getHealth[2] = { 0xA5, 0x52 };
+uint8_t start_cmd[2] = { 0xA5, 0x20 };
+uint8_t stop_cmd[2] = { 0xA5, 0x25 };
+uint8_t reset_cmd[2] = { 0xA5, 0x40 };
+uint8_t get_health_cmd[2] = { 0xA5, 0x52 };
 uint8_t legacy_scan[9] = { 0xA5, 0x82, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x22 };
 
 bool shouldReadData = false;
 int zahl = 0;
 int y = 0;
 
-void LaserScannerTaskFunction(void *arg)
+void call_laser_scanner_task(void *arg)
 {
 	LaserScanner *scan = (LaserScanner *)arg;
-	log_message(log_info, "LaserScanner Task");
-	scan->LaserScannerTask();
+	scan->laser_scanner_task();
 }
 
-void LaserScanner::LaserScannerTask()
+void LaserScanner::laser_scanner_task()
 {
+	log_message(log_info, "LaserScanner Task");
 	while (true) {
 
 		char receivedBytes[1800] = { 0 };
@@ -81,13 +81,13 @@ void LaserScanner::LaserScannerTask()
 						angleInt += 360;
 					}
 
-					ls.adjustedScan[angleInt] = distanceInMeters;
+					laser_scanner.adjustedScan[angleInt] = distanceInMeters;
 
 					if (zahl == 360) {
 						zahl = 0;
 					}
 
-					ls.quality[zahl] = quality;
+					laser_scanner.quality[zahl] = quality;
 					//					ls.dist[zahl] = distanceInMeters;
 					//					ls.ang[zahl++] = actualAngle;
 					i += 5;
@@ -103,7 +103,7 @@ void LaserScanner::LaserScannerTask()
 	}
 }
 
-void LaserScanner::init_LaserScanner()
+void LaserScanner::init()
 {
 	log_message(log_info, "Create LaserScanner");
 
@@ -112,10 +112,10 @@ void LaserScanner::init_LaserScanner()
 	__HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1, 0);
 }
 
-void LaserScanner::Stop()
+void LaserScanner::stop()
 {
 	__HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1, 0);
-	HAL_UART_Transmit_DMA(&huart2, (uint8_t *)stop, 2);
+	HAL_UART_Transmit_DMA(&huart2, (uint8_t *)stop_cmd, 2);
 	shouldReadData = false;
 }
 
@@ -124,7 +124,7 @@ void LaserScanner::Start()
 	// clear the overrun and noise interrupt flag
 	__HAL_UART_CLEAR_IT(&huart2, UART_CLEAR_NEF | UART_CLEAR_OREF);
 	__HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1, 5000);
-	HAL_UART_Transmit_DMA(&huart2, (uint8_t *)start, 2);
+	HAL_UART_Transmit_DMA(&huart2, (uint8_t *)start_cmd, 2);
 	shouldReadData = true;
 }
 
