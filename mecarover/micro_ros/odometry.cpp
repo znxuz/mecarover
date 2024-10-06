@@ -1,7 +1,5 @@
 #include "odometry.hpp"
 
-#include <experimental/source_location>
-
 #include <geometry_msgs/msg/twist.h>
 #include <rcl/allocator.h>
 #include <rcl/node.h>
@@ -19,7 +17,7 @@
 extern "C"
 {
 static rclc_executor_t odometry_exe;
-static inline const unsigned int TIMER_TIMEOUT = 5000; // TODO: probably will be FzDreh
+static inline const uint16_t TIMER_TIMEOUT = 5000;
 static auto timer = rcl_get_zero_initialized_timer();
 static geometry_msgs__msg__Twist pose_msg{};
 static rcl_publisher_t pub_odometry;

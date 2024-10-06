@@ -8,6 +8,7 @@
 #include <mecarover/retarget.h>
 #include <mecarover/robot_params.hpp>
 
+#include <cmsis_os2.h>
 #include <tim.h>
 #include <usart.h>
 
@@ -35,19 +36,13 @@ void mecarover_start(void)
 {
 	retarget_init(&huart3);
 	logger_init();
-	hal_init();
-
 	log_message(log_info, "mecarover start");
 
-	auto* controller_task = new imsl::vehiclecontrol::ControllerTask<real_t>();
+	hal_init();
 	laser_scanner.init();
-
-	const osThreadAttr_t executor_attributes = {
-		.name = "micro_ros",
-		.stack_size = MAIN_TASK_STACK_SIZE,
-		.priority = (osPriority_t)MICRO_ROS_TASK_PRIORITY,
-	};
-	osThreadNew(micro_ros_legacy, controller_task, &executor_attributes);
+	auto* controller_task = new imsl::vehiclecontrol::ControllerTask<real_t>();
+	xTaskCreate(micro_ros_legacy, "micro_ros", MAIN_TASK_STACK_SIZE,
+				controller_task, MICRO_ROS_TASK_PRIORITY, NULL);
 
 	osKernelStart();
 	Error_Handler(); // because osKernelStart should never return

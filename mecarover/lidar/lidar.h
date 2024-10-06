@@ -21,8 +21,8 @@ void call_laser_scanner_task(void *arg);
 
 class LaserScanner {
 private:
-	RT_Mutex sensMut;
-	RT_Task laserscanner_thread{call_laser_scanner_task, "LaserScanner",
+	RtosMutex sensMut;
+	RtosTask laserscanner_thread{call_laser_scanner_task, "LaserScanner",
 								SCAN_STACK_SIZE, this, SCAN_TASK_PRIORITY};
 
 public:

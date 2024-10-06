@@ -79,12 +79,8 @@ void MX_LWIP_Init(void)
 
   /* Create the Ethernet link handler thread */
 /* USER CODE BEGIN H7_OS_THREAD_NEW_CMSIS_RTOS_V2 */
-  osThreadAttr_t attributes;
-  memset(&attributes, 0x0, sizeof(osThreadAttr_t));
-  attributes.name = "EthLink";
-  attributes.stack_size = LWIP_STACK_SIZE;
-  attributes.priority = LWIP_TASK_PRIORITY;
-  osThreadNew(ethernet_link_thread, &gnetif, &attributes);
+  xTaskCreate(ethernet_link_thread, "EthLink", LWIP_STACK_SIZE, &gnetif,
+		  LWIP_TASK_PRIORITY, NULL);
 /* USER CODE END H7_OS_THREAD_NEW_CMSIS_RTOS_V2 */
 
   /* Start DHCP negotiation for a network interface (IPv4) */

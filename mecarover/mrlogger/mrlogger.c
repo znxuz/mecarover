@@ -1,7 +1,6 @@
 #include "mrlogger.h"
 
 #include <FreeRTOS.h>
-#include <cmsis_os2.h>
 #include <queue.h>
 #include <semphr.h>
 
@@ -91,8 +90,6 @@ void logger_init()
 		return;
 	}
 
-	osThreadAttr_t attr = {.name = "logger server",
-						   .stack_size = MAIN_TASK_STACK_SIZE,
-						   .priority = (osPriority_t)LOGGER_TASK_PRIORITY};
-	osThreadNew(logger_server_task, NULL, &attr);
+	xTaskCreate(logger_server_task, "logger server", MAIN_TASK_STACK_SIZE, NULL,
+				LOGGER_TASK_PRIORITY, NULL);
 }

@@ -34,21 +34,21 @@ private:
 
 	MecanumController<T> controller{};
 
-	RT_Task lageregler_thread{call_pose_control_task, "PoseControllerTask",
+	RtosTask lageregler_thread{call_pose_control_task, "PoseControllerTask",
 							  MAIN_TASK_STACK_SIZE, this,
 							  POSE_CONTROLLER_PRIORITY};
-	RT_Task drehzahlregler_thread{call_wheel_control_task,
+	RtosTask drehzahlregler_thread{call_wheel_control_task,
 								  "WheelControllerTask", MAIN_TASK_STACK_SIZE,
 								  this, WHEEL_CONTROLLER_PRIORITY};
-	RT_Semaphore pose_ctrl_sem{10, 0};
+	RtosSemaphore pose_ctrl_sem{10, 0};
 
-	MutexObject<std::array<T, 4>> vel_wheel_sp;
-	MutexObject<mrc_stat> error_status{MRC_NOERR};
+	RtosMutexObject<std::array<T, 4>> vel_wheel_sp;
+	RtosMutexObject<mrc_stat> error_status{MRC_NOERR};
 
 public:
-	MutexObject<CtrlMode> ctrl_mode;
-	MutexObject<Pose<T>> pose_current;
-	MutexObject<vPose<T>> ref_vel_manual;
+	RtosMutexObject<CtrlMode> ctrl_mode;
+	RtosMutexObject<Pose<T>> pose_current;
+	RtosMutexObject<vPose<T>> ref_vel_manual;
 
 	void PoseControlTask()
 	{
@@ -151,7 +151,7 @@ public:
 					"free heap: %d, free stack: %ld",
 					free_heap, free_stack);
 
-		RT_PeriodicTimer WheelControllerTimer(sampling_times.FzDreh * MS_TO_S);
+		RtosPeriodicTimer WheelControllerTimer(sampling_times.FzDreh * MS_TO_S);
 		while (true) {
 			controllerMode = ctrl_mode.get();
 

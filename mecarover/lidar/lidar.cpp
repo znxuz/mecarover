@@ -96,10 +96,10 @@ void LaserScanner::laser_scanner_task()
 				}
 			}
 
-			osDelay(1);
+			vTaskDelay(1);
 		}
 
-		osDelay(1);
+		vTaskDelay(1);
 	}
 }
 

@@ -1,19 +1,18 @@
 #pragma once
 
-#include <Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h>
 #include <Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h>
 #include <Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h>
 
-class RT_Task {
+class RtosTask {
 public:
-	RT_Task(TaskFunction_t pvTaskCode, const char* const pcName,
-			uint32_t usStackDepth, void* pvParameters, UBaseType_t uxPriority)
+	RtosTask(TaskFunction_t pvTaskCode, const char* const pcName,
+			 uint32_t usStackDepth, void* pvParameters, UBaseType_t uxPriority)
 	{
-		xTaskCreate(pvTaskCode, pcName, usStackDepth, pvParameters,
-					(osPriority_t)uxPriority, &this->handle);
+		xTaskCreate(pvTaskCode, pcName, usStackDepth, pvParameters, uxPriority,
+					&this->handle);
 	}
 
-	~RT_Task() { vTaskDelete(this->handle); }
+	~RtosTask() { vTaskDelete(this->handle); }
 
 	void suspend() { vTaskSuspend(this->handle); }
 
@@ -28,9 +27,9 @@ private:
 	TaskHandle_t handle = nullptr;
 };
 
-class RT_PeriodicTimer {
+class RtosPeriodicTimer {
 public:
-	RT_PeriodicTimer(TickType_t ticks)
+	RtosPeriodicTimer(TickType_t ticks)
 		: xLastWakeTime{xTaskGetTickCount()}
 		, xFrequency{ticks}
 	{ }
@@ -42,14 +41,14 @@ private:
 	TickType_t xFrequency;
 };
 
-class RT_Semaphore {
+class RtosSemaphore {
 public:
-	RT_Semaphore(UBaseType_t uxMaxCount, UBaseType_t uxInitialCount)
+	RtosSemaphore(UBaseType_t uxMaxCount, UBaseType_t uxInitialCount)
 	{
 		this->handle = xSemaphoreCreateCounting(uxMaxCount, uxInitialCount);
 	}
 
-	~RT_Semaphore() { vSemaphoreDelete(this->handle); }
+	~RtosSemaphore() { vSemaphoreDelete(this->handle); }
 
 	bool wait() { return xSemaphoreTake(this->handle, portMAX_DELAY); }
 
@@ -64,11 +63,11 @@ private:
 	SemaphoreHandle_t handle = nullptr;
 };
 
-class RT_Mutex {
+class RtosMutex {
 public:
-	RT_Mutex() { this->handle = xSemaphoreCreateMutex(); }
+	RtosMutex() { this->handle = xSemaphoreCreateMutex(); }
 
-	~RT_Mutex() { vSemaphoreDelete(this->handle); }
+	~RtosMutex() { vSemaphoreDelete(this->handle); }
 
 	bool lock() { return xSemaphoreTake(this->handle, portMAX_DELAY); }
 
@@ -83,11 +82,11 @@ private:
 	SemaphoreHandle_t handle;
 };
 
-template<class T> class MutexObject {
+template<class T> class RtosMutexObject {
 public:
-	MutexObject() = default;
+	RtosMutexObject() = default;
 
-	MutexObject(T t) { this->set(t); }
+	RtosMutexObject(T t) { this->set(t); }
 
 	T get()
 	{
@@ -107,5 +106,5 @@ public:
 
 private:
 	T object{};
-	RT_Mutex mutex{};
+	RtosMutex mutex{};
 };

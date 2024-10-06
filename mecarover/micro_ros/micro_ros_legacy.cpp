@@ -1,10 +1,6 @@
-#include <experimental/source_location>
-
-#include <geometry_msgs/msg/transform_stamped.h>
 #include <geometry_msgs/msg/twist.h>
 #include <sensor_msgs/msg/detail/laser_scan__struct.h>
 #include <sensor_msgs/msg/laser_scan.h>
-#include <sensor_msgs/msg/range.h>
 #include <std_msgs/msg/bool.h>
 #include <std_msgs/msg/byte.h>
 #include <tf2_msgs/msg/tf_message.h>
@@ -17,42 +13,18 @@
 #include <rmw_microros/rmw_microros.h>
 #include <uxr/client/config.h>
 
-#include <nav_msgs/msg/odometry.h>
-
 #include <lwip.h>
+
 #include <mecarover/controls/ControllerTask.h>
-#include <mecarover/lidar/lidar.h>
-#include <mecarover/mrlogger/mrlogger.h>
 #include <mecarover/hal/stm_hal.hpp>
+#include <mecarover/lidar/lidar.h>
+#include <mecarover/micro_ros/rcl_ret_check.hpp>
+#include <mecarover/mrlogger/mrlogger.h>
 
 #include "eth_transport.h"
 
 using namespace imsl;
 using namespace imsl::vehiclecontrol;
-
-static inline void
-rcl_ret_check(rcl_ret_t ret_code,
-			  const std::experimental::source_location location
-			  = std::experimental::source_location::current())
-{
-	if (ret_code) {
-		printf("Failed status on line %d: %d in %s. Aborting.\n",
-			   static_cast<int>(location.line()), static_cast<int>(ret_code),
-			   location.file_name());
-		vTaskDelete(NULL);
-	}
-}
-
-static inline void
-rcl_ret_softcheck(rcl_ret_t ret_code,
-				  const std::experimental::source_location location
-				  = std::experimental::source_location::current())
-{
-	if (ret_code)
-		printf("Failed status on line %d: %d in %s. Continuing.\n",
-			   static_cast<int>(location.line()), static_cast<int>(ret_code),
-			   location.file_name());
-}
 
 extern "C"
 {
@@ -174,7 +146,7 @@ void cmd_cb(const void* cmd_msg)
 	v_ref.vy = msg->linear.y * 1000.0; // m/s -> mm/s
 	v_ref.omega = msg->angular.z; // rad/s
 
-	if (controller) [[ likely ]]
+	if (controller) [[likely]]
 		controller->ref_vel_manual.set(v_ref);
 
 	// TODO: probably just for updating the previous encoder values
@@ -199,7 +171,7 @@ void enable_topic_cb(const void* enable_topic)
 void micro_ros_legacy(void* arg)
 {
 	MX_LWIP_Init();
-	vTaskDelay(1000);
+	vTaskDelay(pdMS_TO_TICKS(200));
 
 	controller = reinterpret_cast<vehiclecontrol::ControllerTask<real_t>*>(arg);
 
