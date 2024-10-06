@@ -147,7 +147,7 @@ public:
 
 	void WheelControlTask()
 	{
-		std::array<T, N_WHEEL> encoder_deltas{};
+		std::array<T, N_WHEEL> encoders_delta{};
 		std::array<T, N_WHEEL> vel_wheel_sp{};
 		std::array<T, N_WHEEL> vel_wheel_actual{};
 		std::array<T, N_WHEEL> vel_wheel_corrected{};
@@ -178,8 +178,8 @@ public:
 				break;
 			}
 
-			encoder_deltas = hal_encoder_delta();
-			std::transform(begin(encoder_deltas), end(encoder_deltas),
+			encoders_delta = hal_encoder_delta();
+			std::transform(begin(encoders_delta), end(encoders_delta),
 						   begin(vel_wheel_actual), [this](T encoder_delta) {
 							   return encoder_delta / sampling_times.FzDreh;
 						   });
@@ -200,7 +200,7 @@ public:
 
 			// Odometry func
 			VelRF vel_rframe_matrix
-				= controller.vWheel2vRF(VelWheel(encoder_deltas.data()));
+				= controller.vWheel2vRF(VelWheel(encoders_delta.data()));
 			auto oldPose = this->pose_current.get();
 			auto newPose = controller.odometry(oldPose, vel_rframe_matrix);
 			pose_current.set(newPose);

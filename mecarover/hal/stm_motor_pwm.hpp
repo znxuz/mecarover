@@ -32,7 +32,7 @@ public:
 	}
 
 private:
-	TIM_HandleTypeDef* htim;
+	TIM_HandleTypeDef* htim = nullptr;
 	uint32_t pwm_channel_a;
 	uint32_t pwm_channel_b;
 	int direction;
