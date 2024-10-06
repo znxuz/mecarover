@@ -139,7 +139,7 @@ OBJS := $(addprefix $(BUILD_DIR)/, $(C_SRCS:.c=.o)) \
 		$(addprefix $(BUILD_DIR)/, $(CPP_SRCS:.cpp=.o)) \
 		$(addprefix $(BUILD_DIR)/, $(S_SRC:.s=.o))
 
-.PHONY: all clean fclean flash
+.PHONY: all clean flash reflash
 
 all: $(BIN) $(SIZE_OUTPUT) $(OBJDUMP_LIST)
 
@@ -154,9 +154,6 @@ $(BUILD_DIR)/%.o $(BUILD_DIR)/%.su: %.cpp
 $(BUILD_DIR)/%.o: %.s
 	$(DIR_GUARD)
 	arm-none-eabi-gcc $(STARTUP_FLAGS) "$<" -o "$@"
-
-flash: $(BIN)
-	st-flash --reset write $(EXECUTABLE:.elf=.bin) 0x8000000
 
 $(BIN): $(EXECUTABLE)
 	arm-none-eabi-objcopy -O binary $(EXECUTABLE) $(EXECUTABLE:.elf=.bin)
@@ -174,9 +171,6 @@ $(OBJDUMP_LIST): $(EXECUTABLE)
 	@echo "Finished building: $@"
 
 clean:
-	$(RM) $(OBJS)
-
-fclean:
 	$(RM) $(shell find $(BUILD_DIR) -type f -name '*.su' -or -name '*.d' -or -name '*.o')
 	$(RM) $(EXECUTABLE)
 	$(RM) $(BIN)
@@ -204,5 +198,9 @@ backup: $(BIN)
 	@cp $(BIN) $(BUILD_DIR)/$(shell git log -1 --pretty='%h').bin
 	@rm -f $(BUILD_DIR)/$(shell git log -2 --pretty='%h' | tail -n1).bin
 
-diff: $(BIN)
-	diff $(BUILD_DIR)/*.bin
+flash: all
+	st-flash --reset write $(EXECUTABLE:.elf=.bin) 0x8000000
+
+reflash:
+	$(MAKE) clean
+	$(MAKE) flash

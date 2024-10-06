@@ -63,6 +63,7 @@ template<typename T> dPose<T> dRF2dWF(dPose<T> dRF, T theta)
 	return dWF;
 }
 
+// FIXME: how this is function not used at all?!
 /* transformation of small movements from world frame into robot frame  */
 template<typename T> dPose<T> dWF2dRF(dPose<T> dWF, T theta)
 {
@@ -172,6 +173,12 @@ public:
 	}
 };
 
+template<typename T>
+dPose<T> operator*(const vPose<T>& vel, const size_t factor)
+{
+	return dPose<T>{vel.vx * factor, vel.vy * factor, vel.omega * factor};
+}
+
 template<typename T> dPose<T> operator-(const Pose<T>& p1, const Pose<T>& p2)
 {
 	dPose<T> p;
@@ -182,13 +189,9 @@ template<typename T> dPose<T> operator-(const Pose<T>& p1, const Pose<T>& p2)
 }
 
 template<typename T>
-dPose<T> operator/(const dPose<T>& p1, const unsigned int divisor)
+vPose<T> operator/(const dPose<T>& p1, const size_t divisor)
 {
-	dPose<T> p;
-	p.dx = p1.dx / divisor;
-	p.dy = p1.dy / divisor;
-	p.d_theta = p1.d_theta / divisor;
-	return p;
+	return vPose<T>{p1.dx / divisor, p1.dy / divisor, p1.d_theta / divisor};
 }
 
 template<typename T> Pose<T> operator+(const Pose<T>& p, const dPose<T>& d)

@@ -35,11 +35,11 @@ private:
 	MecanumController<T> controller{};
 
 	RtosTask lageregler_thread{call_pose_control_task, "PoseControllerTask",
-							  MAIN_TASK_STACK_SIZE, this,
-							  POSE_CONTROLLER_PRIORITY};
+							   MAIN_TASK_STACK_SIZE, this,
+							   POSE_CONTROLLER_PRIORITY};
 	RtosTask drehzahlregler_thread{call_wheel_control_task,
-								  "WheelControllerTask", MAIN_TASK_STACK_SIZE,
-								  this, WHEEL_CONTROLLER_PRIORITY};
+								   "WheelControllerTask", MAIN_TASK_STACK_SIZE,
+								   this, WHEEL_CONTROLLER_PRIORITY};
 	RtosSemaphore pose_ctrl_sem{10, 0};
 
 	RtosMutexObject<std::array<T, 4>> vel_wheel_sp;
@@ -93,8 +93,7 @@ public:
 			// set pose_manual from velocity setpoint
 			vel_rframe_sp
 				= controller.velocityFilter(vel_rframe_sp, vel_rframe_prev);
-			vPose<T> vel_wframe_sp
-				= vRF2vWF<T>(vel_rframe_sp, pose_cur.theta);
+			vPose<T> vel_wframe_sp = vRF2vWF<T>(vel_rframe_sp, pose_cur.theta);
 			pose_manual.x += vel_wframe_sp.vx * sampling_times.FzLage;
 			pose_manual.y += vel_wframe_sp.vy * sampling_times.FzLage;
 			pose_manual.theta += vel_wframe_sp.omega * sampling_times.FzLage;
@@ -186,27 +185,29 @@ public:
 
 			hal_wheel_vel_set_pwm(vel_wheel_corrected);
 
-			// Odometry func
-			VelRF vel_rframe_matrix
+			/*
+			 * odometry: encoder delta gets feeded directly into the inv
+			 * jacobian matrix without dividing the dt
+			 * d_encoder / dt = wheel_vel X inv_j = robot_vel * dt = dpose
+			 * => dt can be spared because its unnecessary calculation
+			 */
+			VelRF dpose_rframe_matrix
 				= controller.vWheel2vRF(VelWheel(encoders_delta.data()));
-
-			dPose<T> vel_rframe{vel_rframe_matrix(0), vel_rframe_matrix(1),
-								vel_rframe_matrix(2)};
-			controller.update_epsilon(vel_rframe_matrix(3));
+			dPose<T> dpose_rframe{dpose_rframe_matrix(0),
+								  dpose_rframe_matrix(1),
+								  dpose_rframe_matrix(2)};
+			controller.update_epsilon(dpose_rframe_matrix(3));
 
 			auto oldPose = this->pose_current.get();
-
-			dPose<T> delta_pose_wframe = dRF2dWF<T>(
-				vel_rframe,
-				oldPose.theta + vel_rframe.d_theta / static_cast<T>(2));
-			auto newPose = oldPose + delta_pose_wframe;
-
-			// TODO: why divide by 2?
-			T vx = delta_pose_wframe.dx / sampling_times.FzDreh;
-			T vy = delta_pose_wframe.dy / sampling_times.FzDreh;
-			T omega = delta_pose_wframe.d_theta / sampling_times.FzDreh;
-			pose_current.set(Pose<T>{newPose.x, newPose.y, newPose.theta,
-									 vPose<T>{vx, vy, omega}});
+			dPose<T> dpose_wframe = dRF2dWF<T>(
+				dpose_rframe,
+				oldPose.theta + dpose_rframe.d_theta / static_cast<T>(2));
+			auto newPose = oldPose + dpose_wframe;
+			newPose.velocity = dpose_wframe
+				/ sampling_times.FzDreh; // TODO: check why velocity is set here
+										 // as well, its supposed to only care
+										 // about the odometry here
+			pose_current.set(newPose);
 
 			/* ++counter % n is undefined? */
 			++counter;
