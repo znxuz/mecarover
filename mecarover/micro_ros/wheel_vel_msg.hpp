@@ -1,7 +1,10 @@
 #pragma once
 
 #include <cstring>
+
 #include <std_msgs/msg/float64_multi_array.h>
+
+#include <mecarover/mrtypes.h>
 
 struct wheel_vel_msg {
 	wheel_vel_msg()
@@ -11,19 +14,20 @@ struct wheel_vel_msg {
 		this->msg.layout.data_offset = 0;
 		this->dim.label.data = const_cast<char*>(label);
 		this->dim.label.size = strlen(label);
-		// set up the array dimension
-		this->dim.size = this->size; // number of elements in the array
-		this->dim.stride = this->stride;
+
+		this->dim.size = this->SIZE; // number of elements in the array
+		this->dim.stride = this->STRIDE;
+
 		this->msg.layout.dim.data = &this->dim;
 		this->msg.layout.dim.size = 1;
 		this->msg.layout.dim.capacity = 1;
 
-		this->msg.data.data = new double[this->dim.size]{};
+		this->msg.data.data = new real_t[this->dim.size]{};
 		this->msg.data.size = this->dim.size;
 		this->msg.data.capacity = this->dim.size;
 	}
 
-	wheel_vel_msg(double o0, double o1, double o2, double o3)
+	wheel_vel_msg(real_t o0, real_t o1, real_t o2, real_t o3)
 		: wheel_vel_msg()
 	{
 		this->msg.data.data[0] = o0;
@@ -34,16 +38,17 @@ struct wheel_vel_msg {
 
 	~wheel_vel_msg() { delete[] this->msg.data.data; }
 
-	double& operator[](size_t i) { return this->msg.data.data[i]; }
+	real_t& operator[](size_t i) { return this->msg.data.data[i]; }
 
-	const double& operator[](size_t i) const
+	const real_t& operator[](size_t i) const
 	{
 		return const_cast<wheel_vel_msg*>(this)->operator[](i);
 	}
 
+	constexpr static uint8_t SIZE = 4;
+	constexpr static uint8_t STRIDE = 1;
+
 	std_msgs__msg__Float64MultiArray msg;
 	std_msgs__msg__MultiArrayDimension dim;
-	const uint8_t size = 4;
-	const uint8_t stride = 1;
 	const char* label = "mecanum wheel velocity array";
 };

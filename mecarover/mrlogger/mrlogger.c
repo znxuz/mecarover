@@ -1,9 +1,9 @@
 #include "mrlogger.h"
 
 #include <FreeRTOS.h>
+#include <cmsis_os2.h>
 #include <queue.h>
 #include <semphr.h>
-#include <cmsis_os2.h>
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -16,7 +16,6 @@
 #define MAXMSG 10 // max number of messages
 
 static bool use_colors = true;
-static TaskHandle_t logger_server = NULL;
 static SemaphoreHandle_t msgmutex = NULL;
 static QueueHandle_t msg_queue = NULL;
 
@@ -46,10 +45,7 @@ static void logger_server_task(void* args)
 	}
 }
 
-void logger_use_colors(bool colors)
-{
-	use_colors = colors;
-}
+void logger_use_colors(bool colors) { use_colors = colors; }
 
 void log_message(mr_logprio_t prio, const char* format, ...)
 {
@@ -94,13 +90,11 @@ void logger_init()
 		return;
 	}
 
-	BaseType_t retval
-		= xTaskCreate(logger_server_task, "Logger Server", STACK_SIZE, NULL,
-					  (osPriority_t)LOGGER_TASK_PRIORITY, &logger_server);
-	if (retval != pdPASS) {
-		perror("Error: logger_init(), xTaskCreate()\n");
-		return;
-	}
+	osThreadAttr_t attr = {.name = "logger server",
+						   .stack_size = MAIN_TASK_STACK_SIZE,
+						   .priority = (osPriority_t)LOGGER_TASK_PRIORITY};
+	if (!osThreadNew(logger_server_task, NULL, &attr))
+		perror("Error: logger task cannot be created");
 
 	log_message(log_info, "Starting Logger");
 }

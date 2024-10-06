@@ -3,11 +3,13 @@
 #include <cmath>
 #include <limits>
 
+#include <mecarover/mrtypes.h>
+
 namespace imsl
 {
 
-constexpr double inf = std::numeric_limits<double>::infinity();
-constexpr double eps = std::numeric_limits<double>::epsilon();
+constexpr static inline real_t inf = std::numeric_limits<real_t>::infinity();
+constexpr static inline real_t eps = std::numeric_limits<real_t>::epsilon();
 
 template<typename T> class dPose {
 public:
@@ -25,12 +27,11 @@ public:
 
 	bool operator==(const dPose<T>& rhs) const
 	{
-		return this->dx == rhs.dx && this->dy == rhs.dy && this->d_theta ==
-			rhs.d_theta;
+		return this->dx == rhs.dx && this->dy == rhs.dy
+			&& this->d_theta == rhs.d_theta;
 	}
 };
 
-/* velocity (vx = dx/dt, vy = dy/dt, omega = dtheta/dt) of a mobile robot */
 template<typename T> class vPose {
 public:
 	T vx{};
@@ -144,8 +145,6 @@ public:
 	operator T() const { return th; }
 };
 
-/* Pose (x, y, theta) and velocity (vx, vy, omega) of a mobile robot, theta is
- * in the range of -pi ... +pi */
 template<typename T> class Pose {
 public:
 	T x{};

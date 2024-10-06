@@ -1,65 +1,31 @@
 #pragma once
 
+#include <Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h>
 #include <Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h>
 #include <Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h>
-#include <Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h>
 
 class RT_Task {
 public:
-	bool create(TaskFunction_t pvTaskCode, const char *const pcName, uint32_t usStackDepth, void *pvParameters, UBaseType_t uxPriority)
+	RT_Task(TaskFunction_t pvTaskCode, const char* const pcName,
+			uint32_t usStackDepth, void* pvParameters, UBaseType_t uxPriority)
 	{
-		auto retval = xTaskCreate(pvTaskCode, pcName, usStackDepth,
-				pvParameters, (osPriority_t)uxPriority, &handle);
-
-		if (!retval)
-			handle = nullptr; // just to be sure
-		return retval;
+		xTaskCreate(pvTaskCode, pcName, usStackDepth, pvParameters,
+					(osPriority_t)uxPriority, &this->handle);
 	}
 
-	void del()
-	{
-		if (handle) {
-			vTaskDelete(handle);
-		}
-	}
+	~RT_Task() { vTaskDelete(this->handle); }
 
-	RT_Task()
-	{
-		handle = nullptr;
-	}
+	void suspend() { vTaskSuspend(this->handle); }
 
-	~RT_Task()
-	{
-		this->del();
-	}
-
-	void suspend()
-	{
-		if (handle) {
-			vTaskSuspend(handle);
-		}
-	}
-
-	void resume()
-	{
-		if (handle) {
-			vTaskResume(handle);
-		}
-	}
-
-	static uint32_t thisTaskGetStackHighWaterMark()
-	{
-		return uxTaskGetStackHighWaterMark(NULL);
-	}
+	void resume() { vTaskResume(this->handle); }
 
 	uint32_t getStackHighWaterMark()
 	{
-		// TaskHandle_t xHandle;
-		return uxTaskGetStackHighWaterMark(handle);
+		return uxTaskGetStackHighWaterMark(this->handle);
 	}
 
 private:
-	TaskHandle_t handle;
+	TaskHandle_t handle = nullptr;
 };
 
 class RT_PeriodicTimer {
@@ -78,86 +44,40 @@ private:
 
 class RT_Semaphore {
 public:
-	bool create(UBaseType_t uxMaxCount, UBaseType_t uxInitialCount)
+	RT_Semaphore(UBaseType_t uxMaxCount, UBaseType_t uxInitialCount)
 	{
-		handle = xSemaphoreCreateCounting(uxMaxCount, uxInitialCount);
-		if (handle)
-			return true;
-
-		return false; // semaphore is not created
+		this->handle = xSemaphoreCreateCounting(uxMaxCount, uxInitialCount);
 	}
 
-	void del()
-	{
-		if (handle) {
-			vSemaphoreDelete(handle);
-		}
-	}
+	~RT_Semaphore() { vSemaphoreDelete(this->handle); }
 
-	RT_Semaphore()
-	{
-		handle = nullptr;
-	}
-
-	~RT_Semaphore()
-	{
-		this->del();
-	}
-
-	bool wait()
-	{
-		if (handle) {
-			if (xSemaphoreTake(handle, portMAX_DELAY) == pdTRUE) {
-				return true;
-			}
-		}
-		return false;
-	}
+	bool wait() { return xSemaphoreTake(this->handle, portMAX_DELAY); }
 
 	bool wait(TickType_t xTicksToWait)
 	{
-		if (handle) {
-			if (xSemaphoreTake(handle, xTicksToWait) == pdTRUE) {
-				return true;
-			}
-		}
-		return false;
+		return xSemaphoreTake(this->handle, xTicksToWait);
 	}
 
-	bool signal()
-	{
-		if (handle) {
-			if (xSemaphoreGive(handle) == pdTRUE) {
-				return true;
-			}
-		}
-		return false;
-	}
+	bool signal() { return xSemaphoreGive(this->handle); }
 
 private:
-	SemaphoreHandle_t handle;
+	SemaphoreHandle_t handle = nullptr;
 };
 
 class RT_Mutex {
 public:
-	RT_Mutex() { handle = xSemaphoreCreateMutex(); }
+	RT_Mutex() { this->handle = xSemaphoreCreateMutex(); }
 
-	~RT_Mutex() { vSemaphoreDelete(handle); }
+	~RT_Mutex() { vSemaphoreDelete(this->handle); }
 
-	bool lock()
-	{
-		return xSemaphoreTake(handle, portMAX_DELAY);
-	}
+	bool lock() { return xSemaphoreTake(this->handle, portMAX_DELAY); }
 
 	bool lock(TickType_t xTicksToWait)
 	{
-		return xSemaphoreTake(handle, xTicksToWait);
+		return xSemaphoreTake(this->handle, xTicksToWait);
 	}
 
-	bool unlock()
-	{
-		return xSemaphoreGive(handle);
-	}
+	bool unlock() { return xSemaphoreGive(this->handle); }
 
 private:
 	SemaphoreHandle_t handle;

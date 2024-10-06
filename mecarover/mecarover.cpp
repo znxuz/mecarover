@@ -1,3 +1,4 @@
+#include "mecarover/rtos_config.h"
 #include <mecarover/controls/ControllerTask.h>
 #include <mecarover/hal/stm_hal.hpp>
 #include <mecarover/lidar/lidar.h>
@@ -45,7 +46,7 @@ void mecarover_start(void)
 
 	const osThreadAttr_t executor_attributes = {
 		.name = "micro_ros",
-		.stack_size = STACK_SIZE,
+		.stack_size = MAIN_TASK_STACK_SIZE,
 		.priority = (osPriority_t)MICRO_ROS_TASK_PRIORITY,
 	};
 	osThreadNew(micro_ros_legacy, controller_task, &executor_attributes);

@@ -14,10 +14,16 @@
 
 #include <mecarover/mrlogger/mrlogger.h>
 
+extern "C"
+{
+void LaserScannerTaskFunction(void *arg);
+};
+
 class LaserScanner {
 private:
 	RT_Mutex sensMut;
-	RT_Task laserscanner_thread;
+	RT_Task laserscanner_thread{LaserScannerTaskFunction, "LaserScanner",
+								SCAN_STACK_SIZE, this, SCAN_TASK_PRIORITY};
 
 public:
 	float dist[360];

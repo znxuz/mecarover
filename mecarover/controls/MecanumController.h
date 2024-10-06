@@ -10,8 +10,7 @@
 namespace imsl::vehiclecontrol
 {
 
-template<typename T>
-class MecanumController {
+template<typename T> class MecanumController {
 public:
 	static constexpr uint8_t DOF = 4;
 

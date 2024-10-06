@@ -105,16 +105,11 @@ void LaserScanner::LaserScannerTask()
 
 void LaserScanner::init_LaserScanner()
 {
-
 	log_message(log_info, "Create LaserScanner");
 
 	// start the engine of the laser scanner
 	HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1);
 	__HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1, 0);
-
-	if (!laserscanner_thread.create(LaserScannerTaskFunction, "LaserScanner",
-			3000, this, (osPriority_t)LaserScanner_TASK_PRIORITY))
-		log_message(log_info, "Create LaserScanner failed");
 }
 
 void LaserScanner::Stop()

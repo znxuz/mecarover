@@ -36,9 +36,13 @@ private:
 	ctrl_param_t ctrl_params;
 	sampling_time_t sampling_times;
 
-	RT_Task lageregler_thread;
-	RT_Task drehzahlregler_thread;
-	RT_Semaphore pose_ctrl_sem;
+	RT_Task lageregler_thread{call_pose_control_task, "PoseControllerTask",
+							  MAIN_TASK_STACK_SIZE, this,
+							  POSE_CONTROLLER_PRIORITY};
+	RT_Task drehzahlregler_thread{call_wheel_control_task,
+								  "WheelControllerTask", MAIN_TASK_STACK_SIZE,
+								  this, WHEEL_CONTROLLER_PRIORITY};
+	RT_Semaphore pose_ctrl_sem{10, 0};
 
 	MutexObject<std::array<T, 4>> vel_wheel_sp;
 	MutexObject<mrc_stat> error_status{MRC_NOERR};
@@ -48,39 +52,14 @@ public:
 	MutexObject<Pose<T>> pose_current;
 	MutexObject<vPose<T>> ref_vel_manual;
 
-	int init(const robot_param_t* robot_params, ctrl_param_t ctrl_params,
-			 sampling_time_t sampling_times)
+	void init(const robot_param_t* robot_params, ctrl_param_t ctrl_params,
+			  sampling_time_t sampling_times)
 	{
-		log_message(log_info, "MecanumControllerTask init");
+		log_message(log_info, "controller tasks init");
 
 		this->controller.init(robot_params, ctrl_params, sampling_times);
 		this->ctrl_params = ctrl_params;
 		this->sampling_times = sampling_times;
-
-		// TODO: find out why is 10 as max count
-		if (!pose_ctrl_sem.create(10, 0)) {
-			log_message(log_error, "%s: Can init semaphore", __FUNCTION__);
-			return -1;
-		}
-
-		if (!drehzahlregler_thread.create(call_wheel_control_task,
-										  "WheelControllerTask", STACK_SIZE,
-										  this, WHEEL_CONTROLLER_PRIORITY)) {
-			log_message(log_error, "Can not create drehzahlregler thread");
-			return -1;
-		}
-
-		vTaskDelay(
-			10); // wait some ticks to give wheel controller some time to start
-
-		if (!lageregler_thread.create(call_pose_control_task,
-									  "PoseControllerTask", STACK_SIZE, this,
-									  POSE_CONTROLLER_PRIORITY)) {
-			log_message(log_error, "Can not create lageregler thread");
-			return -1;
-		}
-
-		return 0;
 	}
 
 	void PoseControlTask()
@@ -104,7 +83,9 @@ public:
 
 		while (true) {
 			pose_ctrl_sem.wait();
-			pose_ctrl_sem.wait(); // FIXME: without the second wait the vel changes too fast so that the motors get locked up
+			pose_ctrl_sem
+				.wait(); // FIXME: without the second wait the vel changes too
+						 // fast so that the motors get locked up
 
 			oldmode = std::exchange(controllerMode, ctrl_mode.get());
 			pose_current = this->pose_current.get();
@@ -199,8 +180,7 @@ public:
 
 			encoder_deltas = hal_encoder_delta();
 			std::transform(begin(encoder_deltas), end(encoder_deltas),
-						   begin(vel_wheel_actual),
-						   [this](T encoder_delta) {
+						   begin(vel_wheel_actual), [this](T encoder_delta) {
 							   return encoder_delta / sampling_times.FzDreh;
 						   });
 
