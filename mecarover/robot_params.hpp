@@ -7,34 +7,34 @@
 static inline constexpr uint8_t N_WHEEL = 4;
 static inline constexpr uint16_t MS_TO_S = 1000;
 
-// TODO: better names
 struct ctrl_param_t {
-	double DzrKv;
-	double DzrTaDTn;
-	double DzrTvDTa;
-	double DzrIntMax;
-	double DzrSkalierung[4];
+	double k_i;
+	double k_d;
+	double k_ctrl_output;
+	double integral_limit;
 	Pose_t LageKv;
 	Pose_t LageSchleppMax;
 	double Koppel; /* Faktor für Ausregelung des Verkopplungsfehlers */
+	// double ctrl_output_scaler[N_WHEEL]; // useless
 	// double DzrSchleppMax;
 	// double DzrKoppel[4];
 };
 
 struct sampling_time_t {
 	// double Timer;
-	double FzDreh;
-	double FzLage;
-	uint32_t FzLageZuDreh;
+	double dt_pose_ctrl;
+	double dt_wheel_ctrl;
+	uint32_t ratio_pose_wheel;
 };
 
 static constexpr inline sampling_time_t sampling_times = {
 	// .Timer = 0.001, // 1 ms timer tick
-	.FzDreh = 0.005, // 5 ms sampling time of wheel control loop
-	.FzLage = 0.015, // 15 ms sampling time of pose control loop
-	.FzLageZuDreh = 3 // 15 ms / 5 ms ratio pose / wheel
+	.dt_pose_ctrl = 0.015, // 15 ms sampling time of pose control loop
+	.dt_wheel_ctrl = 0.005, // 5 ms sampling time of wheel control loop
+	.ratio_pose_wheel = 3 // 15 ms / 5 ms ratio pose / wheel
 };
 
+// ASK: why l_w_half is used rather than a+b for the velocity transformations?
 static constexpr inline robot_param_t robot_params = {
 	.increments = 48.0, // 4 x 1024 //4096
 	.gear_ratio = 64.0, // gear ratio //68
@@ -53,14 +53,14 @@ static constexpr inline robot_param_t robot_params = {
 };
 
 static constexpr inline ctrl_param_t ctrl_params = {
-	.DzrKv = 0.3,
-	.DzrTaDTn = 0.1,
-	.DzrTvDTa = 0.0,
-	.DzrIntMax = 30.0,
-	.DzrSkalierung = {1.0, 1.0, 1.0, 1.0},
+	.k_i = 0.1,
+	.k_d = 0.0,
+	.k_ctrl_output = 0.3,
+	.integral_limit = 30.0,
 	.LageKv = {5, 5, 5},
 	.LageSchleppMax = {300.0, 300.0, 30.0},
 	.Koppel = 0.0
+	// .ctrl_output_scaler = {1.0, 1.0, 1.0, 1.0},
 	// .DzrSchleppMax = 0.0,
 	// .DzrKoppel = {-0.1, 0.1, -0.1, 0.1},
 };

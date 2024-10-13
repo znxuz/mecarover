@@ -7,18 +7,6 @@ extern "C"
 {
 #endif
 
-// Beschraenkung eines Winkels auf 0 ... 2PI
-#ifndef MAX2PI
-#define MAX2PI(x)                                                              \
-	((x) > (2 * M_PI) ? ((x) - (2 * M_PI)) : ((x) < 0 ? ((x) + (2 * M_PI)) : x))
-#endif
-
-// Beschraenkung eines Winkels auf -PI ... +PI
-#ifndef MAXPI
-#define MAXPI(x)                                                               \
-	((x) > (M_PI) ? ((x) - (2 * M_PI)) : ((x) < -M_PI ? ((x) + (2 * M_PI)) : x))
-#endif
-
 typedef double real_t;
 
 typedef struct {

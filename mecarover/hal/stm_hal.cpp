@@ -36,7 +36,7 @@ void hal_init()
 	hal_wheel_vel_set_pwm({0.0, 0.0, 0.0, 0.0});
 }
 
-std::array<real_t, N_WHEEL> hal_encoder_delta()
+std::array<real_t, N_WHEEL> hal_encoder_delta_rad()
 {
 	auto encoder_delta = std::array<real_t, 4>{};
 

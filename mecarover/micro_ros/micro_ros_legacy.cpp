@@ -255,6 +255,7 @@ void micro_ros_legacy(void* arg)
 												 &sub_startScan, &start_Scan,
 												 &start_Scan_cb, ON_NEW_DATA));
 
+	log_message(log_info, "micro_ros agent intialized - start spinning");
 	while (true) {
 		rcl_ret_check(rclc_executor_spin_some(
 			&executor,

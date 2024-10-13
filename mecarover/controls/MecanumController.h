@@ -2,6 +2,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/LU>
+#include <algorithm>
 #include <cmath>
 #include <mecarover/mrcpptypes.h>
 #include <mecarover/mrlogger/mrlogger.h>
@@ -16,15 +17,15 @@ public:
 
 	using VelWheel = Eigen::Matrix<T, N_WHEEL, 1>;
 	using VelRF = Eigen::Matrix<T, DOF, 1>;
-	using Jacobian = Eigen::Matrix<T, N_WHEEL, DOF>;
-	using InvJacobian = Eigen::Matrix<T, DOF, N_WHEEL>;
+	using Robot2WheelMatrix = Eigen::Matrix<T, N_WHEEL, DOF>;
+	using Wheel2RobotMatrix = Eigen::Matrix<T, DOF, N_WHEEL>;
 
 private:
-	T epsilon1 = 0; // Verkopplungsfehler
-	Jacobian j;
-	InvJacobian inv_j;
-	VelWheel RAbwAlt = VelWheel::Zero();
-	VelWheel Integr = VelWheel::Zero();
+	Robot2WheelMatrix bt_matrix;
+	Wheel2RobotMatrix ft_matrix;
+	T epsilon1 = 0; // Verkopplungsfehler // TODO: what is this
+	VelWheel prev_errors = VelWheel::Zero();
+	VelWheel cumulated_integral = VelWheel::Zero();
 
 public:
 	// for data types VelWheel
@@ -32,13 +33,13 @@ public:
 
 	MecanumController()
 	{
-		this->j = Jacobian{{1.0, 1.0, robot_params.l_w_half, 1.0},
+		this->bt_matrix = Robot2WheelMatrix{{1.0, 1.0, robot_params.l_w_half, 1.0},
 						   {1.0, -1.0, -robot_params.l_w_half, 1.0},
 						   {1.0, 1.0, -robot_params.l_w_half, -1.0},
 						   {1.0, -1.0, robot_params.l_w_half, -1.0}};
-		this->j /= robot_params.wheel_radius;
+		this->bt_matrix /= robot_params.wheel_radius;
 
-		this->inv_j = InvJacobian{
+		this->ft_matrix = Wheel2RobotMatrix{
 			{1.0, 1.0, 1.0, 1.0},
 			{1.0, -1.0, 1.0, -1.0},
 			{1.0 / robot_params.l_w_half, -1.0 / robot_params.l_w_half,
@@ -46,14 +47,12 @@ public:
 			{4.0 / robot_params.wheel_radius, 4.0 / robot_params.wheel_radius,
 			 -4.0 / robot_params.wheel_radius,
 			 -4.0 / robot_params.wheel_radius}};
-		this->inv_j *= robot_params.wheel_radius / 4.0;
+		this->ft_matrix *= robot_params.wheel_radius / 4.0;
 	}
 
-	/* forward transformation wheel -> robot velocity */
-	VelRF vWheel2vRF(const VelWheel& u) const { return inv_j * u; }
+	VelRF vWheel2vRF(const VelWheel& u) const { return ft_matrix * u; }
 
-	/* backward transformation robot -> wheel velocity */
-	VelWheel vRF2vWheel(const VelRF& v) const { return j * v; }
+	VelWheel vRF2vWheel(const VelRF& v) const { return bt_matrix * v; }
 
 	/* no idea what this epsilon is */
 	void update_epsilon(T epsilon1)
@@ -96,38 +95,30 @@ public:
 					 ctrl_params.Koppel * epsilon1};
 	}
 
-	VelWheel wheelControl(const VelWheel& refVel, const VelWheel& realVel)
+	VelWheel wheel_pid_control(const VelWheel& vel_wheel_sp, const VelWheel&
+			vel_wheel_actual)
 	{
-		T regelAbw, diff;
-		VelWheel StellV;
+		VelWheel ctrl_output = vel_wheel_sp;
 
-		for (int i = 0; i < N_WHEEL; i++) {
-			// Regelabweichung, Sollwert und Istwert in rad/s
-			regelAbw = refVel(i) - realVel(i);
+		for (int i = 0; i < N_WHEEL; ++i) {
+			T error = vel_wheel_sp(i) - vel_wheel_actual(i);
 
 			// I-Anteil
-			Integr(i) += ctrl_params.DzrTaDTn * regelAbw;
-			if (Integr(i) > ctrl_params.DzrIntMax) {
-				Integr(i) = ctrl_params.DzrIntMax;
-			} else if (Integr(i) < -(ctrl_params.DzrIntMax)) {
-				Integr(i) = -(ctrl_params.DzrIntMax);
-			}
+			cumulated_integral(i) = std::clamp(
+				cumulated_integral(i) + ctrl_params.k_i * error,
+				-ctrl_params.integral_limit, ctrl_params.integral_limit);
 
 			// D-Anteil
-			diff = ctrl_params.DzrTvDTa * (regelAbw - RAbwAlt(i));
+			T derivative_gain = ctrl_params.k_d * (error - prev_errors(i));
 
-			// Stellgroesse in rad/s
-			StellV(i) = ctrl_params.DzrKv * (regelAbw + Integr(i) + diff);
+			// ASK: why downscale the sum of the PID errors
+			ctrl_output(i) += ctrl_params.k_ctrl_output
+				* (error + cumulated_integral(i) + derivative_gain);
 
-			// Vorsteuerung addieren
-			StellV(i) += refVel(i);
-
-			// Anpassung an individuellen Verstaerker
-			StellV(i) *= ctrl_params.DzrSkalierung[i];
-
-			RAbwAlt(i) = regelAbw;
+			prev_errors(i) = error;
 		}
-		return StellV;
+
+		return ctrl_output;
 	}
 
 	vPose<T> velocityFilter(const vPose<T>& vel_rframe_sp,
@@ -135,7 +126,7 @@ public:
 	{
 		vPose<T> vel_rframe = vel_rframe_sp;
 
-		T v_diff = robot_params.JoystickBeschl * sampling_times.FzLage;
+		T v_diff = robot_params.JoystickBeschl * sampling_times.dt_pose_ctrl;
 
 		if (vel_rframe.vx - vel_rframe_old.vx > v_diff)
 			vel_rframe.vx = vel_rframe_old.vx + v_diff;

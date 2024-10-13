@@ -20,7 +20,7 @@ extern LaserScanner laser_scanner;
 
 extern "C"
 {
-// transport params cannot be const, because the middleware will change it
+/* transport params cannot be const, because the middleware will change it */
 static eth_transport_params_t TRANSPORT_PARAMS
 	= {{0, 0, 0}, {MICRO_ROS_AGENT_IP}, {MICRO_ROS_AGENT_PORT}};
 
@@ -45,7 +45,8 @@ void init()
 	rcl_ret_check(rclc_support_init_with_options(&support, 0, NULL,
 												 &init_options, &allocator));
 
-	rclc_node_init_default(&node, "micro_ros_node", "", &support);
+	rcl_ret_check(
+		rclc_node_init_default(&node, "micro_ros_node", "", &support));
 }
 
 void micro_ros(void* arg)

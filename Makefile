@@ -199,7 +199,10 @@ backup: $(BIN)
 	@rm -f $(BUILD_DIR)/$(shell git log -2 --pretty='%h' | tail -n1).bin
 
 flash: all
-	st-flash --reset write $(EXECUTABLE:.elf=.bin) 0x8000000
+	@while ! st-flash --reset write $(EXECUTABLE:.elf=.bin) 0x8000000; do \
+		echo "st-flash failed, retrying..."; \
+		sleep 1; \
+	done
 
 reflash:
 	$(MAKE) clean

@@ -52,11 +52,6 @@ public:
 
 	bool wait() { return xSemaphoreTake(this->handle, portMAX_DELAY); }
 
-	bool wait(TickType_t xTicksToWait)
-	{
-		return xSemaphoreTake(this->handle, xTicksToWait);
-	}
-
 	bool signal() { return xSemaphoreGive(this->handle); }
 
 private:

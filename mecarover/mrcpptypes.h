@@ -199,7 +199,7 @@ template<typename T> Pose<T> operator+(const Pose<T>& p, const dPose<T>& d)
 	Pose<T> n;
 	n.x = p.x + d.dx;
 	n.y = p.y + d.dy;
-	n.theta = p.theta + d.d_theta; // MAXPI(p.theta + d.theta);
+	n.theta = p.theta + d.d_theta;
 	return n;
 }
 
@@ -208,7 +208,7 @@ template<typename T> Pose<T> operator-(const Pose<T>& p, const dPose<T>& d)
 	Pose<T> n;
 	n.x = p.x - d.dx;
 	n.y = p.y - d.dy;
-	n.theta = p.theta - d.d_theta; // MAXPI(p.theta - d.theta);
+	n.theta = p.theta - d.d_theta;
 	return n;
 }
 
