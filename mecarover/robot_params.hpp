@@ -30,8 +30,8 @@ struct sampling_time_t {
 static constexpr inline sampling_time_t sampling_times = {
 	// .Timer = 0.001, // 1 ms timer tick
 	.dt_pose_ctrl = 0.015, // 15 ms sampling time of pose control loop
-	.dt_wheel_ctrl = 0.005, // 5 ms sampling time of wheel control loop
-	.ratio_pose_wheel = 3 // 15 ms / 5 ms ratio pose / wheel
+	.dt_wheel_ctrl = 0.015, // 5 ms sampling time of wheel control loop
+	.ratio_pose_wheel = 1 // 15 ms / 5 ms ratio pose / wheel
 };
 
 // ASK: why l_w_half is used rather than a+b for the velocity transformations?
