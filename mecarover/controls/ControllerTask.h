@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <array>
 #include <cstring>
-#include <utility>
 
 #include <mecarover/controls/MecanumController.h>
 #include <mecarover/hal/stm_hal.hpp>
@@ -48,18 +47,16 @@ private:
 public:
 	RtosMutexObject<CtrlMode> ctrl_mode;
 	RtosMutexObject<Pose<T>> pose_current;
-	RtosMutexObject<vPose<T>> ref_vel_manual;
+	RtosMutexObject<vPose<T>> vel_rframe_sp;
 
 	void PoseControlTask()
 	{
-		vPose<T> vel_rframe_sp;
+		vPose<T> vel_rframe_cur;
 		vPose<T> vel_rframe_prev;
 		vPose<T> vel_wframe_sp;
 		Pose<T> pose_sp;
 		Pose<T> pose_cur;
-		Pose<T> pose_manual;
 
-		CtrlMode oldmode = CtrlMode::OFF;
 		CtrlMode controllerMode = CtrlMode::OFF;
 
 		size_t free_heap = xPortGetMinimumEverFreeHeapSize();
@@ -75,51 +72,36 @@ public:
 				.wait(); // FIXME: without the second wait the vel changes too
 						 // fast so that the motors get locked up
 
-			oldmode = std::exchange(controllerMode, ctrl_mode.get());
+			controllerMode = this->ctrl_mode.get();
 			pose_cur = this->pose_current.get();
 
 			if (controllerMode == CtrlMode::OFF) {
-				pose_sp = pose_manual = pose_cur;
-				pose_sp.velocity = vel_rframe_prev = vPose<T>{};
+				pose_sp = pose_cur;
 				continue;
 			}
 
-			/* First time after mode switch */
-			if (oldmode != CtrlMode::TWIST)
-				pose_manual = pose_cur;
-
-			vel_rframe_sp = ref_vel_manual.get();
-
-			// set pose_manual from velocity setpoint
-			vel_rframe_sp
-				= controller.velocityFilter(vel_rframe_sp, vel_rframe_prev);
-			vPose<T> vel_wframe_sp = vRF2vWF<T>(vel_rframe_sp, pose_cur.theta);
-			pose_manual.x += vel_wframe_sp.vx * sampling_times.dt_pose_ctrl;
-			pose_manual.y += vel_wframe_sp.vy * sampling_times.dt_pose_ctrl;
-			pose_manual.theta += vel_wframe_sp.omega *
-				sampling_times.dt_pose_ctrl;
+			vel_rframe_cur = controller.velocityFilter(
+				this->vel_rframe_sp.get(), vel_rframe_prev);
+			vPose<T> vel_wframe_cur
+				= vRF2vWF<T>(vel_rframe_cur, pose_cur.theta);
+			pose_sp.x += vel_wframe_cur.vx * sampling_times.dt_pose_ctrl;
+			pose_sp.y += vel_wframe_cur.vy * sampling_times.dt_pose_ctrl;
+			pose_sp.theta += vel_wframe_cur.omega * sampling_times.dt_pose_ctrl;
 
 			static int count = 0;
-			if (count++ > 100) {
-				count = 0;
+			++count;
+			if (!(count = count % 100)) {
 				log_message(log_info,
 							"manual pose via velocity x: %f, y: %f, theta: %f",
-							pose_manual.x, pose_manual.y, T(pose_manual.theta));
+							pose_sp.x, pose_sp.y, T(pose_sp.theta));
 			}
-			vel_rframe_prev = vel_rframe_sp;
 
-			/* V von RKS -> WKS transformieren */
-			vel_wframe_sp = vRF2vWF<T>(vel_rframe_sp, pose_cur.theta);
-
-			pose_sp.x = pose_manual.x;
-			pose_sp.y = pose_manual.y;
-			pose_sp.theta = pose_manual.theta;
-			pose_sp.velocity = vel_wframe_sp;
+			vel_rframe_prev = vel_rframe_cur;
 
 			try {
 				// calculate reference velocities of the wheels
 				VelWheel vel_wheel_sp_mtx = controller.vRF2vWheel(
-					controller.poseControl(pose_sp, pose_cur));
+					controller.poseControl(pose_sp, pose_cur, vel_wframe_cur));
 				auto vel_wheel_sp = std::array<T, N_WHEEL>{};
 				std::copy(std::begin(vel_wheel_sp_mtx),
 						  std::end(vel_wheel_sp_mtx), begin(vel_wheel_sp));
@@ -209,15 +191,17 @@ public:
 				dpose_rframe,
 				oldPose.theta + dpose_rframe.d_theta / static_cast<T>(2));
 			auto newPose = oldPose + dpose_wframe;
-			newPose.velocity = dpose_wframe
-				/ sampling_times
-					  .dt_wheel_ctrl; // TODO: check why velocity is set here as
-									  // well, its supposed to only care about
-									  // the odometry here
+			// newPose.velocity = dpose_wframe
+			// 	/ sampling_times
+			// 		  .dt_wheel_ctrl; // TODO: check why velocity is set here as
+			// 						  // well, its supposed to only care about
+			// 						  // the odometry here
+			// 						  // NOTE: the vel is indeed not needed
 			pose_current.set(newPose);
 
 			static int counter = 0;
-			if (!(counter = ++counter % sampling_times.ratio_pose_wheel))
+			++counter;
+			if (!(counter = counter % sampling_times.ratio_pose_wheel))
 				pose_ctrl_sem.signal();
 
 			WheelControllerTimer.wait();

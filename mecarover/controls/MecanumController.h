@@ -33,10 +33,11 @@ public:
 
 	MecanumController()
 	{
-		this->bt_matrix = Robot2WheelMatrix{{1.0, 1.0, robot_params.l_w_half, 1.0},
-						   {1.0, -1.0, -robot_params.l_w_half, 1.0},
-						   {1.0, 1.0, -robot_params.l_w_half, -1.0},
-						   {1.0, -1.0, robot_params.l_w_half, -1.0}};
+		this->bt_matrix
+			= Robot2WheelMatrix{{1.0, 1.0, robot_params.l_w_half, 1.0},
+								{1.0, -1.0, -robot_params.l_w_half, 1.0},
+								{1.0, 1.0, -robot_params.l_w_half, -1.0},
+								{1.0, -1.0, robot_params.l_w_half, -1.0}};
 		this->bt_matrix /= robot_params.wheel_radius;
 
 		this->ft_matrix = Wheel2RobotMatrix{
@@ -55,12 +56,10 @@ public:
 	VelWheel vRF2vWheel(const VelRF& v) const { return bt_matrix * v; }
 
 	/* no idea what this epsilon is */
-	void update_epsilon(T epsilon1)
-	{
-		this->epsilon1 = epsilon1;
-	}
+	void update_epsilon(T epsilon1) { this->epsilon1 = epsilon1; }
 
-	VelRF poseControl(const Pose<T>& pose_sp, const Pose<T>& actual_pose) const
+	VelRF poseControl(const Pose<T>& pose_sp, const Pose<T>& actual_pose,
+					  const vPose<T>& vel_wframe_cur) const
 	{
 		dPose<T> pose_delta{pose_sp.x - actual_pose.x,
 							pose_sp.y - actual_pose.y,
@@ -71,22 +70,16 @@ public:
 			|| abs(pose_delta.dy) > ctrl_params.LageSchleppMax.y
 			|| abs(pose_delta.d_theta) > ctrl_params.LageSchleppMax.theta)
 			[[unlikely]] {
-			log_message(
-				log_error,
-				"%s, %s, deviation position controller too large: act.x: %f, "
-				"ref.x: %f, act.y: %f, ref.y: %f, act.theta: %f, ref.theta: %f",
-				__FILE__, __FUNCTION__, actual_pose.x, pose_sp.x, actual_pose.y,
-				pose_sp.y, static_cast<T>(actual_pose.theta),
-				static_cast<T>(pose_sp.theta));
 			throw MRC_LAGEERR;
 		}
 
+		// FIXME: it doesn't feel right to add delta pose and velocity together
 		vPose<T> vel_wframe_sp;
 		vel_wframe_sp.vx
-			= pose_sp.velocity.vx + pose_delta.dx * ctrl_params.LageKv.x;
+			= vel_wframe_cur.vx + pose_delta.dx * ctrl_params.LageKv.x;
 		vel_wframe_sp.vy
-			= pose_sp.velocity.vy + pose_delta.dy * ctrl_params.LageKv.y;
-		vel_wframe_sp.omega = pose_sp.velocity.omega
+			= vel_wframe_cur.vy + pose_delta.dy * ctrl_params.LageKv.y;
+		vel_wframe_sp.omega = vel_wframe_cur.omega
 			+ pose_delta.d_theta * ctrl_params.LageKv.theta;
 
 		vPose<T> vel_rframe_sp = vWF2vRF<T>(vel_wframe_sp, actual_pose.theta);
@@ -95,8 +88,8 @@ public:
 					 ctrl_params.Koppel * epsilon1};
 	}
 
-	VelWheel wheel_pid_control(const VelWheel& vel_wheel_sp, const VelWheel&
-			vel_wheel_actual)
+	VelWheel wheel_pid_control(const VelWheel& vel_wheel_sp,
+							   const VelWheel& vel_wheel_actual)
 	{
 		VelWheel ctrl_output = vel_wheel_sp;
 

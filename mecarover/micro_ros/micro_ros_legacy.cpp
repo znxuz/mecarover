@@ -147,7 +147,7 @@ void cmd_cb(const void* cmd_msg)
 	v_ref.omega = msg->angular.z; // rad/s
 
 	if (controller) [[likely]]
-		controller->ref_vel_manual.set(v_ref);
+		controller->vel_rframe_sp.set(v_ref);
 }
 
 void enable_topic_cb(const void* enable_topic)

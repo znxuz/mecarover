@@ -11,11 +11,63 @@ namespace imsl
 constexpr static inline real_t inf = std::numeric_limits<real_t>::infinity();
 constexpr static inline real_t eps = std::numeric_limits<real_t>::epsilon();
 
+/* Heading of a mobile robot in the range of -pi ... +pi */
+template<typename T> class Heading {
+private:
+	T th{};
+
+	T maxPI(T theta) const
+	{
+		while (theta > T(M_PI))
+			theta -= T(2 * M_PI);
+		while (theta < T(-M_PI))
+			theta += T(2 * M_PI);
+		return theta;
+	}
+
+public:
+	Heading() = default;
+
+	Heading(T theta) { th = maxPI(theta); }
+
+	Heading& operator=(const T& theta)
+	{
+		th = maxPI(theta);
+		return *this;
+	}
+
+	Heading operator+(const T& d) const
+	{
+		Heading t = maxPI(th + d);
+		return t;
+	}
+
+	Heading& operator+=(const T& d)
+	{
+		th = maxPI(th + d);
+		return *this;
+	}
+
+	Heading operator-(const T& d) const
+	{
+		Heading t = maxPI(th - d);
+		return t;
+	}
+
+	Heading& operator-=(const T& d)
+	{
+		th = maxPI(th - d);
+		return *this;
+	}
+
+	operator T() const { return th; }
+};
+
 template<typename T> class dPose {
 public:
 	T dx{};
 	T dy{};
-	T d_theta{};
+	Heading<T> d_theta{};
 
 	dPose() = default;
 
@@ -94,82 +146,23 @@ template<typename T> vPose<T> vWF2vRF(vPose<T> vWF, T theta)
 	return vRF;
 }
 
-/* Heading of a mobile robot in the range of -pi ... +pi */
-template<typename T> class Heading {
-private:
-	T th{};
-
-	T maxPI(T theta) const
-	{
-		while (theta > T(M_PI))
-			theta -= T(2 * M_PI);
-		while (theta < T(-M_PI))
-			theta += T(2 * M_PI);
-		return theta;
-	}
-
-public:
-	Heading() = default;
-
-	Heading(T theta) { th = maxPI(theta); }
-
-	Heading& operator=(const T& theta)
-	{
-		th = maxPI(theta);
-		return *this;
-	}
-
-	Heading operator+(const T& d) const
-	{
-		Heading t = maxPI(th + d);
-		return t;
-	}
-
-	Heading& operator+=(const T& d)
-	{
-		th = maxPI(th + d);
-		return *this;
-	}
-
-	Heading operator-(const T& d) const
-	{
-		Heading t = maxPI(th - d);
-		return t;
-	}
-
-	Heading& operator-=(const T& d)
-	{
-		th = maxPI(th - d);
-		return *this;
-	}
-
-	operator T() const { return th; }
-};
-
 template<typename T> class Pose {
 public:
 	T x{};
 	T y{};
 	Heading<T> theta{};
-	vPose<T> velocity{};
 
 	Pose() = default;
 
-	Pose(T x, T y, Heading<T> theta, vPose<T> velocity)
+	Pose(T x, T y, Heading<T> theta)
 		: x{x}
 		, y{y}
 		, theta{theta}
-		, velocity{velocity}
-	{ }
-
-	Pose(T x, T y, Heading<T> theta, T vx, T vy, T omega)
-		: Pose(x, y, theta, vPose<T>{vx, vy, omega})
 	{ }
 
 	bool operator==(const Pose<T>& rhs) const
 	{
-		return this->x == rhs.x && this->y == rhs.y && this->theta == rhs.theta
-			&& this->velocity == rhs.velocity;
+		return this->x == rhs.x && this->y == rhs.y && this->theta == rhs.theta;
 	}
 };
 
