@@ -6,7 +6,6 @@
 #define MICRO_ROS_AGENT_PORT "8888"
 #define ROS_DOMAIN_ID 42
 
-extern "C"
-{
+extern "C" {
 void micro_ros(void* ct);
 };

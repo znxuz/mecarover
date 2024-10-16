@@ -1,8 +1,7 @@
 #pragma once
 
-#include <tim.h>
-
 #include <mecarover/mrtypes.h>
+#include <tim.h>
 
 #ifdef __cplusplus
 #include <array>
@@ -15,8 +14,7 @@ void hal_wheel_vel_set_pwm(const std::array<real_t, N_WHEEL>& duty_cycle);
 std::array<real_t, NUM_MOTORS> hal_encoder_delta_rad();
 bool hal_get_estop();
 
-extern "C"
-{
+extern "C" {
 #endif
 
 void stm_encoder_cb(TIM_HandleTypeDef* htim);
