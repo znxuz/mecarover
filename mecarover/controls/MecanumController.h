@@ -104,28 +104,15 @@ public:
 	vPose<T> velocityFilter(const vPose<T>& vel_rframe_sp,
 							const vPose<T>& vel_rframe_old) const
 	{
-		vPose<T> vel_rframe = vel_rframe_sp;
+		T diff_max = robot_params.JoystickBeschl * sampling_times.dt_pose_ctrl;
 
-		T v_diff = robot_params.JoystickBeschl * sampling_times.dt_pose_ctrl;
+		vPose<T> v_diff = vel_rframe_sp - vel_rframe_old;
+		v_diff.vx = std::clamp(v_diff.vx, -diff_max, diff_max);
+		v_diff.vy = std::clamp(v_diff.vy, -diff_max, diff_max);
+		diff_max /= robot_params.l_w_half;
+		v_diff.omega = std::clamp(v_diff.omega, -diff_max, diff_max);
 
-		if (vel_rframe.vx - vel_rframe_old.vx > v_diff)
-			vel_rframe.vx = vel_rframe_old.vx + v_diff;
-		else if (vel_rframe_old.vx - vel_rframe.vx > v_diff)
-			vel_rframe.vx = vel_rframe_old.vx - v_diff;
-
-		if (vel_rframe.vy - vel_rframe_old.vy > v_diff)
-			vel_rframe.vy = vel_rframe_old.vy + v_diff;
-		else if (vel_rframe_old.vy - vel_rframe.vy > v_diff)
-			vel_rframe.vy = vel_rframe_old.vy - v_diff;
-
-		v_diff /= robot_params.l_w_half;
-
-		if (vel_rframe.omega - vel_rframe_old.omega > v_diff)
-			vel_rframe.omega = vel_rframe_old.omega + v_diff;
-		else if (vel_rframe_old.omega - vel_rframe.omega > v_diff)
-			vel_rframe.omega = vel_rframe_old.omega - v_diff;
-
-		return vel_rframe;
+		return vel_rframe_old + v_diff;
 	}
 };
 

@@ -7,6 +7,7 @@
 #include <mecarover/controls/MecanumController.h>
 #include <mecarover/hal/stm_hal.hpp>
 #include <mecarover/mrcpptypes.h>
+#include <mecarover/mrlogger/mrlogger.h>
 #include <mecarover/mrtypes.h>
 #include <mecarover/robot_params.hpp>
 #include <mecarover/rtos_config.h>
@@ -90,10 +91,13 @@ public:
 
 			static int count = 0;
 			++count;
-			if (!(count = count % 100)) {
-				log_message(log_info,
-							"manual pose via velocity x: %f, y: %f, theta: %f",
-							pose_sp.x, pose_sp.y, T(pose_sp.theta));
+			if (!(count %= 100)) {
+				log_message(
+					log_info, "pose sp via velocity [x: %f, y: %f, theta: %f]",
+					pose_sp.x, pose_sp.y, static_cast<T>(pose_sp.theta));
+				log_message(
+					log_info, "pose cur via enc: [x: %f, y: %f, theta: %f]",
+					pose_cur.x, pose_cur.y, static_cast<T>(pose_cur.theta));
 			}
 
 			vel_rframe_prev = vel_rframe_cur;
@@ -106,16 +110,22 @@ public:
 				[[unlikely]] {
 				ctrl_mode.set(CtrlMode::OFF);
 				error_status.set(MRC_LAGEERR);
-				log_message(log_error,
-							"deviation position controller too large");
-				continue;
+				log_message(log_error, "pose deviation too large");
+				log_message(log_error, "sp: [x: %f, y: %f, theta: %f]",
+							pose_sp.x, pose_sp.y,
+							static_cast<T>(pose_sp.theta));
+				log_message(log_error, "cur: [x: %f, y: %f, theta: %f]",
+							pose_cur.x, pose_cur.y,
+							static_cast<T>(pose_cur.theta));
+				vTaskDelete(NULL);
+				break; // probably not necessary
 			}
 			VelWheel vel_wheel_sp_mtx
 				= controller.vRF2vWheel(controller.pose_control_get_vel_rframe(
 					pose_delta, pose_cur.theta, vel_wframe_cur));
 			auto vel_wheel_sp = std::array<T, N_WHEEL>{};
-			std::copy(std::begin(vel_wheel_sp_mtx),
-					  std::end(vel_wheel_sp_mtx), begin(vel_wheel_sp));
+			std::copy(std::begin(vel_wheel_sp_mtx), std::end(vel_wheel_sp_mtx),
+					  begin(vel_wheel_sp));
 			this->vel_wheel_sp.set(vel_wheel_sp);
 		}
 	}
@@ -160,7 +170,9 @@ public:
 			std::transform(
 				begin(encoders_delta_rad), end(encoders_delta_rad),
 				begin(vel_wheel_actual),
-				[dt = sampling_times.dt_wheel_ctrl](T encoder_delta_rad) {
+				[dt = sampling_times.dt_wheel_ctrl,
+				 r = robot_params.wheel_radius](T encoder_delta_rad) {
+					// return encoder_delta_rad / dt * r;
 					return encoder_delta_rad / dt;
 				});
 
@@ -176,16 +188,31 @@ public:
 						  begin(vel_wheel_corrected));
 			}
 
+			static int pwm_cnt = 0;
+			++pwm_cnt;
+			if (!(pwm_cnt %= 100)) {
+				log_message(log_info, "vel_wheel_sp: [%f, %f, %f, %f]",
+							vel_wheel_sp[0], vel_wheel_sp[1], vel_wheel_sp[2],
+							vel_wheel_sp[3]);
+				log_message(log_info, "vel_wheel_actual: [%f, %f, %f, %f]",
+							vel_wheel_actual[0], vel_wheel_actual[1],
+							vel_wheel_actual[2], vel_wheel_actual[3]);
+				log_message(log_info, "vel_wheel_corected: [%f, %f, %f, %f]",
+							vel_wheel_corrected[0], vel_wheel_corrected[1],
+							vel_wheel_corrected[2], vel_wheel_corrected[3]);
+			}
+
 			hal_wheel_vel_set_pwm(vel_wheel_corrected);
 
 			/*
 			 * odometry: encoder delta gets feeded directly into the inverted
 			 * jacobian matrix without dividing the dt for the reason being:
-			 * d_encoder / dt = wheel_velin rad X inv_j = robot_vel * dt = dpose
+			 * d_enc in rad / dt = vel in rad -> tf() = robot_vel * dt = dpose
 			 * => dt can be spared because its unnecessary calculation
 			 */
 			VelRF dpose_rframe_matrix
 				= controller.vWheel2vRF(VelWheel(encoders_delta_rad.data()));
+			// * robot_params.wheel_radius);
 			dPose<T> dpose_rframe{dpose_rframe_matrix(0),
 								  dpose_rframe_matrix(1),
 								  dpose_rframe_matrix(2)};
@@ -206,7 +233,7 @@ public:
 
 			static int counter = 0;
 			++counter;
-			if (!(counter = counter % sampling_times.ratio_pose_wheel))
+			if (!(counter %= sampling_times.ratio_pose_wheel))
 				pose_ctrl_sem.signal();
 
 			WheelControllerTimer.wait();

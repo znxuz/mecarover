@@ -186,6 +186,12 @@ vPose<T> operator+(const vPose<T>& lhs, const vPose<T>& rhs)
 	return vPose<T>{lhs.vx + rhs.vx, lhs.vy + rhs.vy, lhs.omega + rhs.omega};
 }
 
+template<typename T>
+vPose<T> operator-(const vPose<T>& lhs, const vPose<T>& rhs)
+{
+	return vPose<T>{lhs.vx - rhs.vx, lhs.vy - rhs.vy, lhs.omega - rhs.omega};
+}
+
 template<typename T> dPose<T> operator-(const Pose<T>& p1, const Pose<T>& p2)
 {
 	dPose<T> p;
