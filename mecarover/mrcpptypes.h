@@ -63,6 +63,35 @@ public:
 	operator T() const { return th; }
 };
 
+template<typename T> class vPose {
+public:
+	T vx{};
+	T vy{};
+	T omega{};
+
+	vPose() = default;
+
+	vPose(T vx, T vy, T omega)
+		: vx{vx}
+		, vy{vy}
+		, omega{omega}
+	{ }
+
+	bool operator==(const vPose<T>& rhs) const
+	{
+		return this->vx == rhs.vx && this->vy == rhs.vy
+			&& this->omega == rhs.omega;
+	}
+
+	vPose<T>& operator+=(const vPose<T>& rhs)
+	{
+		this->vx += rhs.vx;
+		this->vy += rhs.vy;
+		this->omega += rhs.omega;
+		return *this;
+	}
+};
+
 template<typename T> class dPose {
 public:
 	T dx{};
@@ -84,24 +113,23 @@ public:
 	}
 };
 
-template<typename T> class vPose {
+template<typename T> class Pose {
 public:
-	T vx{};
-	T vy{};
-	T omega{};
+	T x{};
+	T y{};
+	Heading<T> theta{};
 
-	vPose() = default;
+	Pose() = default;
 
-	vPose(T vx, T vy, T omega)
-		: vx{vx}
-		, vy{vy}
-		, omega{omega}
+	Pose(T x, T y, Heading<T> theta)
+		: x{x}
+		, y{y}
+		, theta{theta}
 	{ }
 
-	bool operator==(const vPose<T>& rhs) const
+	bool operator==(const Pose<T>& rhs) const
 	{
-		return this->vx == rhs.vx && this->vy == rhs.vy
-			&& this->omega == rhs.omega;
+		return this->x == rhs.x && this->y == rhs.y && this->theta == rhs.theta;
 	}
 };
 
@@ -146,30 +174,16 @@ template<typename T> vPose<T> vWF2vRF(vPose<T> vWF, T theta)
 	return vRF;
 }
 
-template<typename T> class Pose {
-public:
-	T x{};
-	T y{};
-	Heading<T> theta{};
-
-	Pose() = default;
-
-	Pose(T x, T y, Heading<T> theta)
-		: x{x}
-		, y{y}
-		, theta{theta}
-	{ }
-
-	bool operator==(const Pose<T>& rhs) const
-	{
-		return this->x == rhs.x && this->y == rhs.y && this->theta == rhs.theta;
-	}
-};
+template<typename T>
+dPose<T> operator*(const vPose<T>& lhs, const size_t factor)
+{
+	return dPose<T>{lhs.vx * factor, lhs.vy * factor, lhs.omega * factor};
+}
 
 template<typename T>
-dPose<T> operator*(const vPose<T>& vel, const size_t factor)
+vPose<T> operator+(const vPose<T>& lhs, const vPose<T>& rhs)
 {
-	return dPose<T>{vel.vx * factor, vel.vy * factor, vel.omega * factor};
+	return vPose<T>{lhs.vx + rhs.vx, lhs.vy + rhs.vy, lhs.omega + rhs.omega};
 }
 
 template<typename T> dPose<T> operator-(const Pose<T>& p1, const Pose<T>& p2)

@@ -58,31 +58,18 @@ public:
 	/* no idea what this epsilon is */
 	void update_epsilon(T epsilon1) { this->epsilon1 = epsilon1; }
 
-	VelRF poseControl(const Pose<T>& pose_sp, const Pose<T>& actual_pose,
+	VelRF pose_control_get_vel_rframe(const dPose<T>& pose_delta,
+					  const Heading<T>& pose_cur_theta,
 					  const vPose<T>& vel_wframe_cur) const
 	{
-		dPose<T> pose_delta{pose_sp.x - actual_pose.x,
-							pose_sp.y - actual_pose.y,
-							Heading<T>(pose_sp.theta - actual_pose.theta)};
+		vPose<T> vel_diff = {
+			pose_delta.dx / sampling_times.dt_pose_ctrl * ctrl_params.LageKv.x,
+			pose_delta.dy / sampling_times.dt_pose_ctrl * ctrl_params.LageKv.y,
+			pose_delta.d_theta / sampling_times.dt_pose_ctrl
+				* ctrl_params.LageKv.theta};
 
-		using std::abs;
-		if (abs(pose_delta.dx) > ctrl_params.LageSchleppMax.x
-			|| abs(pose_delta.dy) > ctrl_params.LageSchleppMax.y
-			|| abs(pose_delta.d_theta) > ctrl_params.LageSchleppMax.theta)
-			[[unlikely]] {
-			throw MRC_LAGEERR;
-		}
-
-		// FIXME: it doesn't feel right to add delta pose and velocity together
-		vPose<T> vel_wframe_sp;
-		vel_wframe_sp.vx
-			= vel_wframe_cur.vx + pose_delta.dx * ctrl_params.LageKv.x;
-		vel_wframe_sp.vy
-			= vel_wframe_cur.vy + pose_delta.dy * ctrl_params.LageKv.y;
-		vel_wframe_sp.omega = vel_wframe_cur.omega
-			+ pose_delta.d_theta * ctrl_params.LageKv.theta;
-
-		vPose<T> vel_rframe_sp = vWF2vRF<T>(vel_wframe_sp, actual_pose.theta);
+		vPose<T> vel_rframe_sp
+			= vWF2vRF<T>(vel_wframe_cur + vel_diff, pose_cur_theta);
 
 		return VelRF{vel_rframe_sp.vx, vel_rframe_sp.vy, vel_rframe_sp.omega,
 					 ctrl_params.Koppel * epsilon1};

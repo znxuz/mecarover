@@ -98,20 +98,25 @@ public:
 
 			vel_rframe_prev = vel_rframe_cur;
 
-			try {
-				// calculate reference velocities of the wheels
-				VelWheel vel_wheel_sp_mtx = controller.vRF2vWheel(
-					controller.poseControl(pose_sp, pose_cur, vel_wframe_cur));
-				auto vel_wheel_sp = std::array<T, N_WHEEL>{};
-				std::copy(std::begin(vel_wheel_sp_mtx),
-						  std::end(vel_wheel_sp_mtx), begin(vel_wheel_sp));
-				this->vel_wheel_sp.set(vel_wheel_sp);
-			} catch (mrc_stat e) {
+			auto pose_delta = pose_sp - pose_cur;
+			using std::abs;
+			if (abs(pose_delta.dx) > ctrl_params.LageSchleppMax.x
+				|| abs(pose_delta.dy) > ctrl_params.LageSchleppMax.y
+				|| abs(pose_delta.d_theta) > ctrl_params.LageSchleppMax.theta)
+				[[unlikely]] {
 				ctrl_mode.set(CtrlMode::OFF);
 				error_status.set(MRC_LAGEERR);
 				log_message(log_error,
 							"deviation position controller too large");
+				continue;
 			}
+			VelWheel vel_wheel_sp_mtx
+				= controller.vRF2vWheel(controller.pose_control_get_vel_rframe(
+					pose_delta, pose_cur.theta, vel_wframe_cur));
+			auto vel_wheel_sp = std::array<T, N_WHEEL>{};
+			std::copy(std::begin(vel_wheel_sp_mtx),
+					  std::end(vel_wheel_sp_mtx), begin(vel_wheel_sp));
+			this->vel_wheel_sp.set(vel_wheel_sp);
 		}
 	}
 

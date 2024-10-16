@@ -78,7 +78,6 @@ CFLAGS = \
 CPPFLAGS = \
 		   $(FLAGS) \
 		   -std=gnu++20 \
-		   -fexceptions \
 		   -fno-rtti \
 		   -fno-use-cxa-atexit
 
