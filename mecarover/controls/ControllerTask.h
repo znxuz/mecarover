@@ -142,8 +142,6 @@ public:
 
 		CtrlMode controllerMode;
 
-		int counter = sampling_times.ratio_pose_wheel;
-
 		size_t free_heap = xPortGetMinimumEverFreeHeapSize();
 		uint32_t free_stack = lageregler_thread.getStackHighWaterMark();
 		log_message(log_info,
@@ -151,8 +149,8 @@ public:
 					"free heap: %d, free stack: %ld",
 					free_heap, free_stack);
 
-		RtosPeriodicTimer WheelControllerTimer(sampling_times.dt_wheel_ctrl
-											   * MS_TO_S);
+		RtosPeriodicTimer WheelControllerTimer(
+			pdMS_TO_TICKS(sampling_times.dt_wheel_ctrl * S_TO_MS));
 		while (true) {
 			controllerMode = ctrl_mode.get();
 
@@ -218,10 +216,8 @@ public:
 									  // the odometry here
 			pose_current.set(newPose);
 
-			/* ++counter % n is undefined? */
-			++counter;
-			counter = counter % sampling_times.ratio_pose_wheel;
-			if (!counter)
+			static int counter = 0;
+			if (!(counter = ++counter % sampling_times.ratio_pose_wheel))
 				pose_ctrl_sem.signal();
 
 			WheelControllerTimer.wait();

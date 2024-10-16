@@ -5,7 +5,7 @@
 #include "mrtypes.h"
 
 static inline constexpr uint8_t N_WHEEL = 4;
-static inline constexpr uint16_t MS_TO_S = 1000;
+static inline constexpr uint16_t S_TO_MS = 1000;
 
 struct ctrl_param_t {
 	double k_i;

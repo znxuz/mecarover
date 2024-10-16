@@ -47,6 +47,8 @@ start_keyboard_control()
 
 main()
 {
+	[[ -z "$ROS_DISTRO" ]] && echo "ros not sourced" >&2 && exit 1
+
 	set_motor 1
 	set_scan 1
 
