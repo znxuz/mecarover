@@ -6,6 +6,8 @@
 
 #include "wheel_vel_msg.hpp"
 
+static constexpr uint8_t N_EXEC_HANDLES = 1;
+
 extern "C" {
 static rclc_executor_t wheel_ctrl_exe;
 static wheel_vel_msg msg{};
@@ -23,7 +25,8 @@ static void wheel_vel_callback(const void* arg) {
 rclc_executor_t* wheel_ctrl_init(rcl_node_t* node, rclc_support_t* support,
                                  const rcl_allocator_t* allocator) {
   wheel_ctrl_exe = rclc_executor_get_zero_initialized_executor();
-  rclc_executor_init(&wheel_ctrl_exe, &support->context, 1, allocator);
+  rclc_executor_init(&wheel_ctrl_exe, &support->context, N_EXEC_HANDLES,
+                     allocator);
 
   rclc_subscription_init_default(
       &sub_wheel_vel, node,

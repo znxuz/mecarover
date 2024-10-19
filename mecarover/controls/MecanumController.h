@@ -59,18 +59,18 @@ class MecanumController {
 
   VelRF pose_control_get_vel_rframe(const dPose<T>& pose_delta,
                                     const Heading<T>& pose_cur_theta,
-                                    const vPose<T>& vel_wframe_cur) const {
+                                    const vPose<T>& vel_wframe_sp) const {
     vPose<T> vel_diff = {
         pose_delta.dx / sampling_times.dt_pose_ctrl * ctrl_params.LageKv.x,
         pose_delta.dy / sampling_times.dt_pose_ctrl * ctrl_params.LageKv.y,
         pose_delta.d_theta / sampling_times.dt_pose_ctrl *
             ctrl_params.LageKv.theta};
 
-    vPose<T> vel_rframe_sp =
-        vWF2vRF<T>(vel_wframe_cur + vel_diff, pose_cur_theta);
+    vPose<T> vel_rframe_corrected =
+        vWF2vRF<T>(vel_wframe_sp + vel_diff, pose_cur_theta);
 
-    return VelRF{vel_rframe_sp.vx, vel_rframe_sp.vy, vel_rframe_sp.omega,
-                 ctrl_params.Koppel * epsilon1};
+    return VelRF{vel_rframe_corrected.vx, vel_rframe_corrected.vy,
+                 vel_rframe_corrected.omega, ctrl_params.Koppel * epsilon1};
   }
 
   VelWheel wheel_pid_control(const VelWheel& vel_wheel_sp,

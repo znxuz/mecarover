@@ -162,9 +162,9 @@ void micro_ros_legacy(void* arg) {
   // ethernet communication, change to the local lan ip address
   eth_transport_params_t default_params = {
       {0, 0, 0}, {"192.168.199.157"}, {"8888"}};
-  rmw_uros_set_custom_transport(false, (void*)&default_params,
-                                eth_transport_open, eth_transport_close,
-                                eth_transport_write, eth_transport_read);
+  rcl_ret_check(rmw_uros_set_custom_transport(
+      false, (void*)&default_params, eth_transport_open, eth_transport_close,
+      eth_transport_write, eth_transport_read));
 
   rcl_allocator_t allocator = rcl_get_default_allocator();
   rcl_init_options_t init_options = rcl_get_zero_initialized_init_options();

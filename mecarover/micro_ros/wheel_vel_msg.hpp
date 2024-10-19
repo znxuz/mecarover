@@ -34,6 +34,11 @@ struct wheel_vel_msg {
 
   ~wheel_vel_msg() { delete[] this->msg.data.data; }
 
+  wheel_vel_msg(const wheel_vel_msg&) = delete;
+  wheel_vel_msg(wheel_vel_msg&&) = delete;
+  wheel_vel_msg& operator=(const wheel_vel_msg&) = delete;
+  wheel_vel_msg& operator=(wheel_vel_msg&&) = delete;
+
   real_t& operator[](size_t i) { return this->msg.data.data[i]; }
 
   const real_t& operator[](size_t i) const {

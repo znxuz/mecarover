@@ -50,7 +50,7 @@ class ControllerTask {
   RtosMutexObject<vPose<T>> vel_rframe_sp;
 
   void PoseControlTask() {
-    vPose<T> vel_rframe_cur;
+    vPose<T> vel_rframe_sp;
     vPose<T> vel_rframe_prev;
     vPose<T> vel_wframe_sp;
     Pose<T> pose_sp;
@@ -78,12 +78,12 @@ class ControllerTask {
         continue;
       }
 
-      vel_rframe_cur =
+      vel_rframe_sp =
           controller.velocityFilter(this->vel_rframe_sp.get(), vel_rframe_prev);
-      vPose<T> vel_wframe_cur = vRF2vWF<T>(vel_rframe_cur, pose_cur.theta);
-      pose_sp.x += vel_wframe_cur.vx * sampling_times.dt_pose_ctrl;
-      pose_sp.y += vel_wframe_cur.vy * sampling_times.dt_pose_ctrl;
-      pose_sp.theta += vel_wframe_cur.omega * sampling_times.dt_pose_ctrl;
+      vPose<T> vel_wframe_sp = vRF2vWF<T>(vel_rframe_sp, pose_cur.theta);
+      pose_sp.x += vel_wframe_sp.vx * sampling_times.dt_pose_ctrl;
+      pose_sp.y += vel_wframe_sp.vy * sampling_times.dt_pose_ctrl;
+      pose_sp.theta += vel_wframe_sp.omega * sampling_times.dt_pose_ctrl;
 
       static int count = 0;
       ++count;
@@ -94,7 +94,7 @@ class ControllerTask {
                     pose_cur.x, pose_cur.y, static_cast<T>(pose_cur.theta));
       }
 
-      vel_rframe_prev = vel_rframe_cur;
+      vel_rframe_prev = vel_rframe_sp;
 
       auto pose_delta = pose_sp - pose_cur;
       using std::abs;
@@ -114,7 +114,7 @@ class ControllerTask {
       }
       VelWheel vel_wheel_sp_mtx =
           controller.vRF2vWheel(controller.pose_control_get_vel_rframe(
-              pose_delta, pose_cur.theta, vel_wframe_cur));
+              pose_delta, pose_cur.theta, vel_wframe_sp));
       auto vel_wheel_sp = std::array<T, N_WHEEL>{};
       std::copy(std::begin(vel_wheel_sp_mtx), std::end(vel_wheel_sp_mtx),
                 begin(vel_wheel_sp));

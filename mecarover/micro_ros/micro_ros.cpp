@@ -18,7 +18,7 @@
 extern LaserScanner laser_scanner;
 
 extern "C" {
-/* transport params cannot be const, because the middleware will change it */
+/* cannot be const, because the transport function requires non const */
 static eth_transport_params_t TRANSPORT_PARAMS = {
     {0, 0, 0}, {MICRO_ROS_AGENT_IP}, {MICRO_ROS_AGENT_PORT}};
 
@@ -31,9 +31,9 @@ void init() {
   MX_LWIP_Init();
   vTaskDelay(pdMS_TO_TICKS(200));
 
-  rmw_uros_set_custom_transport(false, (void*)&TRANSPORT_PARAMS,
-                                eth_transport_open, eth_transport_close,
-                                eth_transport_write, eth_transport_read);
+  rcl_ret_check(rmw_uros_set_custom_transport(
+      false, (void*)&TRANSPORT_PARAMS, eth_transport_open, eth_transport_close,
+      eth_transport_write, eth_transport_read));
 
   allocator = rcl_get_default_allocator();
   init_options = rcl_get_zero_initialized_init_options();

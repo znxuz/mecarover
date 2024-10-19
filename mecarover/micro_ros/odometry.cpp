@@ -14,6 +14,8 @@
 
 #include "rcl_ret_check.hpp"
 
+static constexpr uint8_t N_EXEC_HANDLES = 1;
+
 extern "C" {
 static rclc_executor_t odometry_exe;
 static inline const uint16_t TIMER_TIMEOUT = 5000;
@@ -37,7 +39,8 @@ static void odometry_callback(rcl_timer_t* timer, int64_t last_call_time) {
 
 rclc_executor_t* odometry_init(const rcl_node_t* node, rclc_support_t* support,
                                const rcl_allocator_t* allocator) {
-  rclc_executor_init(&odometry_exe, &support->context, 1, allocator);
+  rclc_executor_init(&odometry_exe, &support->context, N_EXEC_HANDLES,
+                     allocator);
 
   rclc_publisher_init_default(
       &pub_odometry, node,
