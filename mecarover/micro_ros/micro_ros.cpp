@@ -5,6 +5,7 @@
 // micro-ros headers
 #include <mecarover/lidar/lidar.h>
 #include <rcl/allocator.h>
+#include <rcl/types.h>
 #include <rclc/executor.h>
 #include <rclc/rclc.h>
 #include <rmw_microros/rmw_microros.h>
@@ -39,9 +40,15 @@ void init() {
   init_options = rcl_get_zero_initialized_init_options();
   rcl_ret_check(rcl_init_options_init(&init_options, allocator));
   rcl_ret_check(rcl_init_options_set_domain_id(&init_options, ROS_DOMAIN_ID));
-  rcl_ret_check(rclc_support_init_with_options(&support, 0, NULL, &init_options,
-                                               &allocator));
 
+  /* retry until success or timeout */
+  for (uint8_t cnt = 0; cnt < 5; ++cnt) {
+    if (rclc_support_init_with_options(&support, 0, NULL, &init_options,
+                                       &allocator) == RCL_RET_OK)
+      break;
+    rcl_ret_check(cnt + 1 == 5);
+    vTaskDelay(pdMS_TO_TICKS(1000));
+  }
   rcl_ret_check(rclc_node_init_default(&node, "micro_ros_node", "", &support));
 }
 
