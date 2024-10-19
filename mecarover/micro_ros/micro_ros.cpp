@@ -41,14 +41,21 @@ void init() {
   rcl_ret_check(rcl_init_options_init(&init_options, allocator));
   rcl_ret_check(rcl_init_options_set_domain_id(&init_options, ROS_DOMAIN_ID));
 
-  /* retry until success or timeout */
-  for (uint8_t cnt = 0; cnt < 5; ++cnt) {
-    if (rclc_support_init_with_options(&support, 0, NULL, &init_options,
-                                       &allocator) == RCL_RET_OK)
-      break;
-    rcl_ret_check(cnt + 1 == 5);
+  vTaskDelay(pdMS_TO_TICKS(5000)); // delay for the agent to be available
+
+  /* probing the agent until success or timeout */
+  for (uint8_t cnt = 0, max_cnt = 10; cnt < max_cnt; ++cnt) {
+    if (rmw_uros_ping_agent(50, 2) == RCL_RET_OK) break;
+    rcl_ret_check(cnt + 1 == max_cnt);
+    log_message(log_warning, "agent not responding, retrying...");
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
+  rcl_ret_check(rclc_support_init_with_options(&support, 0, NULL, &init_options,
+                                               &allocator));
+  log_message(log_debug, "free heap: %d, free stack: %lu",
+              xPortGetMinimumEverFreeHeapSize(),
+              uxTaskGetStackHighWaterMark(NULL));
+
   rcl_ret_check(rclc_node_init_default(&node, "micro_ros_node", "", &support));
 }
 
