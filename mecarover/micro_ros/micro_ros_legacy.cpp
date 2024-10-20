@@ -161,7 +161,7 @@ void micro_ros_legacy(void* arg) {
 
   // ethernet communication, change to the local lan ip address
   eth_transport_params_t default_params = {
-      {0, 0, 0}, {"192.168.199.157"}, {"8888"}};
+      {0, 0, 0}, {"192.168.199.242"}, {"8888"}};
   rcl_ret_check(rmw_uros_set_custom_transport(
       false, (void*)&default_params, eth_transport_open, eth_transport_close,
       eth_transport_write, eth_transport_read));
@@ -176,7 +176,7 @@ void micro_ros_legacy(void* arg) {
   vTaskDelay(pdMS_TO_TICKS(5000)); // delay for the agent to be available
 
   /* probing the agent until success or timeout */
-  for (uint8_t cnt = 0, max_cnt = 10; cnt < max_cnt; ++cnt) {
+  for (uint8_t cnt = 0, max_cnt = 20; cnt < max_cnt; ++cnt) {
     if (rmw_uros_ping_agent(50, 2) == RCL_RET_OK) break;
     rcl_ret_check(cnt + 1 == max_cnt);
     log_message(log_warning, "agent not responding, retrying...");

@@ -15,19 +15,15 @@
 #include "rcl_ret_check.hpp"
 
 static constexpr uint8_t N_EXEC_HANDLES = 1;
+static constexpr uint16_t TIMER_TIMEOUT_MS = 1000;
 
 extern "C" {
-static rclc_executor_t odometry_exe;
-static inline const uint16_t TIMER_TIMEOUT = 5000;
+static auto odometry_exe = rclc_executor_get_zero_initialized_executor();
 static auto timer = rcl_get_zero_initialized_timer();
 static geometry_msgs__msg__Twist pose_msg{};
 static rcl_publisher_t pub_odometry;
 
-static void odometry_callback(rcl_timer_t* timer, int64_t last_call_time) {
-  // auto encoder_delta = hal_encoder_delta();
-  // for (auto d : encoder_delta)
-  // log_message(log_info, "encoder delta: %f", d);
-
+static void odometry_callback(rcl_timer_t* timer, int64_t) {
   pose_msg.linear.x = 1;
   pose_msg.linear.y = 2;
   pose_msg.angular.z = 0.5;
@@ -46,7 +42,7 @@ rclc_executor_t* odometry_init(const rcl_node_t* node, rclc_support_t* support,
       &pub_odometry, node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "odometry");
 
-  rclc_timer_init_default2(&timer, support, RCL_MS_TO_NS(TIMER_TIMEOUT),
+  rclc_timer_init_default2(&timer, support, RCL_MS_TO_NS(TIMER_TIMEOUT_MS),
                            odometry_callback, true);
   rclc_executor_add_timer(&odometry_exe, &timer);
 

@@ -6,6 +6,7 @@
 
 static inline constexpr uint8_t N_WHEEL = 4;
 static inline constexpr uint16_t S_TO_MS = 1000;
+static inline constexpr real_t MAX_VELOCITY = 1;
 
 struct ctrl_param_t {
   double k_i;

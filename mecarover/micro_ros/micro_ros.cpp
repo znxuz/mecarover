@@ -14,7 +14,7 @@
 #include "interpolation.hpp"
 #include "odometry.hpp"
 #include "rcl_ret_check.hpp"
-#include "wheel_PID.hpp"
+#include "wheel_ctrl.hpp"
 
 extern LaserScanner laser_scanner;
 
@@ -28,7 +28,7 @@ static rclc_support_t support;
 static rcl_allocator_t allocator;
 static rcl_init_options_t init_options;
 
-void init() {
+static void init() {
   MX_LWIP_Init();
   vTaskDelay(pdMS_TO_TICKS(200));
 
@@ -44,9 +44,8 @@ void init() {
   vTaskDelay(pdMS_TO_TICKS(5000)); // delay for the agent to be available
 
   /* probing the agent until success or timeout */
-  for (uint8_t cnt = 0, max_cnt = 10; cnt < max_cnt; ++cnt) {
+  while (true) {
     if (rmw_uros_ping_agent(50, 2) == RCL_RET_OK) break;
-    rcl_ret_check(cnt + 1 == max_cnt);
     log_message(log_warning, "agent not responding, retrying...");
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
