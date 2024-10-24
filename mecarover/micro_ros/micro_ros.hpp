@@ -2,7 +2,7 @@
 
 #include <mecarover/micro_ros/eth_transport.h>
 
-#define MICRO_ROS_AGENT_IP "192.168.199.242"
+#define MICRO_ROS_AGENT_IP "192.168.199.157"
 #define MICRO_ROS_AGENT_PORT "8888"
 #define ROS_DOMAIN_ID 42
 

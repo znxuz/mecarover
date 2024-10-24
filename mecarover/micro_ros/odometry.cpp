@@ -35,16 +35,17 @@ static void odometry_callback(rcl_timer_t* timer, int64_t) {
 
 rclc_executor_t* odometry_init(const rcl_node_t* node, rclc_support_t* support,
                                const rcl_allocator_t* allocator) {
-  rclc_executor_init(&odometry_exe, &support->context, N_EXEC_HANDLES,
-                     allocator);
+  rcl_ret_check(rclc_executor_init(&odometry_exe, &support->context,
+                                   N_EXEC_HANDLES, allocator));
 
-  rclc_publisher_init_default(
+  rcl_ret_check(rclc_publisher_init_default(
       &pub_odometry, node,
-      ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "odometry");
+      ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "odometry"));
 
-  rclc_timer_init_default2(&timer, support, RCL_MS_TO_NS(TIMER_TIMEOUT_MS),
-                           odometry_callback, true);
-  rclc_executor_add_timer(&odometry_exe, &timer);
+  rcl_ret_check(rclc_timer_init_default2(&timer, support,
+                                         RCL_MS_TO_NS(TIMER_TIMEOUT_MS),
+                                         odometry_callback, true));
+  rcl_ret_check(rclc_executor_add_timer(&odometry_exe, &timer));
 
   return &odometry_exe;
 }

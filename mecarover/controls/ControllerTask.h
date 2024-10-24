@@ -207,15 +207,8 @@ class ControllerTask {
           dRF2dWF<T>(dpose_rframe,
                      oldPose.theta + dpose_rframe.d_theta / static_cast<T>(2));
       auto newPose = oldPose + dpose_wframe;
-      // newPose.velocity = dpose_wframe
-      // 	/ sampling_times
-      // 		  .dt_wheel_ctrl; // TODO: check why velocity is set
-      // here as
-      // 						  // well, its supposed
-      // to only care about
-      // 						  // the odometry here
-      // 						  // NOTE: the vel is
-      // indeed not needed
+      // NOTE: the vel is indeed not needed
+      // newPose.velocity = dpose_wframe / sampling_times.dt_wheel_ctrl;
       pose_current.set(newPose);
 
       static int counter = 0;

@@ -1,15 +1,15 @@
 #include "micro_ros.hpp"
 
 #include <lwip.h>
-
-// micro-ros headers
 #include <mecarover/lidar/lidar.h>
+#include <mecarover/mrlogger/mrlogger.h>
 #include <rcl/allocator.h>
 #include <rcl/types.h>
 #include <rclc/executor.h>
 #include <rclc/rclc.h>
 #include <rmw_microros/rmw_microros.h>
 
+#include "encoder_data.hpp"
 #include "eth_transport.h"
 #include "interpolation.hpp"
 #include "odometry.hpp"
@@ -41,35 +41,37 @@ static void init() {
   rcl_ret_check(rcl_init_options_init(&init_options, allocator));
   rcl_ret_check(rcl_init_options_set_domain_id(&init_options, ROS_DOMAIN_ID));
 
-  vTaskDelay(pdMS_TO_TICKS(5000)); // delay for the agent to be available
+  vTaskDelay(pdMS_TO_TICKS(5000));  // delay for the agent to be available
 
-  /* probing the agent until success or timeout */
-  while (true) {
-    if (rmw_uros_ping_agent(50, 2) == RCL_RET_OK) break;
-    log_message(log_warning, "agent not responding, retrying...");
+  /* probing the agent until success */
+  while (rmw_uros_ping_agent(50, 2) != RCL_RET_OK) {
+    log_message(log_warning, "agent not responding yet, retrying...");
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
+  log_message(log_debug, "agent responded. continuing initialization...");
   rcl_ret_check(rclc_support_init_with_options(&support, 0, NULL, &init_options,
                                                &allocator));
-  log_message(log_debug, "free heap: %d, free stack: %lu",
+  rcl_ret_check(rclc_node_init_default(&node, "micro_ros_node", "", &support));
+
+  log_message(log_debug, "init finished; free heap: %d, free stack: %lu",
               xPortGetMinimumEverFreeHeapSize(),
               uxTaskGetStackHighWaterMark(NULL));
-
-  rcl_ret_check(rclc_node_init_default(&node, "micro_ros_node", "", &support));
 }
 
 void micro_ros(void* arg) {
   init();
 
-  auto* odometry_exe = odometry_init(&node, &support, &allocator);
-  auto* interpolation_exe = interpolation_init(&node, &support, &allocator);
+  auto* encoder_pub_exe = encoder_data_exe_init(&node, &support, &allocator);
   auto* wheel_ctrl_exe = wheel_ctrl_init(&node, &support, &allocator);
+  auto* interpolation_exe = interpolation_init(&node, &support, &allocator);
+  // auto* odometry_exe = odometry_init(&node, &support, &allocator);
 
   log_message(log_info, "micro_ros starting the loop");
   for (;;) {
-    rclc_executor_spin_some(odometry_exe, RCL_MS_TO_NS(1));
-    rclc_executor_spin_some(interpolation_exe, RCL_MS_TO_NS(1));
-    rclc_executor_spin_some(wheel_ctrl_exe, RCL_MS_TO_NS(1));
+    rclc_executor_spin_some(encoder_pub_exe, RCL_MS_TO_NS(5));
+    rclc_executor_spin_some(wheel_ctrl_exe, RCL_MS_TO_NS(5));
+    // rclc_executor_spin_some(odometry_exe, RCL_MS_TO_NS(5));
+    rclc_executor_spin_some(interpolation_exe, RCL_MS_TO_NS(5));
   }
 }
 }

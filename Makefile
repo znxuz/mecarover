@@ -1,5 +1,6 @@
 NAME := mecarover
 
+APP_DIR := $(NAME)
 BUILD_DIR := build
 DIR_GUARD = @mkdir -p "$(@D)"
 
@@ -117,6 +118,7 @@ STARTUP_FLAGS = \
 				-mfloat-abi=hard \
 				-mthumb
 
+SRCS_PATHS := $(ST_DIR_CORE) $(ST_DIR_DRIVERS) $(ST_DIR_MW) $(ST_DIR_LWIP) $(MICRO_ROS_DIR) $(APP_DIR)
 C_SRCS_EXCLS :=  \
 		  $(MICRO_ROS_DIR)/extra_sources/microros_transports/dma_transport.c \
 		  $(MICRO_ROS_DIR)/extra_sources/microros_transports/it_transport.c \
@@ -126,9 +128,7 @@ C_SRCS_EXCLS :=  \
 		  $(MICRO_ROS_DIR)/sample_main_embeddedrtps.c \
 		  $(MICRO_ROS_DIR)/sample_main_udp.c \
 		  $(ST_DIR_CORE)/Src/syscalls.c \
-		  $(ST_DIR_CORE)/Src/sysmem.c \
-		  mecarover/micro_ros/micro_ros.cpp.bak
-SRCS_PATHS := $(ST_DIR_CORE) $(ST_DIR_DRIVERS) $(ST_DIR_MW) $(ST_DIR_LWIP) $(MICRO_ROS_DIR) mecarover
+		  $(ST_DIR_CORE)/Src/sysmem.c
 C_SRCS := $(filter-out $(C_SRCS_EXCLS), $(shell find $(SRCS_PATHS) -type f -name "*.c"))
 CPP_SRCS_EXCLS :=
 CPP_SRCS := $(filter-out $(CPP_SRCS_EXCLS), $(shell find $(SRCS_PATHS) -type f -name "*.cpp"))
@@ -181,7 +181,7 @@ print_cflags:
 	@echo $(CFLAGS)
 
 clangd_db: clean
-	@bear --output build/compile_commands.json -- make -j
+	@bear --output build/compile_commands.json -- $(MAKE)
 
 # test
 print_c_srcs:

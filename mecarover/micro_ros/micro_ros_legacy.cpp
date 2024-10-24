@@ -161,7 +161,7 @@ void micro_ros_legacy(void* arg) {
 
   // ethernet communication, change to the local lan ip address
   eth_transport_params_t default_params = {
-      {0, 0, 0}, {"192.168.199.242"}, {"8888"}};
+      {0, 0, 0}, {"192.168.199.157"}, {"8888"}};
   rcl_ret_check(rmw_uros_set_custom_transport(
       false, (void*)&default_params, eth_transport_open, eth_transport_close,
       eth_transport_write, eth_transport_read));

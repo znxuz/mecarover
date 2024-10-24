@@ -4,31 +4,52 @@
 #include <mecarover/mrtypes.h>
 #include <rclc/executor.h>
 #include <rclc/subscription.h>
-#include <rclc/timer.h>
 
+#include <algorithm>
 #include <mecarover/hal/stm_hal.hpp>
 
 #include "WheelDataWrapper.hpp"
+#include "rcl_ret_check.hpp"
 
-static constexpr uint8_t N_EXEC_HANDLES = 1;
-// static constexpr uint16_t TIMER_TIMEOUT_MS = 15;
+static constexpr uint8_t N_EXEC_HANDLES = 2;
+
+static std::array<real_t, N_WHEEL> vel_to_duty_cycle(
+    const std::array<real_t, N_WHEEL>& wheel_vel) {
+  auto ret = std::array<real_t, N_WHEEL>{};
+
+  std::transform(begin(wheel_vel), end(wheel_vel), begin(ret), [](real_t elem) {
+    return std::clamp(elem / MAX_VELOCITY, -1.0, 1.0);
+  });
+  return ret;
+}
 
 extern "C" {
 static auto wheel_ctrl_exe = rclc_executor_get_zero_initialized_executor();
-static auto encoder_delta_timer = rcl_get_zero_initialized_timer();
-static auto wheel_enc_deltas = WheelDataWrapper<real_t>{};
-static auto msg = WheelDataWrapper<real_t>{};
+
+static rcl_subscription_t sub_encoder_data;
+static auto enc_msg_buf =
+    WheelDataWrapper<real_t, WheelDataType::ENC_DELTA_RAD>{};
+
 static rcl_subscription_t sub_wheel_vel;
+static auto wheel_vel_buf = WheelDataWrapper<real_t, WheelDataType::VEL_SP>{};
 
-// static void publish_encoder_delta(rcl_timer_t* timer, int64_t) {
-//   auto d_enc = hal_encoder_delta_rad();
-// }
+/* void arg points to the static msg object as given in the init function */
+static void wheel_ctrl_cb(const void* arg) {
+  const auto* msg = reinterpret_cast<const MsgType<real_t>*>(arg);
+  const auto* label = extract_label(*msg);
 
-static void wheel_vel_callback(const void* arg) {
-  /* arg points to the static msg object as given in the init function */
-  log_message(log_debug,
-              "wheel_vel_cb wheel velocities: [%.2f], [%.2f], [%.2f], [%.2f]",
-              msg[0], msg[1], msg[2], msg[3]);
+  switch (parse_wheel_data_type(label).value()) {
+    case WheelDataType::ENC_DELTA_RAD:
+      log_message(log_info, "%s: %.2f, %.2f, %.2f, %.2f",
+                  "d_enc: ", enc_msg_buf[0], enc_msg_buf[1], enc_msg_buf[2],
+                  enc_msg_buf[3]);
+      break;
+    case WheelDataType::VEL_SP:
+      log_message(log_info, "%s: %.2f, %.2f, %.2f, %.2f",
+                  "vel sp: ", wheel_vel_buf[0], wheel_vel_buf[1],
+                  wheel_vel_buf[2], wheel_vel_buf[3]);
+      break;
+  }
 }
 
 rclc_executor_t* wheel_ctrl_init(rcl_node_t* node, rclc_support_t* support,
@@ -36,16 +57,21 @@ rclc_executor_t* wheel_ctrl_init(rcl_node_t* node, rclc_support_t* support,
   rclc_executor_init(&wheel_ctrl_exe, &support->context, N_EXEC_HANDLES,
                      allocator);
 
-  // rclc_timer_init_default2(&encoder_delta_timer, support,
-  //                          RCL_MS_TO_NS(TIMER_TIMEOUT_MS),
-  //                          publish_encoder_delta, true);
-  // rclc_executor_add_timer(&wheel_ctrl_exe, &encoder_delta_timer);
+  rclc_subscription_init_default(
+      &sub_encoder_data, node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float64MultiArray),
+      "encoder_data");
+  rcl_ret_check(rclc_executor_add_subscription(
+      &wheel_ctrl_exe, &sub_encoder_data, &enc_msg_buf.msg, &wheel_ctrl_cb,
+      ON_NEW_DATA));
 
-  rclc_subscription_init_default(&sub_wheel_vel, node,
-                                 msg.get_msg_type_support(), "wheel_vel");
-
-  rclc_executor_add_subscription(&wheel_ctrl_exe, &sub_wheel_vel, &msg.msg,
-                                 &wheel_vel_callback, ON_NEW_DATA);
+  rcl_ret_check(rclc_subscription_init_default(
+      &sub_wheel_vel, node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float64MultiArray),
+      "wheel_vel"));
+  rcl_ret_check(rclc_executor_add_subscription(&wheel_ctrl_exe, &sub_wheel_vel,
+                                               &wheel_vel_buf.msg,
+                                               &wheel_ctrl_cb, ON_NEW_DATA));
 
   return &wheel_ctrl_exe;
 }
