@@ -1,7 +1,7 @@
 #pragma once
 
 #include <mecarover/controls/MecanumController.h>
-#include <mecarover/mrcpptypes.h>
+#include <mecarover/mrcpptypes.hpp>
 #include <mecarover/mrlogger/mrlogger.h>
 #include <mecarover/mrtypes.h>
 #include <mecarover/rtos_config.h>
@@ -80,7 +80,7 @@ class ControllerTask {
 
       vel_rframe_sp =
           controller.velocityFilter(this->vel_rframe_sp.get(), vel_rframe_prev);
-      vPose<T> vel_wframe_sp = vRF2vWF<T>(vel_rframe_sp, pose_cur.theta);
+      vPose<T> vel_wframe_sp = vRF2vWF(vel_rframe_sp, pose_cur.theta);
       pose_sp.x += vel_wframe_sp.vx * sampling_times.dt_pose_ctrl;
       pose_sp.y += vel_wframe_sp.vy * sampling_times.dt_pose_ctrl;
       pose_sp.theta += vel_wframe_sp.omega * sampling_times.dt_pose_ctrl;
@@ -98,9 +98,9 @@ class ControllerTask {
 
       auto pose_delta = pose_sp - pose_cur;
       using std::abs;
-      if (abs(pose_delta.dx) > ctrl_params.LageSchleppMax.x ||
-          abs(pose_delta.dy) > ctrl_params.LageSchleppMax.y ||
-          abs(pose_delta.d_theta) > ctrl_params.LageSchleppMax.theta)
+      if (abs(pose_delta.x) > ctrl_params.LageSchleppMax.x ||
+          abs(pose_delta.y) > ctrl_params.LageSchleppMax.y ||
+          abs(pose_delta.theta) > ctrl_params.LageSchleppMax.theta)
           [[unlikely]] {
         ctrl_mode.set(CtrlMode::OFF);
         error_status.set(MRC_LAGEERR);
@@ -198,15 +198,14 @@ class ControllerTask {
       VelRF dpose_rframe_matrix =
           controller.vWheel2vRF(VelWheel(encoders_delta_rad.data()));
       // * robot_params.wheel_radius);
-      dPose<T> dpose_rframe{dpose_rframe_matrix(0), dpose_rframe_matrix(1),
-                            dpose_rframe_matrix(2)};
+      Pose<T> dpose_rframe{dpose_rframe_matrix(0), dpose_rframe_matrix(1),
+                           dpose_rframe_matrix(2)};
       controller.update_epsilon(dpose_rframe_matrix(3));
 
       auto oldPose = this->pose_current.get();
-      dPose<T> dpose_wframe =
-          dRF2dWF<T>(dpose_rframe,
-                     oldPose.theta + dpose_rframe.d_theta / static_cast<T>(2));
-      auto newPose = oldPose + dpose_wframe;
+      Pose<T> dp_wframe = pRF2pWF(
+          dpose_rframe, oldPose.theta + dpose_rframe.theta / static_cast<T>(2));
+      auto newPose = oldPose + dp_wframe;
       // NOTE: the vel is indeed not needed
       // newPose.velocity = dpose_wframe / sampling_times.dt_wheel_ctrl;
       pose_current.set(newPose);

@@ -138,7 +138,7 @@ OBJS := $(addprefix $(BUILD_DIR)/, $(C_SRCS:.c=.o)) \
 		$(addprefix $(BUILD_DIR)/, $(CPP_SRCS:.cpp=.o)) \
 		$(addprefix $(BUILD_DIR)/, $(S_SRC:.s=.o))
 
-.PHONY: all clean flash reflash
+.PHONY: all test clean flash reflash
 
 all: $(BIN) $(SIZE_OUTPUT) $(OBJDUMP_LIST)
 
@@ -169,6 +169,9 @@ $(OBJDUMP_LIST): $(EXECUTABLE)
 	arm-none-eabi-objdump -h -S $(EXECUTABLE) > "$(OBJDUMP_LIST)"
 	@echo "Finished building: $@"
 
+test:
+	cd test && $(MAKE) -j retest
+
 clean:
 	$(RM) $(shell find $(BUILD_DIR) -type f -name '*.su' -or -name '*.d' -or -name '*.o')
 	$(RM) $(EXECUTABLE)
@@ -176,14 +179,15 @@ clean:
 	$(RM) $(MAP_FILES)
 	$(RM) $(OBJDUMP_LIST)
 
-# required by micro_ros_stm32cubemx_utils
+# target required by micro_ros_stm32cubemx_utils
 print_cflags:
 	@echo $(CFLAGS)
 
 clangd_db: clean
 	@bear --output build/compile_commands.json -- $(MAKE)
 
-# test
+# misc
+
 print_c_srcs:
 	@echo $(C_SRCS)
 

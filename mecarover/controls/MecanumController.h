@@ -1,6 +1,6 @@
 #pragma once
 
-#include <mecarover/mrcpptypes.h>
+#include <mecarover/mrcpptypes.hpp>
 #include <mecarover/mrlogger/mrlogger.h>
 
 #include <Eigen/Core>
@@ -57,17 +57,17 @@ class MecanumController {
   /* no idea what this epsilon is */
   void update_epsilon(T epsilon1) { this->epsilon1 = epsilon1; }
 
-  VelRF pose_control_get_vel_rframe(const dPose<T>& pose_delta,
+  VelRF pose_control_get_vel_rframe(const Pose<T>& pose_delta,
                                     const Heading<T>& pose_cur_theta,
                                     const vPose<T>& vel_wframe_sp) const {
     vPose<T> vel_diff = {
-        pose_delta.dx / sampling_times.dt_pose_ctrl * ctrl_params.LageKv.x,
-        pose_delta.dy / sampling_times.dt_pose_ctrl * ctrl_params.LageKv.y,
-        pose_delta.d_theta / sampling_times.dt_pose_ctrl *
+        pose_delta.x / sampling_times.dt_pose_ctrl * ctrl_params.LageKv.x,
+        pose_delta.y / sampling_times.dt_pose_ctrl * ctrl_params.LageKv.y,
+        pose_delta.theta / sampling_times.dt_pose_ctrl *
             ctrl_params.LageKv.theta};
 
     vPose<T> vel_rframe_corrected =
-        vWF2vRF<T>(vel_wframe_sp + vel_diff, pose_cur_theta);
+        vWF2vRF(vel_wframe_sp + vel_diff, pose_cur_theta);
 
     return VelRF{vel_rframe_corrected.vx, vel_rframe_corrected.vy,
                  vel_rframe_corrected.omega, ctrl_params.Koppel * epsilon1};
