@@ -3,8 +3,10 @@
 #include <std_msgs/msg/float32_multi_array.h>
 #include <std_msgs/msg/float64_multi_array.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <iterator>
 #include <mecarover/robot_params.hpp>
 #include <type_traits>
 
@@ -14,10 +16,9 @@ template <typename T>
 concept FltNum = std::is_same_v<T, float> || std::is_same_v<T, double>;
 
 template <typename FltNum>
-using MsgType =
-    typename std::conditional_t<std::is_same_v<FltNum, float>,
-                              std_msgs__msg__Float32MultiArray,
-                              std_msgs__msg__Float64MultiArray>;
+using MsgType = typename std::conditional_t<std::is_same_v<FltNum, float>,
+                                            std_msgs__msg__Float32MultiArray,
+                                            std_msgs__msg__Float64MultiArray>;
 
 template <typename MsgType>
 inline const char* extract_label(const MsgType& msg) {
@@ -26,12 +27,11 @@ inline const char* extract_label(const MsgType& msg) {
 
 template <FltNum T, WheelDataType E>
 struct WheelDataWrapper {
-
   WheelDataWrapper() : label{to_string(E).value()} {
     this->msg.layout.data_offset = 0;
     this->dim.label.data = const_cast<char*>(this->label.data());
     this->dim.label.size = this->label.size();
-    this->dim.label.capacity = 0; // constant string ptr - not modifiable
+    this->dim.label.capacity = 0;  // constant string ptr - not modifiable
     // set up the array dimension
     this->dim.size = this->size;  // number of elements in the array
     this->dim.stride = this->stride;
@@ -46,6 +46,10 @@ struct WheelDataWrapper {
 
   WheelDataWrapper(const std::array<T, N_WHEEL>& data) : WheelDataWrapper() {
     std::copy(begin(data), end(data), this->msg.data.data);
+  }
+
+  WheelDataWrapper(const VelRF& data) : WheelDataWrapper() {
+    std::copy(data.data(), data.data() + data.size(), this->msg.data.data);
   }
 
   WheelDataWrapper(const WheelDataWrapper&) = delete;

@@ -62,16 +62,16 @@ void micro_ros(void* arg) {
   init();
 
   auto* encoder_pub_exe = encoder_data_exe_init(&node, &support, &allocator);
-  auto* wheel_ctrl_exe = wheel_ctrl_init(&node, &support, &allocator);
+  auto* odometry_exe = odometry_init(&node, &support, &allocator);
   auto* interpolation_exe = interpolation_init(&node, &support, &allocator);
-  // auto* odometry_exe = odometry_init(&node, &support, &allocator);
+  auto* wheel_ctrl_exe = wheel_ctrl_init(&node, &support, &allocator);
 
   log_message(log_info, "micro_ros starting the loop");
   for (;;) {
     rclc_executor_spin_some(encoder_pub_exe, RCL_MS_TO_NS(5));
-    rclc_executor_spin_some(wheel_ctrl_exe, RCL_MS_TO_NS(5));
-    // rclc_executor_spin_some(odometry_exe, RCL_MS_TO_NS(5));
+    rclc_executor_spin_some(odometry_exe, RCL_MS_TO_NS(5));
     rclc_executor_spin_some(interpolation_exe, RCL_MS_TO_NS(5));
+    rclc_executor_spin_some(wheel_ctrl_exe, RCL_MS_TO_NS(5));
   }
 }
 }

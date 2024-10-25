@@ -37,11 +37,11 @@ void mecarover_start(void) {
 
   hal_init();
   laser_scanner.init();
-  auto* controller_task = new imsl::vehiclecontrol::ControllerTask<real_t>();
-  xTaskCreate(micro_ros_legacy, "micro_ros", MAIN_TASK_STACK_SIZE,
-              controller_task, MICRO_ROS_TASK_PRIORITY, NULL);
-  // xTaskCreate(micro_ros, "micro_ros", MAIN_TASK_STACK_SIZE, NULL,
-  //             MICRO_ROS_TASK_PRIORITY, NULL);
+  // auto* controller_task = new imsl::vehiclecontrol::ControllerTask<real_t>();
+  // xTaskCreate(micro_ros_legacy, "micro_ros", MAIN_TASK_STACK_SIZE,
+  //             controller_task, MICRO_ROS_TASK_PRIORITY, NULL);
+  xTaskCreate(micro_ros, "micro_ros", MAIN_TASK_STACK_SIZE, NULL,
+              MICRO_ROS_TASK_PRIORITY, NULL);
 
   osKernelStart();
   Error_Handler();  // because osKernelStart should never return

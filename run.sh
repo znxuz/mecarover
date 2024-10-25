@@ -4,11 +4,13 @@ export ROS_DOMAIN_ID=42
 
 set_motor()
 {
+	ros2 topic list | grep -qo '/enable' || return 1
 	ros2 topic pub --once /enable std_msgs/msg/Bool "data: $1"
 }
 
 set_scan()
 {
+	ros2 topic list | grep -qo '/start_scan' || return 1
 	ros2 topic pub --once /start_scan std_msgs/msg/Bool "data: $1"
 }
 

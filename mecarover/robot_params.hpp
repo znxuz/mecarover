@@ -1,12 +1,20 @@
 #pragma once
 
 #include <stdint.h>
+#include <Eigen/Core>
+#include <Eigen/LU>
 
 #include "mrtypes.h"
 
+inline constexpr uint8_t DOF = 4;
 inline constexpr uint8_t N_WHEEL = 4;
 inline constexpr uint16_t S_TO_MS = 1000;
-inline constexpr real_t MAX_VELOCITY = 1;
+inline constexpr real_t MAX_VELOCITY = 1000;
+
+using VelWheel = Eigen::Matrix<real_t, N_WHEEL, 1>;
+using VelRF = Eigen::Matrix<real_t, DOF, 1>;
+using Robot2WheelMatrix = Eigen::Matrix<real_t, N_WHEEL, DOF>;
+using Wheel2RobotMatrix = Eigen::Matrix<real_t, DOF, N_WHEEL>;
 
 struct ctrl_param_t {
   double k_i;
@@ -22,14 +30,12 @@ struct ctrl_param_t {
 };
 
 struct sampling_time_t {
-  // double Timer;
   double dt_pose_ctrl;
   double dt_wheel_ctrl;
   uint32_t ratio_pose_wheel;
 };
 
 static constexpr inline sampling_time_t sampling_times = {
-    // .Timer = 0.001, // 1 ms timer tick
     .dt_pose_ctrl = 0.015,   // 15 ms sampling time of pose control loop
     .dt_wheel_ctrl = 0.015,  // 5 ms sampling time of wheel control loop
     .ratio_pose_wheel = 1    // 15 ms / 5 ms ratio pose / wheel
