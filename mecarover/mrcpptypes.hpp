@@ -1,9 +1,9 @@
 #pragma once
 
-#include <mecarover/mrlogger/mrlogger.h>
 #include <mecarover/mrtypes.h>
 
 #include <cmath>
+#include <cstdio>
 #include <limits>
 
 namespace imsl {
@@ -138,7 +138,7 @@ class Pose {
 
   friend vPose<T> operator/(const Pose<T>& p1, const T divisor) {
     if (divisor == 0.0) {
-      log_message(log_error, "division by zero! terminatnig the program...");
+      std::perror("division by zero!");
       exit(1);
     }
     return vPose<T>{p1.x / divisor, p1.y / divisor, p1.theta / divisor};
