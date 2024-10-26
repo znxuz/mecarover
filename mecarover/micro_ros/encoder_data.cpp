@@ -13,9 +13,10 @@
 #include "WheelDataWrapper.hpp"
 #include "mecarover/micro_ros/WheelDataType.hpp"
 #include "mecarover/micro_ros/rcl_ret_check.hpp"
+#include "mecarover/robot_params.hpp"
 
 static constexpr uint8_t N_EXEC_HANDLES = 1;
-static constexpr uint16_t TIMER_TIMEOUT_MS = 500;
+static constexpr uint16_t TIMER_TIMEOUT_MS = UROS_FREQ_SEC * S_TO_MS;
 
 extern "C" {
 static auto encoder_pub_exe = rclc_executor_get_zero_initialized_executor();
@@ -25,7 +26,9 @@ static rcl_publisher_t pub_encoder;
 static void encoder_data_cb(rcl_timer_t* timer, int64_t) {
   WheelDataWrapper<real_t, WheelDataType::ENC_DELTA_RAD> enc_data{
       hal_encoder_delta_rad()};
-  log_message(log_debug, "[enc data]: published encoder data");
+  log_message(log_debug,
+              "[enc data]: published encoder data: [%.2f, %.2f, %.2f, %.2f]",
+              enc_data[0], enc_data[1], enc_data[2], enc_data[3]);
   rcl_ret_softcheck(rcl_publish(&pub_encoder, &enc_data.msg, NULL));
 }
 

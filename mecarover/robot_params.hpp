@@ -9,7 +9,8 @@
 inline constexpr uint8_t DOF = 4;
 inline constexpr uint8_t N_WHEEL = 4;
 inline constexpr uint16_t S_TO_MS = 1000;
-inline constexpr real_t MAX_VELOCITY = 1000;
+inline constexpr real_t MAX_VELOCITY = 1500;
+inline constexpr real_t UROS_FREQ_SEC = 1;
 
 using VelWheel = Eigen::Matrix<real_t, N_WHEEL, 1>;
 using VelRF = Eigen::Matrix<real_t, DOF, 1>;

@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
-#include <iterator>
 #include <mecarover/robot_params.hpp>
 #include <type_traits>
 

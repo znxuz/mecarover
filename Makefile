@@ -138,7 +138,7 @@ OBJS := $(addprefix $(BUILD_DIR)/, $(C_SRCS:.c=.o)) \
 		$(addprefix $(BUILD_DIR)/, $(CPP_SRCS:.cpp=.o)) \
 		$(addprefix $(BUILD_DIR)/, $(S_SRC:.s=.o))
 
-.PHONY: all test clean flash reflash
+.PHONY: all clean flash reflash
 
 all: $(BIN) $(SIZE_OUTPUT) $(OBJDUMP_LIST)
 
@@ -168,9 +168,6 @@ $(SIZE_OUTPUT): $(EXECUTABLE)
 $(OBJDUMP_LIST): $(EXECUTABLE)
 	arm-none-eabi-objdump -h -S $(EXECUTABLE) > "$(OBJDUMP_LIST)"
 	@echo "Finished building: $@"
-
-test:
-	cd test && $(MAKE) -j retest
 
 clean:
 	$(RM) $(shell find $(BUILD_DIR) -type f -name '*.su' -or -name '*.d' -or -name '*.o')

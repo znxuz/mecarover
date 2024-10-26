@@ -48,8 +48,8 @@ static void odometry_cb(const void*) {
 
   log_message(
       log_debug,
-      "[odometry]: publish pose triggered from enc: [x: %.02f, y: %.02f, "
-      "theta: %.02f",
+      "[odometry]: publish pose cur triggered from enc: [x: %.02f, y: %.02f, "
+      "theta: %.02f]",
       pose.x, pose.y, static_cast<real_t>(pose.theta));
   auto msg = geometry_msgs__msg__Pose2D{pose.x, pose.y, pose.theta};
   rcl_ret_softcheck(rcl_publish(&pub_odometry, &msg, NULL));

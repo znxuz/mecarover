@@ -16,6 +16,7 @@
 #include "WheelDataWrapper.hpp"
 #include "ctrl_utils.hpp"
 #include "mecarover/mrcpptypes.hpp"
+#include "mecarover/robot_params.hpp"
 #include "rcl_ret_check.hpp"
 
 using namespace imsl;
@@ -38,7 +39,8 @@ static auto vel_rf_target = vPose<real_t>{};
 static auto vel_rf_sp = vPose<real_t>{};
 static auto vel_wf_sp = vPose<real_t>{};
 
-static real_t freq = 0.5;  // FIXME: hardcoded frequency for testing
+// TODO: set another frequency for interpolation module
+// aggregate results via executor trigger_all
 
 static void cmd_vel_cb(const void* arg) {
   static vPose<real_t> vel_prev{};
@@ -53,17 +55,20 @@ static void cmd_vel_cb(const void* arg) {
   vel_prev = vel_rf_sp;
 
   log_message(log_debug,
-              "[interpolation]: vel_rf current triggered from cmd_vel: [%.02f, "
+              "[interpolation cmd_vel]: vel_rf(smoothened) current triggered "
+              "from cmd_vel: [%.02f, "
               "%.02f, %.02f]",
               vel_rf_sp.vx, vel_rf_sp.vy, vel_rf_sp.omega);
 
   vel_wf_sp = vRF2vWF(vel_rf_sp, pose_cur.theta);
-  // pose_sp.x += vel_wf_sp.vx * sampling_times.dt_pose_ctrl;
-  // pose_sp.y += vel_wf_sp.vy * sampling_times.dt_pose_ctrl;
-  // pose_sp.theta += vel_wf_sp.omega * sampling_times.dt_pose_ctrl;
-  pose_sp.x += vel_wf_sp.vx * freq;
-  pose_sp.y += vel_wf_sp.vy * freq;
-  pose_sp.theta += vel_wf_sp.omega * freq;
+  pose_sp.x += vel_wf_sp.vx * UROS_FREQ_SEC;
+  pose_sp.y += vel_wf_sp.vy * UROS_FREQ_SEC;
+  pose_sp.theta += vel_wf_sp.omega * UROS_FREQ_SEC;
+
+  log_message(log_debug,
+              "[interpolation cmd_vel]: pose_sp calc from vel_rf: [x: %.2f, y: "
+              "%.2f, theta: %.2f]",
+              pose_sp.x, pose_sp.y, static_cast<real_t>(pose_sp.theta));
 }
 
 static bool sanity_check(const Pose<real_t>& dpose) {
@@ -87,23 +92,31 @@ static void interpolation_cb(const void* arg) {
   auto dpose = pose_sp - pose_cur;
   // if (!sanity_check(dpose)) {
   //   // TODO: termnate - maybe via a global flag for uros superloop
+  //   // or think about to check in the first place?
   //   return;
   // }
 
-  vPose<real_t> d_vel = {dpose.x / freq * ctrl_params.LageKv.x,
-                         dpose.y / freq * ctrl_params.LageKv.y,
-                         dpose.theta / freq * ctrl_params.LageKv.theta};
+  log_message(log_debug,
+              "[interpolation pose2vel]: delta pose: [x: %.2f, y: %.2f, "
+              "theta: %.2f]",
+              dpose.x, dpose.y, static_cast<real_t>(dpose.theta));
+
+  static real_t pose_kv = 0.01;
+
+  vPose<real_t> d_vel = {dpose.x / UROS_FREQ_SEC * pose_kv,
+                         dpose.y / UROS_FREQ_SEC * pose_kv,
+                         dpose.theta / UROS_FREQ_SEC * pose_kv};
   auto vel_rf_corrected = vWF2vRF(vel_wf_sp + d_vel, pose_cur.theta);
 
   auto vel_wheel_sp_mtx = vRF2vWheel(VelRF{
       vel_rf_corrected.vx, vel_rf_corrected.vy, vel_rf_corrected.omega, 0});
   auto wheel_sp_msg =
       WheelDataWrapper<real_t, WheelDataType::VEL_SP>{vel_wheel_sp_mtx};
-  log_message(log_debug,
-              "[interpolation]: pub vel_wheel_sp triggered from odometry: "
-              "[%.02f, %.02f, %.02f, %.02f]",
-              wheel_sp_msg[0], wheel_sp_msg[1], wheel_sp_msg[2],
-              wheel_sp_msg[3]);
+  log_message(
+      log_debug,
+      "[interpolation pose2vel]: pub vel_wheel_sp triggered from odometry: "
+      "[%.02f, %.02f, %.02f, %.02f]",
+      wheel_sp_msg[0], wheel_sp_msg[1], wheel_sp_msg[2], wheel_sp_msg[3]);
   rcl_ret_softcheck(rcl_publish(&pub_wheel_vel, &wheel_sp_msg.msg, NULL));
 }
 
@@ -115,9 +128,8 @@ rclc_executor_t* interpolation_init(rcl_node_t* node, rclc_support_t* support,
   rcl_ret_check(rclc_subscription_init_default(
       &sub_cmd_vel, node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "cmd_vel"));
-  rcl_ret_check(rclc_executor_add_subscription(&interpolation_exe, &sub_cmd_vel,
-                                               &cmd_vel_msg_buf, &cmd_vel_cb,
-                                               ALWAYS));
+  rcl_ret_check(rclc_executor_add_subscription(
+      &interpolation_exe, &sub_cmd_vel, &cmd_vel_msg_buf, &cmd_vel_cb, ALWAYS));
 
   rcl_ret_check(rclc_subscription_init_default(
       &sub_odometry, node,
@@ -136,7 +148,7 @@ rclc_executor_t* interpolation_init(rcl_node_t* node, rclc_support_t* support,
    * the callbacks becomes available
    */
   rcl_ret_check(rclc_executor_set_trigger(&interpolation_exe,
-                                          rclc_executor_trigger_any, NULL));
+                                          &rclc_executor_trigger_any, NULL));
 
   return &interpolation_exe;
 }

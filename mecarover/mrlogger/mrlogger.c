@@ -11,7 +11,7 @@
 #include <mecarover/mrtypes.h>
 #include <mecarover/rtos_config.h>
 
-#define MSGSIZE 100 // maximum size of a message
+#define MSGSIZE 150 // maximum size of a message
 #define MAXMSG 10 // max number of messages
 
 static bool use_colors = true;

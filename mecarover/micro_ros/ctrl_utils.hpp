@@ -24,7 +24,7 @@ inline VelWheel vRF2vWheel(const VelRF& v) { return bt_mtx * v; }
 
 inline imsl::vPose<real_t> velocity_smoothen(const imsl::vPose<real_t>& vel_sp,
                                              const imsl::vPose<real_t>& vel_old) {
-    real_t diff_max = MAX_VELOCITY * 0.2;
+    real_t diff_max = MAX_VELOCITY * 0.1;
 
     auto v_diff = vel_sp - vel_old;
     v_diff.vx = std::clamp(v_diff.vx, -diff_max, diff_max);
