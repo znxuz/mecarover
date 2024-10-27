@@ -2,7 +2,7 @@
 
 #include <tim.h>
 
-static constexpr uint16_t ARR_VALUE = 65535;
+inline constexpr uint16_t ARR_VALUE = 65535;
 
 class STMEncoder {
  public:
@@ -37,6 +37,6 @@ class STMEncoder {
  private:
   TIM_HandleTypeDef* htim = nullptr;
   /* 64-bit integer for not over or underflowing easily */
+  volatile int64_t offset;
   int64_t counter;
-  int64_t offset;
 };

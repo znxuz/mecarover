@@ -8,11 +8,13 @@
 
 inline constexpr uint8_t DOF = 4;
 inline constexpr uint8_t N_WHEEL = 4;
+/* derived from max 120 rpm: 120 * 2pi / 60 = 12.56 rad/s * 50mm = 628 mm/s */
+inline constexpr real_t MAX_VELOCITY_MM_S = 600;
+
+/* defines the frequencies of uros modules */
+inline constexpr real_t UROS_FREQ_MOD_ENC_SEC = 0.1;
+inline constexpr real_t UROS_FREQ_MOD_INTERPOLATION_SEC = 0.4;
 inline constexpr uint16_t S_TO_MS = 1000;
-// derived from max 120rpm:
-//  120rpm * 2pi / 60 = 12.56 rad/s * 50mm = 628 mm/s
-inline constexpr real_t MAX_VELOCITY_MM_S = 628;
-inline constexpr real_t UROS_FREQ_SEC = 0.2;
 
 using VelWheel = Eigen::Matrix<real_t, N_WHEEL, 1>;
 using VelRF = Eigen::Matrix<real_t, DOF, 1>;

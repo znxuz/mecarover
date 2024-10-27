@@ -2,6 +2,8 @@
 
 #include <stdbool.h>
 
+// TODO: refactor as uros module
+
 #if __cplusplus
 extern "C" {
 #endif

@@ -265,12 +265,30 @@ static void low_level_init(struct netif *netif)
 
   /* create the task that handles the ETH_MAC */
 /* USER CODE BEGIN OS_THREAD_NEW_CMSIS_RTOS_V2 */
-	xTaskCreate(ethernetif_input, "EthIf", ETH_STACK_SIZE, netif,
-			ETH_TASK_PRIORITY, NULL);
+  xTaskCreate(ethernetif_input, "EthIf", ETH_STACK_SIZE, netif,
+              ETH_TASK_PRIORITY, NULL);
 /* USER CODE END OS_THREAD_NEW_CMSIS_RTOS_V2 */
 
 /* USER CODE BEGIN PHY_PRE_CONFIG */
+  /* copied the code from below to use the fix after init */
+  /* Set PHY IO functions */
+  LAN8742_RegisterBusIO(&LAN8742, &LAN8742_IOCtx);
 
+  /* Initialize the LAN8742 ETH PHY */
+  if (LAN8742_Init(&LAN8742) != LAN8742_STATUS_OK) {
+    netif_set_link_down(netif);
+    netif_set_down(netif);
+    return;
+  }
+
+  /* fix for "netif is not up, old style port?" error */
+  LAN8742_StartAutoNego(&LAN8742);
+  for (uint32_t i = 0;
+       LAN8742_GetLinkState(&LAN8742) != LAN8742_STATUS_AUTONEGO_NOTDONE &&
+       i < 500;
+       ++i) {
+    osDelay(10);
+  }
 /* USER CODE END PHY_PRE_CONFIG */
   /* Set PHY IO functions */
   LAN8742_RegisterBusIO(&LAN8742, &LAN8742_IOCtx);

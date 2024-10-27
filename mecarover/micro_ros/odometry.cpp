@@ -9,10 +9,10 @@
 
 #include <mecarover/hal/stm_hal.hpp>
 #include <mecarover/mrcpptypes.hpp>
+#include <mecarover/robot_params.hpp>
 
 #include "WheelDataWrapper.hpp"
 #include "ctrl_utils.hpp"
-#include "mecarover/robot_params.hpp"
 #include "rcl_ret_check.hpp"
 
 using namespace imsl;
@@ -23,9 +23,9 @@ extern "C" {
 static auto odometry_exe = rclc_executor_get_zero_initialized_executor();
 
 static rcl_subscription_t sub_encoder_data;
-static auto enc_msg_buf =
+static auto msg_enc_data =
     WheelDataWrapper<real_t, WheelDataType::ENC_DELTA_RAD>{};
-static Pose<real_t> pose;
+static Pose<real_t> pose_wf;
 
 static rcl_publisher_t pub_odometry;
 
@@ -35,22 +35,28 @@ static rcl_publisher_t pub_odometry;
  * d_enc in rad * r / dt = vel -> tf() = robot_vel * dt = dpose
  * => dt can be spared because its unnecessary calculation
  */
-static void odometry_cb(const void*) {
-  VelRF dpose_rf_mtx = vWheel2vRF(VelWheel(enc_msg_buf.msg.data.data) *
-                                  robot_params.wheel_radius);
+static void odometry_cb(const void* arg) {
+  const auto* enc_delta = reinterpret_cast<const MsgType<real_t>*>(arg);
+  log_message(log_debug, "%s: [%.02f, %.02f, %.02f, %.02f]",
+              "[odometry]: d_enc: ", enc_delta->data.data[0],
+              enc_delta->data.data[1], enc_delta->data.data[2],
+              enc_delta->data.data[3]);
+
+  VelRF dpose_rf_mtx =
+      vWheel2vRF(VelWheel(enc_delta->data.data) * robot_params.wheel_radius);
   Pose<real_t> dpose_rf{dpose_rf_mtx(0), dpose_rf_mtx(1), dpose_rf_mtx(2)};
   // update_epsilon(dpose_rframe_matrix(3)); // factor for this is zero anyway
 
-  Pose<real_t> dpose_wf =
-      pRF2pWF(dpose_rf, pose.theta + dpose_rf.theta / static_cast<real_t>(2));
-  pose += dpose_wf;
+  Pose<real_t> dpose_wf = pRF2pWF(
+      dpose_rf, pose_wf.theta + dpose_rf.theta / static_cast<real_t>(2));
+  pose_wf += dpose_wf;
 
   log_message(
       log_debug,
       "[odometry]: publish pose cur triggered from enc: [x: %.02f, y: %.02f, "
       "theta: %.02f]",
-      pose.x, pose.y, static_cast<real_t>(pose.theta));
-  auto msg = geometry_msgs__msg__Pose2D{pose.x, pose.y, pose.theta};
+      pose_wf.x, pose_wf.y, static_cast<real_t>(pose_wf.theta));
+  auto msg = geometry_msgs__msg__Pose2D{pose_wf.x, pose_wf.y, pose_wf.theta};
   rcl_ret_softcheck(rcl_publish(&pub_odometry, &msg, NULL));
 }
 
@@ -64,7 +70,7 @@ rclc_executor_t* odometry_init(rcl_node_t* node, rclc_support_t* support,
       ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float64MultiArray),
       "encoder_data");
   rcl_ret_check(rclc_executor_add_subscription(&odometry_exe, &sub_encoder_data,
-                                               &enc_msg_buf.msg, &odometry_cb,
+                                               &msg_enc_data.msg, &odometry_cb,
                                                ON_NEW_DATA));
 
   rcl_ret_check(rclc_publisher_init_default(

@@ -47,19 +47,18 @@ static rcl_subscription_t sub_wheel_vel;
 static auto wheel_vel_buf = WheelDataWrapper<real_t, WheelDataType::VEL_SP>{};
 
 static std::array<real_t, N_WHEEL> wheel_vel_cur{};
+static std::array<real_t, N_WHEEL> wheel_vel_sp{};
 
 static void enc2vel_cb(const void* arg) {
-  if (!arg) return;
   log_message(log_debug, "%s: [%.2f, %.2f, %.2f, %.2f]",
               "[wheel ctrl - enc_cb]: enc delta: ", enc_msg_buf[0],
               enc_msg_buf[1], enc_msg_buf[2], enc_msg_buf[3]);
 
   // TODO: add iterators to the wrapper struct
-  // FIXME: the calculated velocity is always lower than the setpoint, see log
   std::transform(
       enc_msg_buf.msg.data.data, enc_msg_buf.msg.data.data + N_WHEEL,
       begin(wheel_vel_cur),
-      [dt = UROS_FREQ_SEC, r = robot_params.wheel_radius](
+      [dt = UROS_FREQ_MOD_ENC_SEC, r = robot_params.wheel_radius](
           real_t encoder_delta_rad) { return encoder_delta_rad * r / dt; });
   log_message(log_debug, "%s: [%.2f, %.2f, %.2f, %.2f]",
               "[wheel ctrl - enc_cb]: wheel vel from enc",
@@ -68,16 +67,21 @@ static void enc2vel_cb(const void* arg) {
 }
 
 static void wheel_ctrl_cb(const void* arg) {
-  VelWheel vel_cur = VelWheel(wheel_vel_cur.data());
-  VelWheel vel_sp = VelWheel(wheel_vel_buf.msg.data.data);
+  if (arg)
+    std::copy(wheel_vel_buf.msg.data.data,
+              wheel_vel_buf.msg.data.data + N_WHEEL, begin(wheel_vel_sp));
 
-  // TODO: wheel PID ctrl
+  // TODO: refactor away the conversion from array to mtx
+  VelWheel vel_cur = VelWheel(wheel_vel_cur.data());
+  VelWheel vel_sp = VelWheel(wheel_vel_sp.data());
+
+  // wheel PID ctrl TODO
 
   log_message(log_info, "%s: %.2f, %.2f, %.2f, %.2f",
               "[wheel ctrl - wheel_ctrl_cb]: vel_wheel_sp from interpolation",
               vel_sp(0), vel_sp(1), vel_sp(2), vel_sp(3));
 
-  auto vel_corrected = vel_sp + (vel_sp - vel_cur) * 0.01;
+  auto vel_corrected = vel_sp + (vel_sp - vel_cur) * 0.1;
 
   log_message(log_info, "%s: %.2f, %.2f, %.2f, %.2f",
               "[wheel ctrl - wheel_ctrl_cb]: vel corrected", vel_corrected(0),
@@ -97,17 +101,21 @@ rclc_executor_t* wheel_ctrl_init(rcl_node_t* node, rclc_support_t* support,
       WheelDataWrapper<real_t,
                        WheelDataType::ENC_DELTA_RAD>::get_msg_type_support(),
       "encoder_data"));
-  rcl_ret_check(
-      rclc_executor_add_subscription(&wheel_ctrl_exe, &sub_encoder_data,
-                                     &enc_msg_buf.msg, &enc2vel_cb, ALWAYS));
+  rcl_ret_check(rclc_executor_add_subscription(
+      &wheel_ctrl_exe, &sub_encoder_data, &enc_msg_buf.msg, &enc2vel_cb,
+      ON_NEW_DATA));
 
   rcl_ret_check(rclc_subscription_init_default(
       &sub_wheel_vel, node,
       WheelDataWrapper<real_t, WheelDataType::VEL_SP>::get_msg_type_support(),
       "wheel_vel"));
+  /*
+   * ALWAYS: let wheel ctrl callback execute at the same frequency as the
+   * encoder data publisher, and when new wheel vel sp is available
+   */
   rcl_ret_check(rclc_executor_add_subscription(&wheel_ctrl_exe, &sub_wheel_vel,
                                                &wheel_vel_buf.msg,
-                                               &wheel_ctrl_cb, ON_NEW_DATA));
+                                               &wheel_ctrl_cb, ALWAYS));
 
   rcl_ret_check(rclc_executor_set_trigger(&wheel_ctrl_exe,
                                           &rclc_executor_trigger_any, NULL));

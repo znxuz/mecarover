@@ -19,6 +19,7 @@ extern "C" {
 
 volatile unsigned long ulHighFrequencyTimerTicks;
 
+// TODO: tim13 or tim12?
 void configureTimerForRunTimeStats(void) {
   ulHighFrequencyTimerTicks = 0;
   HAL_TIM_Base_Start_IT(&htim13);

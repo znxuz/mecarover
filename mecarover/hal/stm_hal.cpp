@@ -42,7 +42,7 @@ std::array<real_t, N_WHEEL> hal_encoder_delta_rad() {
     encoder_delta[i] =
         robot_params.inc2rad *
         (static_cast<real_t>(encoder_val) - prev_encoder_val[i]) *
-        encoder_direction[i] * encoder_scaler[i];
+        encoder_direction[i];  //  * encoder_scaler[i]
 
     prev_encoder_val[i] = encoder_val;
   }

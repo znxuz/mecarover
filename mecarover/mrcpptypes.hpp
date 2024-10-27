@@ -81,6 +81,7 @@ class vPose {
     return *this;
   }
 
+  // FIXME: do not convert here, just multiply; create ctor for conversion
   friend Pose<T> operator*(const vPose<T>& lhs, const T factor) {
     return Pose<T>{lhs.vx * factor, lhs.vy * factor, lhs.omega * factor};
   }
@@ -136,6 +137,7 @@ class Pose {
     return Pose<T>{lhs.x - rhs.x, lhs.y - rhs.y, lhs.theta - rhs.theta};
   }
 
+  // FIXME: do not convert here, just multiply; create ctor for conversion
   friend vPose<T> operator/(const Pose<T>& p1, const T divisor) {
     if (divisor == 0.0) {
       std::perror("division by zero!");
@@ -150,7 +152,6 @@ class Pose {
                    pose.x * sin(th) + pose.y * cos(th), pose.theta};
   }
 
-  // FIXME: how this is function not used at all?!
   /* transformation of small movements from world frame into robot frame  */
   friend Pose<T> pWF2pRF(const Pose<T>& d_pose, T th) {
     return Pose<T>{d_pose.x * cos(th) + d_pose.y * sin(th),

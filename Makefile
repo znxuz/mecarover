@@ -15,6 +15,8 @@ MICRO_ROS_LIB := -L$(MICRO_ROS_LIB_DIR) -lmicroros
 
 EIGEN_DIR := eigen
 
+OPT := 0
+
 BIN := $(BUILD_DIR)/$(NAME).bin
 EXECUTABLE := $(BUILD_DIR)/$(NAME).elf
 MAP_FILES := $(BUILD_DIR)/$(NAME).map
@@ -57,7 +59,7 @@ FLAGS = \
 		-DUSE_HAL_DRIVER \
 		-DSTM32F767xx \
 		-c \
-		-O0 \
+		-O$(OPT) \
 		-ffunction-sections \
 		-fdata-sections \
 		-Wall \
