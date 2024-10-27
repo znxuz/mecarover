@@ -9,8 +9,10 @@
 inline constexpr uint8_t DOF = 4;
 inline constexpr uint8_t N_WHEEL = 4;
 inline constexpr uint16_t S_TO_MS = 1000;
-inline constexpr real_t MAX_VELOCITY = 1500;
-inline constexpr real_t UROS_FREQ_SEC = 1;
+// derived from max 120rpm:
+//  120rpm * 2pi / 60 = 12.56 rad/s * 50mm = 628 mm/s
+inline constexpr real_t MAX_VELOCITY_MM_S = 628;
+inline constexpr real_t UROS_FREQ_SEC = 0.2;
 
 using VelWheel = Eigen::Matrix<real_t, N_WHEEL, 1>;
 using VelRF = Eigen::Matrix<real_t, DOF, 1>;
@@ -52,8 +54,8 @@ static constexpr inline robot_param_t robot_params = {
     .l_w_half = 0.5 * (360 + 325),
     .wheel_radius = 50,
     .JoystickBeschl = 1000.0,  // in mm/s²
-                               // .rad2prm = 120.0 / 2.0 / M_PI,
-                               // .omega_max = 120.0, // n / min //6400
+                               // .omega_max = 120.0, // 120/min -> 7200/s
+                               // .rad2rpm = 120.0 / 2.0 / M_PI,
     // .roll_radius = 20.0, /* in mm                           */
     // .VBahnMax = 1000.0, /* in mm/s                         */
     // .VthetaMax = 2000.0, /* in rad/s                        */

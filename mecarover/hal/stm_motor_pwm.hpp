@@ -21,7 +21,7 @@ class STMMotorPWM {
   }
 
   void setPWM(real_t duty_cycle) {
-    duty_cycle = std::clamp(duty_cycle, -100.0, 100.0) * direction;
+    duty_cycle = std::clamp(duty_cycle, -100.0, 100.0) * this->direction;
     __HAL_TIM_SET_COMPARE(htim, this->pwm_channel_a,
                           duty_cycle > 0 ? duty_cycle : 0);
     __HAL_TIM_SET_COMPARE(htim, this->pwm_channel_b,

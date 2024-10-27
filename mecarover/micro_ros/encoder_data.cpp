@@ -18,6 +18,8 @@
 static constexpr uint8_t N_EXEC_HANDLES = 1;
 static constexpr uint16_t TIMER_TIMEOUT_MS = UROS_FREQ_SEC * S_TO_MS;
 
+// TODO: different frequency for encoder and interpolation
+
 extern "C" {
 static auto encoder_pub_exe = rclc_executor_get_zero_initialized_executor();
 static auto timer = rcl_get_zero_initialized_timer();

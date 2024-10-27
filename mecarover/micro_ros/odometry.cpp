@@ -36,10 +36,9 @@ static rcl_publisher_t pub_odometry;
  * => dt can be spared because its unnecessary calculation
  */
 static void odometry_cb(const void*) {
-  VelRF dpose_rframe_matrix = vWheel2vRF(VelWheel(enc_msg_buf.msg.data.data) *
-                                         robot_params.wheel_radius);
-  Pose<real_t> dpose_rf{dpose_rframe_matrix(0), dpose_rframe_matrix(1),
-                        dpose_rframe_matrix(2)};
+  VelRF dpose_rf_mtx = vWheel2vRF(VelWheel(enc_msg_buf.msg.data.data) *
+                                  robot_params.wheel_radius);
+  Pose<real_t> dpose_rf{dpose_rf_mtx(0), dpose_rf_mtx(1), dpose_rf_mtx(2)};
   // update_epsilon(dpose_rframe_matrix(3)); // factor for this is zero anyway
 
   Pose<real_t> dpose_wf =
