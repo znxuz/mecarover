@@ -270,7 +270,7 @@ static void low_level_init(struct netif *netif)
 /* USER CODE END OS_THREAD_NEW_CMSIS_RTOS_V2 */
 
 /* USER CODE BEGIN PHY_PRE_CONFIG */
-  /* copied the code from below to use the fix after init */
+  /* copied the init code from below in order to use the fix after init */
   /* Set PHY IO functions */
   LAN8742_RegisterBusIO(&LAN8742, &LAN8742_IOCtx);
 

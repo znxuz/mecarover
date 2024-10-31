@@ -26,11 +26,11 @@ static rcl_publisher_t pub_encoder;
 static void encoder_data_cb(rcl_timer_t* timer, int64_t dt) {
   WheelDataWrapper<real_t, WheelDataType::ENC_DELTA_RAD> enc_data{
       hal_encoder_delta_rad()};
-  log_message(
-      log_debug,
-      "[enc data]: dt: %.2d, published encoder data: [%.2f, %.2f, %.2f, %.2f]",
-      static_cast<int32_t>(dt), enc_data[0], enc_data[1], enc_data[2],
-      enc_data[3]);
+  log_message(log_debug, "timeout: %u, dt: %lu",
+              TIMER_TIMEOUT_MS, RCL_NS_TO_MS(dt));
+  // log_message(log_debug, "%s: [%.2f, %.2f, %.2f, %.2f]",
+  //             "[enc data]: published encoder data", enc_data[0], enc_data[1],
+  //             enc_data[2], enc_data[3]);
   rcl_ret_softcheck(rcl_publish(&pub_encoder, &enc_data.msg, NULL));
 }
 

@@ -49,10 +49,10 @@
 
 /* LwIP Stack Parameters (modified compared to initialization value in opt.h) -*/
 /* Parameters set in STM32CubeMX LwIP Configuration GUI -*/
-/*----- Value in opt.h for LWIP_DHCP: 0 -----*/
-#define LWIP_DHCP 1
 /*----- Default Value for LWIP_DNS: 0 ---*/
 #define LWIP_DNS 1
+/*----- Default Value for MEMP_NUM_UDP_PCB: 4 ---*/
+#define MEMP_NUM_UDP_PCB 15
 /*----- Value in opt.h for MEM_ALIGNMENT: 1 -----*/
 #define MEM_ALIGNMENT 4
 /*----- Value in opt.h for LWIP_ETHERNET: LWIP_ARP || PPPOE_SUPPORT -*/
