@@ -4,6 +4,7 @@
 #include <rclc/publisher.h>
 #include <rclc/subscription.h>
 #include <rclc/types.h>
+#include <ulog.h>
 
 #include <mecarover/hal/stm_hal.hpp>
 #include <mecarover/mrcpptypes.hpp>
@@ -12,7 +13,6 @@
 #include "WheelDataWrapper.hpp"
 #include "ctrl_utils.hpp"
 #include "rcl_ret_check.hpp"
-#include "ulog.h"
 
 using namespace imsl;
 
@@ -36,10 +36,6 @@ static rcl_publisher_t pub_odometry;
  */
 static void odometry_cb(const void* arg) {
   const auto* enc_delta = reinterpret_cast<const MsgType<real_t>*>(arg);
-  ULOG_DEBUG("%s: [%.02f, %.02f, %.02f, %.02f]",
-             "[odometry]: d_enc: ", enc_delta->data.data[0],
-             enc_delta->data.data[1], enc_delta->data.data[2],
-             enc_delta->data.data[3]);
 
   VelRF dpose_rf_mtx =
       vWheel2vRF(VelWheel(enc_delta->data.data) * robot_params.wheel_radius);
@@ -51,7 +47,7 @@ static void odometry_cb(const void* arg) {
   pose_wf += dpose_wf;
 
   ULOG_DEBUG("%s: [x: %.02f, y: %.02f, theta: %.02f]",
-             "[odometry]: publish pose cur triggered from enc", pose_wf.x,
+             "[odometry]: pose cur from enc", pose_wf.x,
              pose_wf.y, static_cast<real_t>(pose_wf.theta));
 
   auto msg = geometry_msgs__msg__Pose2D{pose_wf.x, pose_wf.y, pose_wf.theta};

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <mecarover/controls/MecanumController.h>
-#include <mecarover/mrcpptypes.hpp>
 #include <mecarover/mrlogger/mrlogger.h>
 #include <mecarover/mrtypes.h>
 #include <mecarover/rtos_config.h>
@@ -11,6 +10,7 @@
 #include <array>
 #include <cstring>
 #include <mecarover/hal/stm_hal.hpp>
+#include <mecarover/mrcpptypes.hpp>
 #include <mecarover/robot_params.hpp>
 
 extern "C" {

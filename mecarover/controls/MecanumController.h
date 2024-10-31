@@ -1,12 +1,12 @@
 #pragma once
 
-#include <mecarover/mrcpptypes.hpp>
 #include <mecarover/mrlogger/mrlogger.h>
 
 #include <Eigen/Core>
 #include <Eigen/LU>
 #include <algorithm>
 #include <cmath>
+#include <mecarover/mrcpptypes.hpp>
 #include <mecarover/robot_params.hpp>
 
 namespace imsl::vehiclecontrol {

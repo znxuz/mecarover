@@ -17,6 +17,12 @@ ULOG_DIR := ulog/src
 OPT := 0
 ULOG_ENABLED := -DULOG_ENABLED
 
+# micro ros agent ip on the host machine, also where the code is normally compiled on
+ETH_IF := wlp3s0
+MICRO_ROS_AGENT_IP := \"$(shell ip a s $(ETH_IF) | grep -Eo '[0-9]{3}.[0-9]{3}.[0-9]{0,3}.[0-9]{0,3}' | head -n1)\"
+MICRO_ROS_AGENT_PORT := \"8888\"
+ROS_DOMAIN_ID := 42
+
 BIN := $(BUILD_DIR)/$(NAME).bin
 EXECUTABLE := $(BUILD_DIR)/$(NAME).elf
 MAP_FILES := $(BUILD_DIR)/$(NAME).map
@@ -74,7 +80,10 @@ FLAGS = \
 		-mfloat-abi=hard \
 		-mthumb \
 		$(INCL_PATHS) \
-		$(ULOG_ENABLED)
+		$(ULOG_ENABLED) \
+		-DMICRO_ROS_AGENT_IP=$(MICRO_ROS_AGENT_IP) \
+		-DMICRO_ROS_AGENT_PORT=$(MICRO_ROS_AGENT_PORT) \
+		-DROS_DOMAIN_ID=$(ROS_DOMAIN_ID)
 
 CFLAGS = \
 		 $(FLAGS) \
@@ -192,9 +201,12 @@ print_cflags:
 	@echo $(CFLAGS)
 
 clangd_db: clean
-	@bear --output build/compile_commands.json -- $(MAKE)
+	@bear --output build/compile_commands.json -- $(MAKE) -j
 
 # misc
+
+print:
+	@echo $(MICRO_ROS_AGENT_IP)
 
 print_c_srcs:
 	@echo $(C_SRCS)

@@ -12,6 +12,7 @@
 #include <rclc/subscription.h>
 #include <rclc/timer.h>
 #include <rclc/types.h>
+#include <ulog.h>
 
 #include <mecarover/mrcpptypes.hpp>
 #include <mecarover/robot_params.hpp>
@@ -19,7 +20,6 @@
 #include "WheelDataWrapper.hpp"
 #include "ctrl_utils.hpp"
 #include "rcl_ret_check.hpp"
-#include "ulog.h"
 
 using namespace imsl;
 
@@ -79,11 +79,8 @@ static void interpolation_cb(rcl_timer_t*, int64_t) {
              pose_sp.y, static_cast<real_t>(pose_sp.theta));
 
   auto dpose = pose_sp - pose_cur;
-  // if (!sanity_check(dpose)) {
-  //   // TODO: termnate - maybe via a global flag for uros superloop
-  //   // or think about to check in the first place?
-  //   return;
-  // }
+
+  // sanity_check(dpose); // TODO
 
   ULOG_DEBUG("%s: [x: %.2f, y: %.2f, theta: %.2f]",
              "[interpolation]: delta pose:", dpose.x, dpose.y,
@@ -108,7 +105,7 @@ static void interpolation_cb(rcl_timer_t*, int64_t) {
   auto wheel_sp_msg =
       WheelDataWrapper<real_t, WheelDataType::VEL_SP>{vel_wheel_sp_mtx};
   ULOG_DEBUG("%s: [%.02f, %.02f, %.02f, %.02f]",
-             "[interpolation]: pub vel_wheel_sp from corrected vel_rf",
+             "[interpolation]: pub vel_wheel_sp from vel_rf_sp",
              wheel_sp_msg[0], wheel_sp_msg[1], wheel_sp_msg[2],
              wheel_sp_msg[3]);
 
