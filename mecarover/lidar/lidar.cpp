@@ -8,8 +8,11 @@
 #include "lidar.h"
 
 #include <math.h>
+#include <stdio.h>
 #include <tim.h>
 #include <usart.h>
+
+#include "ulog.h"
 
 #define Startflag 0x01
 #define InStartflag 0x02
@@ -35,7 +38,7 @@ void call_laser_scanner_task(void *arg) {
 }
 
 void LaserScanner::laser_scanner_task() {
-  log_message(log_info, "LaserScanner Task");
+  ULOG_INFO("LaserScanner Task");
   while (true) {
     char receivedBytes[1800] = {0};
 
@@ -89,7 +92,8 @@ void LaserScanner::laser_scanner_task() {
 
           laser_scanner.quality[zahl] = quality;
           //					ls.dist[zahl] =
-          //distanceInMeters; 					ls.ang[zahl++] = actualAngle;
+          // distanceInMeters; 					ls.ang[zahl++] =
+          // actualAngle;
           i += 5;
         } else {
           i += 1;
@@ -104,8 +108,6 @@ void LaserScanner::laser_scanner_task() {
 }
 
 void LaserScanner::init() {
-  log_message(log_info, "Create LaserScanner");
-
   // start the engine of the laser scanner
   HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1);
   __HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1, 0);

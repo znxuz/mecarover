@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <mecarover/mrlogger/mrlogger.h>
 #include <mecarover/rtos_config.h>
 #include <mecarover/rtos_utils.h>
 #include <stdint.h>

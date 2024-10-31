@@ -1,8 +1,5 @@
 #include "encoder_data.hpp"
 
-#include <mecarover/mrlogger/mrlogger.h>
-#include <mecarover/mrtypes.h>
-#include <rcl/time.h>
 #include <rclc/executor.h>
 #include <rclc/publisher.h>
 #include <rclc/timer.h>
@@ -14,6 +11,7 @@
 #include "mecarover/micro_ros/WheelDataType.hpp"
 #include "mecarover/micro_ros/rcl_ret_check.hpp"
 #include "mecarover/robot_params.hpp"
+#include "ulog.h"
 
 static constexpr uint8_t N_EXEC_HANDLES = 1;
 static constexpr uint16_t TIMER_TIMEOUT_MS = UROS_FREQ_MOD_ENC_SEC * S_TO_MS;
@@ -26,11 +24,11 @@ static rcl_publisher_t pub_encoder;
 static void encoder_data_cb(rcl_timer_t* timer, int64_t dt) {
   WheelDataWrapper<real_t, WheelDataType::ENC_DELTA_RAD> enc_data{
       hal_encoder_delta_rad()};
-  log_message(log_debug, "timeout: %u, dt: %lu",
-              TIMER_TIMEOUT_MS, RCL_NS_TO_MS(dt));
-  // log_message(log_debug, "%s: [%.2f, %.2f, %.2f, %.2f]",
-  //             "[enc data]: published encoder data", enc_data[0], enc_data[1],
-  //             enc_data[2], enc_data[3]);
+
+  ULOG_DEBUG("%s: [%.2f, %.2f, %.2f, %.2f], dt: %lu",
+             "[enc data]: published encoder data", enc_data[0], enc_data[1],
+             enc_data[2], enc_data[3], static_cast<uint32_t>(dt));
+
   rcl_ret_softcheck(rcl_publish(&pub_encoder, &enc_data.msg, NULL));
 }
 

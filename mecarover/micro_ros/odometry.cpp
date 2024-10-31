@@ -1,8 +1,6 @@
 #include "odometry.hpp"
 
 #include <geometry_msgs/msg/pose2_d.h>
-#include <mecarover/mrlogger/mrlogger.h>
-#include <rclc/executor.h>
 #include <rclc/publisher.h>
 #include <rclc/subscription.h>
 #include <rclc/types.h>
@@ -14,6 +12,7 @@
 #include "WheelDataWrapper.hpp"
 #include "ctrl_utils.hpp"
 #include "rcl_ret_check.hpp"
+#include "ulog.h"
 
 using namespace imsl;
 
@@ -37,10 +36,10 @@ static rcl_publisher_t pub_odometry;
  */
 static void odometry_cb(const void* arg) {
   const auto* enc_delta = reinterpret_cast<const MsgType<real_t>*>(arg);
-  log_message(log_debug, "%s: [%.02f, %.02f, %.02f, %.02f]",
-              "[odometry]: d_enc: ", enc_delta->data.data[0],
-              enc_delta->data.data[1], enc_delta->data.data[2],
-              enc_delta->data.data[3]);
+  ULOG_DEBUG("%s: [%.02f, %.02f, %.02f, %.02f]",
+             "[odometry]: d_enc: ", enc_delta->data.data[0],
+             enc_delta->data.data[1], enc_delta->data.data[2],
+             enc_delta->data.data[3]);
 
   VelRF dpose_rf_mtx =
       vWheel2vRF(VelWheel(enc_delta->data.data) * robot_params.wheel_radius);
@@ -51,11 +50,10 @@ static void odometry_cb(const void* arg) {
       dpose_rf, pose_wf.theta + dpose_rf.theta / static_cast<real_t>(2));
   pose_wf += dpose_wf;
 
-  log_message(
-      log_debug,
-      "[odometry]: publish pose cur triggered from enc: [x: %.02f, y: %.02f, "
-      "theta: %.02f]",
-      pose_wf.x, pose_wf.y, static_cast<real_t>(pose_wf.theta));
+  ULOG_DEBUG("%s: [x: %.02f, y: %.02f, theta: %.02f]",
+             "[odometry]: publish pose cur triggered from enc", pose_wf.x,
+             pose_wf.y, static_cast<real_t>(pose_wf.theta));
+
   auto msg = geometry_msgs__msg__Pose2D{pose_wf.x, pose_wf.y, pose_wf.theta};
   rcl_ret_softcheck(rcl_publish(&pub_odometry, &msg, NULL));
 }

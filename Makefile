@@ -8,14 +8,14 @@ ST_DIR_CORE := Core
 ST_DIR_DRIVERS := Drivers
 ST_DIR_MW := Middlewares/Third_Party
 ST_DIR_LWIP := LWIP
-
 MICRO_ROS_DIR := micro_ros_stm32cubemx_utils
 MICRO_ROS_LIB_DIR := micro_ros_stm32cubemx_utils/microros_static_library/libmicroros
 MICRO_ROS_LIB := -L$(MICRO_ROS_LIB_DIR) -lmicroros
-
 EIGEN_DIR := eigen
+ULOG_DIR := ulog/src
 
 OPT := 0
+ULOG_ENABLED := -DULOG_ENABLED
 
 BIN := $(BUILD_DIR)/$(NAME).bin
 EXECUTABLE := $(BUILD_DIR)/$(NAME).elf
@@ -50,7 +50,8 @@ INCL_PATHS := \
 			  -I$(ST_DIR_MW)/LwIP/system/arch \
 			  -I$(MICRO_ROS_LIB_DIR)/microros_include \
 			  -I$(ST_DIR_LWIP)/App \
-			  -I$(ST_DIR_LWIP)/Target
+			  -I$(ST_DIR_LWIP)/Target \
+			  -I$(ULOG_DIR)
 
 FLAGS = \
 		-mcpu=cortex-m7 \
@@ -72,7 +73,8 @@ FLAGS = \
 		-mfpu=fpv5-d16 \
 		-mfloat-abi=hard \
 		-mthumb \
-		$(INCL_PATHS)
+		$(INCL_PATHS) \
+		$(ULOG_ENABLED)
 
 CFLAGS = \
 		 $(FLAGS) \
@@ -120,7 +122,14 @@ STARTUP_FLAGS = \
 				-mfloat-abi=hard \
 				-mthumb
 
-SRCS_PATHS := $(ST_DIR_CORE) $(ST_DIR_DRIVERS) $(ST_DIR_MW) $(ST_DIR_LWIP) $(MICRO_ROS_DIR) $(APP_DIR)
+SRCS_PATHS := \
+			  $(APP_DIR) \
+			  $(ST_DIR_CORE) \
+			  $(ST_DIR_DRIVERS) \
+			  $(ST_DIR_MW) \
+			  $(ST_DIR_LWIP) \
+			  $(MICRO_ROS_DIR) \
+			  $(ULOG_DIR)
 C_SRCS_EXCLS :=  \
 		  $(MICRO_ROS_DIR)/extra_sources/microros_transports/dma_transport.c \
 		  $(MICRO_ROS_DIR)/extra_sources/microros_transports/it_transport.c \

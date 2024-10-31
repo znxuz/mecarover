@@ -2,8 +2,6 @@
 #include <lwip.h>
 #include <mecarover/controls/ControllerTask.h>
 #include <mecarover/lidar/lidar.h>
-#include <mecarover/mrlogger/mrlogger.h>
-#include <rcl/allocator.h>
 #include <rcl/rcl.h>
 #include <rclc/executor.h>
 #include <rclc/rclc.h>
@@ -20,6 +18,7 @@
 #include <mecarover/micro_ros/rcl_ret_check.hpp>
 
 #include "eth_transport.h"
+#include "ulog.h"
 
 using namespace imsl;
 using namespace imsl::vehiclecontrol;
@@ -89,7 +88,7 @@ void start_Scan_cb(const void* start_Scan) {
     laser_scanner.Start();
   } else {
     laser_scanner.stop();
-    log_message(log_info, "LaserScanner Stop");
+    ULOG_INFO("LaserScanner Stop");
   }
 }
 
@@ -128,8 +127,8 @@ void timer_cb(rcl_timer_t* timer, int64_t last_call_time) {
 
 void cmd_cb(const void* cmd_msg) {
   const auto* msg = reinterpret_cast<const geometry_msgs__msg__Twist*>(cmd_msg);
-  log_message(log_info, "v_x: %f, v_y: %f, omega: %f", msg->linear.x,
-              msg->linear.y, msg->angular.z);
+  ULOG_INFO("v_x: %f, v_y: %f, omega: %f", msg->linear.x, msg->linear.y,
+            msg->angular.z);
 
   imsl::vPose<real_t> v_ref;
   v_ref.vx = msg->linear.x * 1000.0;  // m/s -> mm/s
@@ -145,10 +144,10 @@ void enable_topic_cb(const void* enable_topic) {
       reinterpret_cast<const std_msgs__msg__Bool*>(enable_topic);
   if (enable->data) {
     controller->ctrl_mode.set(imsl::vehiclecontrol::CtrlMode::TWIST);
-    log_message(log_info, "amplifiers enabled, set mode TWIST");
+    ULOG_INFO("amplifiers enabled, set mode TWIST");
   } else {
     controller->ctrl_mode.set(vehiclecontrol::CtrlMode::OFF);
-    log_message(log_info, "amplifiers disabled, set mode OFF");
+    ULOG_INFO("amplifiers disabled, set mode OFF");
   }
 }
 
@@ -173,20 +172,19 @@ void micro_ros_legacy(void* arg) {
   rcl_ret_check(rcl_init_options_set_domain_id(&init_options, domain_id));
   rclc_support_t support;
 
-  vTaskDelay(pdMS_TO_TICKS(5000)); // delay for the agent to be available
+  vTaskDelay(pdMS_TO_TICKS(5000));  // delay for the agent to be available
 
   /* probing the agent until success or timeout */
   for (uint8_t cnt = 0, max_cnt = 20; cnt < max_cnt; ++cnt) {
     if (rmw_uros_ping_agent(50, 2) == RCL_RET_OK) break;
     rcl_ret_check(cnt + 1 == max_cnt);
-    log_message(log_warning, "agent not responding, retrying...");
+    ULOG_WARNING("agent not responding, retrying...");
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
   rcl_ret_check(rclc_support_init_with_options(&support, 0, NULL, &init_options,
                                                &allocator));
-  log_message(log_debug, "free heap: %d, free stack: %lu",
-              xPortGetMinimumEverFreeHeapSize(),
-              uxTaskGetStackHighWaterMark(NULL));
+  ULOG_INFO("free heap: %d, free stack: %lu", xPortGetMinimumEverFreeHeapSize(),
+            uxTaskGetStackHighWaterMark(NULL));
 
   rcl_node_t node;
   rcl_ret_check(rclc_node_init_default(&node, "test_node", "", &support));
@@ -255,7 +253,7 @@ void micro_ros_legacy(void* arg) {
                                                &start_Scan, &start_Scan_cb,
                                                ON_NEW_DATA));
 
-  log_message(log_info, "micro_ros agent intialized - start spinning");
+  ULOG_INFO("micro_ros agent intialized - start spinning");
   while (true) {
     rcl_ret_check(rclc_executor_spin_some(
         &executor,

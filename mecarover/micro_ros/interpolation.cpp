@@ -2,7 +2,6 @@
 
 #include <geometry_msgs/msg/pose2_d.h>
 #include <geometry_msgs/msg/twist.h>
-#include <mecarover/mrlogger/mrlogger.h>
 #include <mecarover/mrtypes.h>
 #include <rcl/allocator.h>
 #include <rcl/node.h>
@@ -20,6 +19,7 @@
 #include "WheelDataWrapper.hpp"
 #include "ctrl_utils.hpp"
 #include "rcl_ret_check.hpp"
+#include "ulog.h"
 
 using namespace imsl;
 
@@ -57,7 +57,7 @@ static void pose_cb(const void*) {
 //   if (abs(dpose.x) > ctrl_params.LageSchleppMax.x ||
 //       abs(dpose.y) > ctrl_params.LageSchleppMax.y ||
 //       abs(dpose.theta) > ctrl_params.LageSchleppMax.theta) [[unlikely]] {
-//     log_message(log_error, "[pose sanity check]: pose deviation too large");
+//     ULOG_ERROR("[pose sanity check]: pose deviation too large");
 //     return false;
 //   }
 //   return true;
@@ -69,14 +69,14 @@ static void interpolation_cb(rcl_timer_t*, int64_t) {
 
   auto vel_rf_sp = velocity_smoothen(vel_rf_target, vel_prev);
   vel_prev = vel_rf_sp;
-  log_message(log_debug, "%s: [%.02f, %.02f, %.02f]",
-              "[interpolation]: vel_rf(smoothened) from cmd_vel",
-              vel_rf_sp.vx, vel_rf_sp.vy, vel_rf_sp.omega);
+  ULOG_DEBUG("%s: [%.02f, %.02f, %.02f]",
+             "[interpolation]: vel_rf(smoothened) from cmd_vel", vel_rf_sp.vx,
+             vel_rf_sp.vy, vel_rf_sp.omega);
   pose_sp +=
       vRF2vWF(vel_rf_sp, pose_cur.theta) * UROS_FREQ_MOD_INTERPOLATION_SEC;
-  log_message(log_debug, "%s: [x: %.2f, y: %.2f, theta: %.2f]",
-              "[interpolation]: cumulated pose_sp from vel_rf",
-              pose_sp.x, pose_sp.y, static_cast<real_t>(pose_sp.theta));
+  ULOG_DEBUG("%s: [x: %.2f, y: %.2f, theta: %.2f]",
+             "[interpolation]: cumulated pose_sp from vel_rf", pose_sp.x,
+             pose_sp.y, static_cast<real_t>(pose_sp.theta));
 
   auto dpose = pose_sp - pose_cur;
   // if (!sanity_check(dpose)) {
@@ -84,10 +84,10 @@ static void interpolation_cb(rcl_timer_t*, int64_t) {
   //   // or think about to check in the first place?
   //   return;
   // }
-  log_message(log_debug,
-              "[interpolation]: delta pose: [x: %.2f, y: %.2f, "
-              "theta: %.2f]",
-              dpose.x, dpose.y, static_cast<real_t>(dpose.theta));
+
+  ULOG_DEBUG("%s: [x: %.2f, y: %.2f, theta: %.2f]",
+             "[interpolation]: delta pose:", dpose.x, dpose.y,
+             static_cast<real_t>(dpose.theta));
 
   /* pose control */
 
@@ -99,19 +99,18 @@ static void interpolation_cb(rcl_timer_t*, int64_t) {
       dpose.y / UROS_FREQ_MOD_INTERPOLATION_SEC * pose_kv,
       dpose.theta / UROS_FREQ_MOD_INTERPOLATION_SEC * pose_kv};
   auto vel_rf_corrected = vel_rf_sp + d_vel;
-  log_message(log_debug, "%s: [dx: %.2f, dy: %.2f, omega: %.2f]",
-              "[interpolation]: (corrected) vel_rf_sp",
-              vel_rf_corrected.vx, vel_rf_corrected.vy, vel_rf_corrected.omega);
+  ULOG_DEBUG("%s: [dx: %.2f, dy: %.2f, omega: %.2f]",
+             "[interpolation]: (corrected) vel_rf_sp", vel_rf_corrected.vx,
+             vel_rf_corrected.vy, vel_rf_corrected.omega);
 
   auto vel_wheel_sp_mtx = vRF2vWheel(VelRF{
       vel_rf_corrected.vx, vel_rf_corrected.vy, vel_rf_corrected.omega, 0});
   auto wheel_sp_msg =
       WheelDataWrapper<real_t, WheelDataType::VEL_SP>{vel_wheel_sp_mtx};
-  log_message(
-      log_debug,
-      "[interpolation]: pub vel_wheel_sp from corrected vel_rf: "
-      "[%.02f, %.02f, %.02f, %.02f]",
-      wheel_sp_msg[0], wheel_sp_msg[1], wheel_sp_msg[2], wheel_sp_msg[3]);
+  ULOG_DEBUG("%s: [%.02f, %.02f, %.02f, %.02f]",
+             "[interpolation]: pub vel_wheel_sp from corrected vel_rf",
+             wheel_sp_msg[0], wheel_sp_msg[1], wheel_sp_msg[2],
+             wheel_sp_msg[3]);
 
   rcl_ret_softcheck(rcl_publish(&pub_wheel_vel, &wheel_sp_msg.msg, NULL));
 }

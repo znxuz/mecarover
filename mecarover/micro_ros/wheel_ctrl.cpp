@@ -1,7 +1,5 @@
 #include "wheel_ctrl.hpp"
 
-#include <mecarover/mrlogger/mrlogger.h>
-#include <mecarover/mrtypes.h>
 #include <rclc/executor.h>
 #include <rclc/subscription.h>
 
@@ -50,9 +48,9 @@ static std::array<real_t, N_WHEEL> wheel_vel_cur{};
 static std::array<real_t, N_WHEEL> wheel_vel_sp{};
 
 static void enc2vel_cb(const void* arg) {
-  log_message(log_debug, "%s: [%.2f, %.2f, %.2f, %.2f]",
-              "[wheel ctrl - enc_cb]: enc delta: ", enc_msg_buf[0],
-              enc_msg_buf[1], enc_msg_buf[2], enc_msg_buf[3]);
+  // ULOG_DEBUG("%s: [%.2f, %.2f, %.2f, %.2f]",
+  //             "[wheel ctrl - enc_cb]: enc delta: ", enc_msg_buf[0],
+  //             enc_msg_buf[1], enc_msg_buf[2], enc_msg_buf[3]);
 
   // TODO: add iterators to the wrapper struct
   std::transform(
@@ -60,10 +58,10 @@ static void enc2vel_cb(const void* arg) {
       begin(wheel_vel_cur),
       [dt = UROS_FREQ_MOD_ENC_SEC, r = robot_params.wheel_radius](
           real_t encoder_delta_rad) { return encoder_delta_rad * r / dt; });
-  log_message(log_debug, "%s: [%.2f, %.2f, %.2f, %.2f]",
-              "[wheel ctrl - enc_cb]: wheel vel from enc",
-              wheel_vel_cur[0], wheel_vel_cur[1], wheel_vel_cur[2],
-              wheel_vel_cur[3]);
+  // ULOG_DEBUG("%s: [%.2f, %.2f, %.2f, %.2f]",
+  //             "[wheel ctrl - enc_cb]: wheel vel from enc",
+  //             wheel_vel_cur[0], wheel_vel_cur[1], wheel_vel_cur[2],
+  //             wheel_vel_cur[3]);
 }
 
 static void wheel_ctrl_cb(const void* arg) {
@@ -77,15 +75,16 @@ static void wheel_ctrl_cb(const void* arg) {
 
   // wheel PID ctrl TODO
 
-  log_message(log_info, "%s: %.2f, %.2f, %.2f, %.2f",
-              "[wheel ctrl - wheel_ctrl_cb]: vel_wheel_sp from interpolation",
-              vel_sp(0), vel_sp(1), vel_sp(2), vel_sp(3));
+  // ULOG_DEBUG("%s: %.2f, %.2f, %.2f, %.2f",
+  //             "[wheel ctrl - wheel_ctrl_cb]: vel_wheel_sp from
+  //             interpolation", vel_sp(0), vel_sp(1), vel_sp(2), vel_sp(3));
 
   auto vel_corrected = vel_sp + (vel_sp - vel_cur) * 0.1;
 
-  log_message(log_info, "%s: %.2f, %.2f, %.2f, %.2f",
-              "[wheel ctrl - wheel_ctrl_cb]: vel corrected", vel_corrected(0),
-              vel_corrected(1), vel_corrected(2), vel_corrected(3));
+  // ULOG_DEBUG("%s: %.2f, %.2f, %.2f, %.2f",
+  //             "[wheel ctrl - wheel_ctrl_cb]: vel corrected",
+  //             vel_corrected(0), vel_corrected(1), vel_corrected(2),
+  //             vel_corrected(3));
 
   auto vel_pwm = vel_to_duty_cycle(vel_corrected);
   hal_wheel_vel_set_pwm(vel_pwm);
@@ -111,7 +110,7 @@ rclc_executor_t* wheel_ctrl_init(rcl_node_t* node, rclc_support_t* support,
       "wheel_vel"));
   /*
    * ALWAYS: let wheel ctrl callback execute at the same frequency as the
-   * encoder data publisher, and when new wheel vel sp is available
+   * encoder data publisher, and also execute when a new wheel vel is available
    */
   rcl_ret_check(rclc_executor_add_subscription(&wheel_ctrl_exe, &sub_wheel_vel,
                                                &wheel_vel_buf.msg,

@@ -44,7 +44,7 @@ void retarget_init(UART_HandleTypeDef *huart)
 
 	/* Disable I/O buffering for STDOUT stream, so that
 	 * chars are sent out as soon as they are printed. */
-	setvbuf(stdout, NULL, _IONBF, 0);
+	// setvbuf(stdout, NULL, _IONBF, 0);
 }
 
 int _getpid(void)
