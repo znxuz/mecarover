@@ -5,6 +5,7 @@
 #include <tim.h>
 #include <ulog.h>
 #include <usart.h>
+#include <rtc.h>
 
 #include <mecarover/hal/stm_hal.hpp>
 #include <mecarover/micro_ros/micro_ros.hpp>
@@ -19,7 +20,6 @@ extern "C" {
 
 volatile unsigned long ulHighFrequencyTimerTicks;
 
-// TODO: tim13 or tim12?
 void configureTimerForRunTimeStats(void) {
   ulHighFrequencyTimerTicks = 0;
   HAL_TIM_Base_Start_IT(&htim13);
@@ -32,8 +32,15 @@ int _gettimeofday(struct timeval* tv, void* tzvp) {
 }
 
 void my_console_logger(ulog_level_t severity, char* msg) {
-  printf("[%s]: %s\n",
-         // get_timestamp(),    // user defined function
+  static RTC_TimeTypeDef sTime;
+  static RTC_DateTypeDef sDate;
+
+  HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+  /* must also get the date *after* getting the time to unlock the time values,
+   * otherwise GetTime() won't work */
+  HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+
+  printf("%02d:%02d:%02d [%s]: %s\n", sTime.Hours, sTime.Minutes, sTime.Seconds,
          ulog_level_name(severity), msg);
 }
 
