@@ -48,18 +48,25 @@ static std::array<real_t, N_WHEEL> wheel_vel_cur{};
 static std::array<real_t, N_WHEEL> wheel_vel_sp{};
 
 static void enc2vel_cb(const void* arg) {
+  const auto* msg = reinterpret_cast<const MsgType<real_t>*>(arg);
   ULOG_DEBUG("[wheel ctrl - enc_cb]: enc: [%.2f, %.2f, %.2f, %.2f]",
-             enc_msg_buf[0], enc_msg_buf[1], enc_msg_buf[2], enc_msg_buf[3]);
+             msg->data.data[0], msg->data.data[1], msg->data.data[2],
+             msg->data.data[3]);
 
-  // TODO: add iterators to the wrapper struct
   std::transform(
-      enc_msg_buf.msg.data.data, enc_msg_buf.msg.data.data + N_WHEEL,
-      begin(wheel_vel_cur),
+      msg->data.data, msg->data.data + N_WHEEL, begin(wheel_vel_cur),
       [dt = UROS_FREQ_MOD_ENC_SEC, r = robot_params.wheel_radius](
           real_t encoder_delta_rad) { return encoder_delta_rad * r / dt; });
   ULOG_DEBUG(
       "[wheel ctrl - enc_cb]: wheel vel from enc: [%.2f, %.2f, %.2f, %.2f]",
       wheel_vel_cur[0], wheel_vel_cur[1], wheel_vel_cur[2], wheel_vel_cur[3]);
+}
+
+static VelWheel vel_pid(const VelWheel& vel_cur, const VelWheel& vel_sp) {
+  auto err = vel_sp - vel_cur;
+  // TODO
+
+  return vel_sp + err * 0.2;
 }
 
 static void wheel_ctrl_cb(const void* arg) {
@@ -71,20 +78,17 @@ static void wheel_ctrl_cb(const void* arg) {
   VelWheel vel_cur = VelWheel(wheel_vel_cur.data());
   VelWheel vel_sp = VelWheel(wheel_vel_sp.data());
 
-  // wheel PID ctrl TODO
-
   ULOG_DEBUG("%s: %.2f, %.2f, %.2f, %.2f",
              "[wheel ctrl - wheel_ctrl_cb]: vel_wheel_sp from interpolation",
              vel_sp(0), vel_sp(1), vel_sp(2), vel_sp(3));
 
-  auto vel_corrected = vel_sp + (vel_sp - vel_cur) * 0.1;
+  auto vel_corrected = vel_pid(vel_cur, vel_sp);
 
   ULOG_DEBUG("%s: %.2f, %.2f, %.2f, %.2f",
              "[wheel ctrl - wheel_ctrl_cb]: vel corrected", vel_corrected(0),
              vel_corrected(1), vel_corrected(2), vel_corrected(3));
 
-  auto vel_pwm = vel_to_duty_cycle(vel_corrected);
-  hal_wheel_vel_set_pwm(vel_pwm);
+  hal_wheel_vel_set_pwm(vel_to_duty_cycle(vel_corrected));
 }
 
 rclc_executor_t* wheel_ctrl_init(rcl_node_t* node, rclc_support_t* support,

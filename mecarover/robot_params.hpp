@@ -13,8 +13,8 @@ inline constexpr uint8_t N_WHEEL = 4;
 inline constexpr real_t MAX_VELOCITY_MM_S = 600;
 
 /* defines the frequencies of uros modules */
-inline constexpr real_t UROS_FREQ_MOD_ENC_SEC = 0.01;
-inline constexpr real_t UROS_FREQ_MOD_INTERPOLATION_SEC = 0.1;
+inline constexpr real_t UROS_FREQ_MOD_ENC_SEC = 0.1;
+inline constexpr real_t UROS_FREQ_MOD_INTERPOLATION_SEC = 0.5;
 inline constexpr uint16_t S_TO_MS = 1000;
 
 using VelWheel = Eigen::Matrix<real_t, N_WHEEL, 1>;

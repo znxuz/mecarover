@@ -72,6 +72,7 @@ static void interpolation_cb(rcl_timer_t*, int64_t) {
   ULOG_DEBUG("%s: [%.02f, %.02f, %.02f]",
              "[interpolation]: vel_rf(smoothened) from cmd_vel", vel_rf_sp.vx,
              vel_rf_sp.vy, vel_rf_sp.omega);
+
   pose_sp +=
       vRF2vWF(vel_rf_sp, pose_cur.theta) * UROS_FREQ_MOD_INTERPOLATION_SEC;
   ULOG_DEBUG("%s: [x: %.2f, y: %.2f, theta: %.2f]",
@@ -88,28 +89,27 @@ static void interpolation_cb(rcl_timer_t*, int64_t) {
 
   /* pose control */
 
-  static constexpr real_t pose_kv = 0.1;
+  static constexpr real_t k_v = 0.2;
 
   // TODO: refactor operator overloads and here
-  vPose<real_t> d_vel = {
-      dpose.x / UROS_FREQ_MOD_INTERPOLATION_SEC * pose_kv,
-      dpose.y / UROS_FREQ_MOD_INTERPOLATION_SEC * pose_kv,
-      dpose.theta / UROS_FREQ_MOD_INTERPOLATION_SEC * pose_kv};
-  auto vel_rf_corrected = vel_rf_sp + d_vel;
+  vPose<real_t> d_vel_wf = {
+      dpose.x / UROS_FREQ_MOD_INTERPOLATION_SEC * k_v,
+      dpose.y / UROS_FREQ_MOD_INTERPOLATION_SEC * k_v,
+      dpose.theta / UROS_FREQ_MOD_INTERPOLATION_SEC * k_v};
+  auto vel_rf_corrected = vel_rf_sp + vWF2vRF(d_vel_wf, pose_cur.theta);
   ULOG_DEBUG("%s: [dx: %.2f, dy: %.2f, omega: %.2f]",
              "[interpolation]: (corrected) vel_rf_sp", vel_rf_corrected.vx,
              vel_rf_corrected.vy, vel_rf_corrected.omega);
 
-  auto vel_wheel_sp_mtx = vRF2vWheel(VelRF{
-      vel_rf_corrected.vx, vel_rf_corrected.vy, vel_rf_corrected.omega, 0});
-  auto wheel_sp_msg =
-      WheelDataWrapper<real_t, WheelDataType::VEL_SP>{vel_wheel_sp_mtx};
+  auto msg_vel_wheel_sp = WheelDataWrapper<real_t, WheelDataType::VEL_SP>{
+      vRF2vWheel(VelRF{vel_rf_corrected.vx, vel_rf_corrected.vy,
+                       vel_rf_corrected.omega, 0})};
   ULOG_DEBUG("%s: [%.02f, %.02f, %.02f, %.02f]",
              "[interpolation]: pub vel_wheel_sp from vel_rf_sp",
-             wheel_sp_msg[0], wheel_sp_msg[1], wheel_sp_msg[2],
-             wheel_sp_msg[3]);
+             msg_vel_wheel_sp[0], msg_vel_wheel_sp[1], msg_vel_wheel_sp[2],
+             msg_vel_wheel_sp[3]);
 
-  rcl_ret_softcheck(rcl_publish(&pub_wheel_vel, &wheel_sp_msg.msg, NULL));
+  rcl_ret_softcheck(rcl_publish(&pub_wheel_vel, &msg_vel_wheel_sp.msg, NULL));
 }
 
 rclc_executor_t* interpolation_init(rcl_node_t* node, rclc_support_t* support,

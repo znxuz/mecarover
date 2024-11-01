@@ -5,6 +5,7 @@
 #include <array>
 #include <cstdint>
 #include <mecarover/robot_params.hpp>
+#include <utility>
 
 #include "stm_encoder.hpp"
 #include "stm_motor_pwm.hpp"
@@ -39,12 +40,10 @@ std::array<real_t, N_WHEEL> hal_encoder_delta_rad() {
 
   for (int i = 0; i < N_WHEEL; ++i) {
     auto encoder_val = encoders[i].get_val();
-    encoder_delta[i] =
-        robot_params.inc2rad *
-        (static_cast<real_t>(encoder_val) - prev_encoder_val[i]) *
-        encoder_direction[i];  //  * encoder_scaler[i]
-
-    prev_encoder_val[i] = encoder_val;
+    encoder_delta[i] = robot_params.inc2rad *
+                       (static_cast<real_t>(encoder_val) -
+                        std::exchange(prev_encoder_val[i], encoder_val)) *
+                       encoder_direction[i];  //  * encoder_scaler[i]
   }
 
   return encoder_delta;
