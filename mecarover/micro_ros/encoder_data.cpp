@@ -22,11 +22,13 @@ static auto enc_data_timer = rcl_get_zero_initialized_timer();
 static rcl_publisher_t pub_encoder;
 
 static void encoder_data_cb(rcl_timer_t* timer, int64_t dt) {
+  // TODO: integrate this module into into wheel_ctrl, becuase `dt` is needed
+  // for precise calculation
   WheelDataWrapper<real_t, WheelDataType::ENC_DELTA_RAD> enc_data{
       hal_encoder_delta_rad()};
 
-  ULOG_DEBUG("[enc]: [%.2f, %.2f, %.2f, %.2f]", enc_data[0], enc_data[1],
-             enc_data[2], enc_data[3]);
+  // ULOG_DEBUG("[enc]: [%.2f, %.2f, %.2f, %.2f]", enc_data[0], enc_data[1],
+  //            enc_data[2], enc_data[3]);
 
   rcl_ret_softcheck(rcl_publish(&pub_encoder, &enc_data.msg, NULL));
 }

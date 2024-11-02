@@ -9,7 +9,8 @@ inline constexpr std::string_view STR_VEL_SP = "wheel velocity setpoint";
 
 enum class WheelDataType { ENC_DELTA_RAD, VEL_SP };
 
-inline std::optional<WheelDataType> parse_wheel_data_type(std::string_view sv) {
+inline constexpr std::optional<WheelDataType> parse_wheel_data_type(
+    std::string_view sv) {
   if (sv == STR_ENC_DELTA_RAD) {
     return WheelDataType::ENC_DELTA_RAD;
   } else if (sv == STR_VEL_SP) {
@@ -19,7 +20,7 @@ inline std::optional<WheelDataType> parse_wheel_data_type(std::string_view sv) {
   }
 }
 
-inline std::optional<std::string_view> to_string(WheelDataType type) {
+inline constexpr std::optional<std::string_view> to_string(WheelDataType type) {
   switch (type) {
     case WheelDataType::ENC_DELTA_RAD:
       return STR_ENC_DELTA_RAD;
@@ -30,7 +31,7 @@ inline std::optional<std::string_view> to_string(WheelDataType type) {
   return {};
 }
 
-inline bool operator==(const WheelDataType& e, std::string_view sv) {
+inline constexpr bool operator==(const WheelDataType& e, std::string_view sv) {
   switch (e) {
     case WheelDataType::ENC_DELTA_RAD:
       return sv == STR_ENC_DELTA_RAD;
@@ -40,6 +41,6 @@ inline bool operator==(const WheelDataType& e, std::string_view sv) {
   return false;
 }
 
-inline bool operator==(std::string_view sv, const WheelDataType& e) {
+inline constexpr bool operator==(std::string_view sv, const WheelDataType& e) {
   return e == sv;
 }

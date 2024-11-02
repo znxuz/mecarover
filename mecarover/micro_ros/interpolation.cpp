@@ -14,6 +14,7 @@
 #include <rclc/types.h>
 #include <ulog.h>
 
+#include <cmath>
 #include <mecarover/mrcpptypes.hpp>
 #include <mecarover/robot_params.hpp>
 
@@ -52,62 +53,60 @@ static void pose_cb(const void*) {
   pose_cur = {msg_odom_pose.x, msg_odom_pose.y, msg_odom_pose.theta};
 }
 
-// static bool sanity_check(const Pose<real_t>& dpose) {
-//   using std::abs;
-//   if (abs(dpose.x) > ctrl_params.LageSchleppMax.x ||
-//       abs(dpose.y) > ctrl_params.LageSchleppMax.y ||
-//       abs(dpose.theta) > ctrl_params.LageSchleppMax.theta) [[unlikely]] {
-//     ULOG_ERROR("[pose sanity check]: pose deviation too large");
-//     return false;
-//   }
-//   return true;
-// }
+static void sanity_check(const Pose<real_t>& dpose) {
+  static constexpr real_t LINEAR_DEVIATION_MAX = 100;
+  static constexpr real_t ANGULAR_DEVIATION_MAX = M_PI;
 
-static void interpolation_cb(rcl_timer_t*, int64_t) {
+  using std::abs;
+  if (abs(dpose.x) > LINEAR_DEVIATION_MAX ||
+      abs(dpose.y) > LINEAR_DEVIATION_MAX ||
+      abs(dpose.theta) > ANGULAR_DEVIATION_MAX) [[unlikely]] {
+    ULOG_ERROR("[pose sanity check]: pose deviation too large");
+  }
+}
+
+static void interpolation_cb(rcl_timer_t*, int64_t last_call_time) {
   static auto vel_prev = vPose<real_t>{};
   static auto pose_sp = Pose<real_t>{};
+  const auto dt = RCL_NS_TO_S(static_cast<real_t>(last_call_time));
 
   auto vel_rf_sp = velocity_smoothen(vel_rf_target, vel_prev);
   vel_prev = vel_rf_sp;
-  ULOG_DEBUG("%s: [%.02f, %.02f, %.02f]",
-             "[interpolation]: vel_rf(smoothened) from cmd_vel", vel_rf_sp.vx,
-             vel_rf_sp.vy, vel_rf_sp.omega);
+  // ULOG_DEBUG("%s: [%.02f, %.02f, %.02f]",
+  //            "[intrpl]: vel_rf(smoothened) from cmd_vel", vel_rf_sp.vx,
+  //            vel_rf_sp.vy, vel_rf_sp.omega);
 
   pose_sp +=
-      vRF2vWF(vel_rf_sp, pose_cur.theta) * UROS_FREQ_MOD_INTERPOLATION_SEC;
-  ULOG_DEBUG("%s: [x: %.2f, y: %.2f, theta: %.2f]",
-             "[interpolation]: cumulated pose_sp from vel_rf", pose_sp.x,
-             pose_sp.y, static_cast<real_t>(pose_sp.theta));
+      vRF2vWF(vel_rf_sp, pose_cur.theta) * dt;
+  // ULOG_DEBUG("%s: [x: %.2f, y: %.2f, theta: %.2f]",
+  //            "[intrpl]: cumulated pose_sp from vel_rf", pose_sp.x,
+  //            pose_sp.y, static_cast<real_t>(pose_sp.theta));
+
+  // TODO PID control this shit, rn k_p (alone) is too sensitive to noise
 
   auto dpose = pose_sp - pose_cur;
+  sanity_check(dpose);
 
-  // sanity_check(dpose); // TODO
+  ULOG_DEBUG("[intrpl]: delta pose: [x: %.2f, y: %.2f, theta: %.2f]", dpose.x,
+             dpose.y, static_cast<real_t>(dpose.theta));
 
-  ULOG_DEBUG("%s: [x: %.2f, y: %.2f, theta: %.2f]",
-             "[interpolation]: delta pose:", dpose.x, dpose.y,
-             static_cast<real_t>(dpose.theta));
-
-  /* pose control */
-
-  static constexpr real_t k_v = 0.2;
+  static constexpr real_t k_v = 0.35;
 
   // TODO: refactor operator overloads and here
-  vPose<real_t> d_vel_wf = {
-      dpose.x / UROS_FREQ_MOD_INTERPOLATION_SEC * k_v,
-      dpose.y / UROS_FREQ_MOD_INTERPOLATION_SEC * k_v,
-      dpose.theta / UROS_FREQ_MOD_INTERPOLATION_SEC * k_v};
+  vPose<real_t> d_vel_wf = {dpose.x / dt * k_v, dpose.y / dt * k_v,
+                            dpose.theta / dt * k_v};
   auto vel_rf_corrected = vel_rf_sp + vWF2vRF(d_vel_wf, pose_cur.theta);
-  ULOG_DEBUG("%s: [dx: %.2f, dy: %.2f, omega: %.2f]",
-             "[interpolation]: (corrected) vel_rf_sp", vel_rf_corrected.vx,
-             vel_rf_corrected.vy, vel_rf_corrected.omega);
+  // ULOG_DEBUG("%s: [dx: %.2f, dy: %.2f, omega: %.2f]",
+  //            "[intrpl]: (corrected) vel_rf_sp", vel_rf_corrected.vx,
+  //            vel_rf_corrected.vy, vel_rf_corrected.omega);
 
   auto msg_vel_wheel_sp = WheelDataWrapper<real_t, WheelDataType::VEL_SP>{
       vRF2vWheel(VelRF{vel_rf_corrected.vx, vel_rf_corrected.vy,
                        vel_rf_corrected.omega, 0})};
-  ULOG_DEBUG("%s: [%.02f, %.02f, %.02f, %.02f]",
-             "[interpolation]: pub vel_wheel_sp from vel_rf_sp",
-             msg_vel_wheel_sp[0], msg_vel_wheel_sp[1], msg_vel_wheel_sp[2],
-             msg_vel_wheel_sp[3]);
+  // ULOG_DEBUG("%s: [%.02f, %.02f, %.02f, %.02f]",
+  //            "[intrpl]: pub vel_wheel_sp from vel_rf_sp",
+  //            msg_vel_wheel_sp[0], msg_vel_wheel_sp[1], msg_vel_wheel_sp[2],
+  //            msg_vel_wheel_sp[3]);
 
   rcl_ret_softcheck(rcl_publish(&pub_wheel_vel, &msg_vel_wheel_sp.msg, NULL));
 }
@@ -131,7 +130,6 @@ rclc_executor_t* interpolation_init(rcl_node_t* node, rclc_support_t* support,
                                                &sub_odometry, &msg_odom_pose,
                                                &pose_cb, ON_NEW_DATA));
 
-  // FIXME: interpolation cb still has the same frequency
   rcl_ret_check(rclc_timer_init_default2(&interpolation_timer, support,
                                          RCL_MS_TO_NS(TIMER_TIMEOUT_MS),
                                          &interpolation_cb, true));

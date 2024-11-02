@@ -47,9 +47,9 @@ static void odometry_cb(const void* arg) {
       dpose_rf, pose_wf.theta + dpose_rf.theta / static_cast<real_t>(2));
   pose_wf += dpose_wf;
 
-  ULOG_DEBUG("%s: [x: %.02f, y: %.02f, theta: %.02f]",
-             "[odometry]: pose cur from enc", pose_wf.x, pose_wf.y,
-             static_cast<real_t>(pose_wf.theta));
+  // ULOG_DEBUG("%s: [x: %.02f, y: %.02f, theta: %.02f]",
+  //            "[odometry]: pose cur from enc", pose_wf.x, pose_wf.y,
+  //            static_cast<real_t>(pose_wf.theta));
 
   auto msg = geometry_msgs__msg__Pose2D{pose_wf.x, pose_wf.y, pose_wf.theta};
   rcl_ret_softcheck(rcl_publish(&pub_odometry, &msg, NULL));

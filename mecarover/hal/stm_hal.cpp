@@ -5,7 +5,6 @@
 #include <array>
 #include <cstdint>
 #include <mecarover/robot_params.hpp>
-#include <utility>
 
 #include "stm_encoder.hpp"
 #include "stm_motor_pwm.hpp"
@@ -19,7 +18,7 @@ static constexpr std::array pwm_channels_b{TIM_CHANNEL_3, TIM_CHANNEL_4,
 
 constexpr static std::array motor_direction{1, 1, -1, -1};
 constexpr static std::array encoder_direction{1, 1, 1, 1};
-constexpr static std::array encoder_scaler{1.0, 1.0, 1.0, 1.0};
+// constexpr static std::array encoder_scaler{1.0, 1.0, 1.0, 1.0};
 
 static std::array<STMEncoder, N_WHEEL> encoders;
 static std::array<STMMotorPWM, N_WHEEL> pwm_motors;
@@ -36,14 +35,16 @@ void hal_init() {
 }
 
 std::array<real_t, N_WHEEL> hal_encoder_delta_rad() {
-  auto encoder_delta = std::array<real_t, 4>{};
+  auto encoder_delta = std::array<real_t, N_WHEEL>{};
 
   for (int i = 0; i < N_WHEEL; ++i) {
     auto encoder_val = encoders[i].get_val();
-    encoder_delta[i] = robot_params.inc2rad *
-                       (static_cast<real_t>(encoder_val) -
-                        std::exchange(prev_encoder_val[i], encoder_val)) *
-                       encoder_direction[i];  //  * encoder_scaler[i]
+    encoder_delta[i] =
+        robot_params.inc2rad *
+        (static_cast<real_t>(encoder_val - prev_encoder_val[i])) *
+        encoder_direction[i];  //  * encoder_scaler[i]
+
+    prev_encoder_val[i] = encoder_val;
   }
 
   return encoder_delta;

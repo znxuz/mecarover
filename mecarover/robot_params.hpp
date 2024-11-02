@@ -9,12 +9,13 @@
 
 inline constexpr uint8_t DOF = 4;
 inline constexpr uint8_t N_WHEEL = 4;
+
 /* derived from max 120 rpm: 120 * 2pi / 60 = 12.56 rad/s * 50mm = 628 mm/s */
-inline constexpr real_t MAX_VELOCITY_MM_S = 600;
+inline constexpr real_t MAX_VELOCITY_MM_S = 4000; // 628 is wrong
 
 /* defines the frequencies of uros modules */
-inline constexpr real_t UROS_FREQ_MOD_ENC_SEC = 0.1;
-inline constexpr real_t UROS_FREQ_MOD_INTERPOLATION_SEC = 0.5;
+inline constexpr real_t UROS_FREQ_MOD_ENC_SEC = 0.05;
+inline constexpr real_t UROS_FREQ_MOD_INTERPOLATION_SEC = 0.15;
 inline constexpr uint16_t S_TO_MS = 1000;
 
 using VelWheel = Eigen::Matrix<real_t, N_WHEEL, 1>;
@@ -41,14 +42,14 @@ struct sampling_time_t {
   uint32_t ratio_pose_wheel;
 };
 
-static constexpr inline sampling_time_t sampling_times = {
+inline constexpr sampling_time_t sampling_times = {
     .dt_pose_ctrl = 0.015,   // 15 ms sampling time of pose control loop
     .dt_wheel_ctrl = 0.015,  // 5 ms sampling time of wheel control loop
     .ratio_pose_wheel = 1    // 15 ms / 5 ms ratio pose / wheel
 };
 
 // ASK: why l_w_half is used rather than a+b for the velocity transformations?
-static constexpr inline robot_param_t robot_params = {
+inline constexpr robot_param_t robot_params = {
     .increments = 48.0,  // 4 x 1024 //4096
     .gear_ratio = 64.0,  // gear ratio //68
     .inc2rad = 2.0 * M_PI / (64.0 * 48.0),
@@ -65,7 +66,7 @@ static constexpr inline robot_param_t robot_params = {
     // .MaxRPM = {5740.6, 5740.6, 7268.4, 7268.4}
 };
 
-static constexpr inline ctrl_param_t ctrl_params = {
+inline constexpr ctrl_param_t ctrl_params = {
     .k_i = 0.1,
     .k_d = 0.0,
     .k_ctrl_output = 0.3,
