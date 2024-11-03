@@ -58,6 +58,20 @@ TEST_F(PoseTest, RandomizedAddition) {
   }
 }
 
+TEST_F(PoseTest, ScalarMultiplicationOperator) {
+  double factor = 2.5;
+
+  Pose<double> originalPose{2.0, 3.0, Heading<double>(M_PI / 3)};
+  Pose<double> expectedPose{originalPose.x * factor, originalPose.y * factor,
+                            originalPose.theta * factor};
+
+  Pose<double> scaledPose = originalPose * factor;
+
+  EXPECT_DOUBLE_EQ(scaledPose.x, expectedPose.x);
+  EXPECT_DOUBLE_EQ(scaledPose.y, expectedPose.y);
+  EXPECT_DOUBLE_EQ(scaledPose.theta, expectedPose.theta);
+}
+
 TEST_F(PoseTest, DivisionOperator) {
   for (int i = 0; i < 100; ++i) {
     double x = dist(rng);
@@ -262,17 +276,17 @@ TEST_F(vPoseTest, vPoseTFBack2Back) {
 }
 
 TEST(PoseMathTests, DivisionAndConversionTest) {
-    double k_v = 2.0;
-    double dt = 0.1;
+  double k_v = 2.0;
+  double dt = 0.1;
 
-    Pose<double> dpose(10.0, 5.0, Heading<real_t>(M_PI / 4));
-    vPose<double> vpose_multiplied = vPose<real_t>(dpose / dt) * k_v;
+  Pose<double> dpose(10.0, 5.0, Heading<real_t>(M_PI / 4));
+  vPose<double> vpose_multiplied = vPose<real_t>(dpose / dt) * k_v;
 
-    // Check the results
-    EXPECT_DOUBLE_EQ(vpose_multiplied.vx, (dpose.x / dt) * k_v);
-    EXPECT_DOUBLE_EQ(vpose_multiplied.vy, (dpose.y / dt) * k_v);
-    EXPECT_DOUBLE_EQ(vpose_multiplied.omega,
-                     Heading<double>(dpose.theta / dt) * k_v);
+  // Check the results
+  EXPECT_DOUBLE_EQ(vpose_multiplied.vx, (dpose.x / dt) * k_v);
+  EXPECT_DOUBLE_EQ(vpose_multiplied.vy, (dpose.y / dt) * k_v);
+  EXPECT_DOUBLE_EQ(vpose_multiplied.omega,
+                   Heading<double>(dpose.theta / dt) * k_v);
 }
 
 int main(int argc, char **argv) {

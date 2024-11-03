@@ -24,7 +24,7 @@ class MecanumController {
  private:
   Robot2WheelMatrix bt_matrix;
   Wheel2RobotMatrix ft_matrix;
-  T epsilon1 = 0;  // Verkopplungsfehler // TODO: what is this
+  T epsilon1 = 0;  // Verkopplungsfehler // ASK: what is this
   VelWheel prev_errors = VelWheel::Zero();
   VelWheel cumulated_integral = VelWheel::Zero();
 

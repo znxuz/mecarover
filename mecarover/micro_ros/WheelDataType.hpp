@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ulog.h>
+
 #include <optional>
 #include <string_view>
 
@@ -15,9 +17,11 @@ inline constexpr std::optional<WheelDataType> parse_wheel_data_type(
     return WheelDataType::ENC_DELTA_RAD;
   } else if (sv == STR_VEL_SP) {
     return WheelDataType::VEL_SP;
-  } else {
-    return {};
   }
+
+  ULOG_ERROR("at %s in %d : parsing unknown wheel data type", __FILE__,
+             __LINE__);
+  return {};
 }
 
 inline constexpr std::optional<std::string_view> to_string(WheelDataType type) {
@@ -28,6 +32,8 @@ inline constexpr std::optional<std::string_view> to_string(WheelDataType type) {
       return STR_VEL_SP;
   }
 
+  ULOG_ERROR("at %s in %d : parsing unknown wheel data type", __FILE__,
+             __LINE__);
   return {};
 }
 

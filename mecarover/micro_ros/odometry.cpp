@@ -62,7 +62,8 @@ rclc_executor_t* odometry_init(rcl_node_t* node, rclc_support_t* support,
 
   rclc_subscription_init_default(
       &sub_encoder_data, node,
-      ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float64MultiArray),
+      WheelDataWrapper<real_t,
+                       WheelDataType::ENC_DELTA_RAD>::get_msg_type_support(),
       "encoder_data");
   rcl_ret_check(rclc_executor_add_subscription(&odometry_exe, &sub_encoder_data,
                                                &msg_enc_data.msg, &odometry_cb,

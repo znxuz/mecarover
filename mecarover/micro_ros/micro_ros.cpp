@@ -9,7 +9,6 @@
 #include <rmw_microros/rmw_microros.h>
 #include <ulog.h>
 
-#include "encoder_data.hpp"
 #include "eth_transport.h"
 #include "interpolation.hpp"
 #include "odometry.hpp"
@@ -62,17 +61,15 @@ static void init() {
 void micro_ros(void* arg) {
   init();
 
-  auto* encoder_pub_exe = encoder_data_exe_init(&node, &support, &allocator);
+  auto* wheel_ctrl_exe = wheel_ctrl_init(&node, &support, &allocator);
   auto* odometry_exe = odometry_init(&node, &support, &allocator);
   auto* interpolation_exe = interpolation_init(&node, &support, &allocator);
-  auto* wheel_ctrl_exe = wheel_ctrl_init(&node, &support, &allocator);
 
-  ULOG_INFO("micro_ros starting the loop");
+  ULOG_INFO("micro-ROS: starting executors");
   for (;;) {
-    rclc_executor_spin_some(encoder_pub_exe, RCL_MS_TO_NS(1));
-    rclc_executor_spin_some(odometry_exe, RCL_MS_TO_NS(1));
-    rclc_executor_spin_some(interpolation_exe, RCL_MS_TO_NS(1));
-    rclc_executor_spin_some(wheel_ctrl_exe, RCL_MS_TO_NS(1));
+    rclc_executor_spin_some(wheel_ctrl_exe, RCL_MS_TO_NS(2));
+    rclc_executor_spin_some(odometry_exe, RCL_MS_TO_NS(2));
+    rclc_executor_spin_some(interpolation_exe, RCL_MS_TO_NS(2));
   }
 }
 }

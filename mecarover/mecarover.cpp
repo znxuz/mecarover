@@ -2,10 +2,10 @@
 #include <mecarover/controls/ControllerTask.h>
 #include <mecarover/lidar/lidar.h>
 #include <mecarover/retarget.h>
+#include <rtc.h>
 #include <tim.h>
 #include <ulog.h>
 #include <usart.h>
-#include <rtc.h>
 
 #include <mecarover/hal/stm_hal.hpp>
 #include <mecarover/micro_ros/micro_ros.hpp>

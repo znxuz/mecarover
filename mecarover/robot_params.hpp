@@ -11,10 +11,12 @@ inline constexpr uint8_t DOF = 4;
 inline constexpr uint8_t N_WHEEL = 4;
 
 /* derived from max 120 rpm: 120 * 2pi / 60 = 12.56 rad/s * 50mm = 628 mm/s */
-inline constexpr real_t MAX_VELOCITY_MM_S = 4000; // 628 is wrong
+inline constexpr real_t MAX_VELOCITY_MM_S = 5000;  // 628 is wrong
+static constexpr real_t MAX_LINEAR_DEVIATION = 300;
+static constexpr real_t MAX_ANGULAR_DEVIATION = M_PI;
 
 /* defines the frequencies of uros modules */
-inline constexpr real_t UROS_FREQ_MOD_ENC_SEC = 0.05;
+inline constexpr real_t UROS_FREQ_MOD_WHEEL_CTRL_SEC = 0.05;
 inline constexpr real_t UROS_FREQ_MOD_INTERPOLATION_SEC = 0.15;
 inline constexpr uint16_t S_TO_MS = 1000;
 

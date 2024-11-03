@@ -7,7 +7,7 @@
 
 #include <source_location>
 
-static inline void rcl_ret_check(
+inline constexpr void rcl_ret_check(
     rcl_ret_t ret_code,
     const std::source_location location = std::source_location::current()) {
   if (ret_code) {
@@ -18,7 +18,7 @@ static inline void rcl_ret_check(
   }
 }
 
-static inline void rcl_ret_softcheck(
+inline constexpr void rcl_ret_softcheck(
     rcl_ret_t ret_code,
     const std::source_location location = std::source_location::current()) {
   if (ret_code)

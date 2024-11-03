@@ -33,35 +33,26 @@ class Heading {
 
   Heading(FltType theta) { this->theta = maxPI(theta); }
 
-  Heading& operator=(const FltType& th) {
-    this->theta = maxPI(th);
+  Heading& operator=(const FltType val) {
+    this->theta = maxPI(val);
     return *this;
   }
 
-  Heading operator+(FltType rhs) const {
-    Heading t = maxPI(this->theta + rhs);
-    return t;
-  }
-
-  Heading& operator+=(FltType rhs) {
+  Heading& operator+=(const FltType& rhs) {
     theta = maxPI(this->theta + rhs);
     return *this;
   }
 
-  Heading operator-(FltType rhs) const {
-    Heading t = maxPI(this->theta - rhs);
-    return t;
-  }
-
-  Heading& operator-=(FltType divisor) {
+  Heading& operator-=(const FltType divisor) {
     this->theta = maxPI(this->theta - divisor);
     return *this;
   }
 
-  Heading& operator*(FltType factor) {
-    this->theta = maxPI(this->theta * factor);
-    return *this;
-  }
+  Heading operator+(FltType rhs) const { return this->theta + rhs; }
+
+  Heading operator-(FltType rhs) const { return this->theta - rhs; }
+
+  Heading operator*(FltType factor) const { return this->theta * factor; }
 
   operator FltType() const { return this->theta; }
 };
@@ -96,32 +87,29 @@ class vPose {
 
   friend vPose<FltType> operator*(const vPose<FltType>& lhs,
                                   const FltType factor) {
-    return vPose<FltType>{lhs.vx * factor, lhs.vy * factor, lhs.omega * factor};
+    return {lhs.vx * factor, lhs.vy * factor, lhs.omega * factor};
   }
 
   friend vPose<FltType> operator+(const vPose<FltType>& lhs,
                                   const vPose<FltType>& rhs) {
-    return vPose<FltType>{lhs.vx + rhs.vx, lhs.vy + rhs.vy,
-                          lhs.omega + rhs.omega};
+    return {lhs.vx + rhs.vx, lhs.vy + rhs.vy, lhs.omega + rhs.omega};
   }
 
   friend vPose<FltType> operator-(const vPose<FltType>& lhs,
                                   const vPose<FltType>& rhs) {
-    return vPose<FltType>{lhs.vx - rhs.vx, lhs.vy - rhs.vy,
-                          lhs.omega - rhs.omega};
+    return {lhs.vx - rhs.vx, lhs.vy - rhs.vy, lhs.omega - rhs.omega};
   }
 
   /* transformation of velocities from robot frame into world frame  */
   friend vPose<FltType> vRF2vWF(vPose<FltType> vRF, FltType theta) {
-    return vPose<FltType>{vRF.vx * cos(theta) - vRF.vy * sin(theta),
-                          vRF.vx * sin(theta) + vRF.vy * cos(theta), vRF.omega};
+    return {vRF.vx * cos(theta) - vRF.vy * sin(theta),
+            vRF.vx * sin(theta) + vRF.vy * cos(theta), vRF.omega};
   }
 
   /* transformation of velocities from world frame into robot frame  */
   friend vPose<FltType> vWF2vRF(vPose<FltType> vWF, FltType theta) {
-    return vPose<FltType>{vWF.vx * cos(theta) + vWF.vy * sin(theta),
-                          -vWF.vx * sin(theta) + vWF.vy * cos(theta),
-                          vWF.omega};
+    return {vWF.vx * cos(theta) + vWF.vy * sin(theta),
+            -vWF.vx * sin(theta) + vWF.vy * cos(theta), vWF.omega};
   }
 };
 
@@ -153,34 +141,38 @@ class Pose {
 
   friend Pose<FltType> operator+(const Pose<FltType>& lhs,
                                  const Pose<FltType>& rhs) {
-    return Pose<FltType>{lhs.x + rhs.x, lhs.y + rhs.y, lhs.theta + rhs.theta};
+    return {lhs.x + rhs.x, lhs.y + rhs.y, lhs.theta + rhs.theta};
   }
 
   friend Pose<FltType> operator-(const Pose<FltType>& lhs,
                                  const Pose<FltType>& rhs) {
-    return Pose<FltType>{lhs.x - rhs.x, lhs.y - rhs.y, lhs.theta - rhs.theta};
+    return {lhs.x - rhs.x, lhs.y - rhs.y, lhs.theta - rhs.theta};
   }
 
-  friend Pose<FltType> operator/(const Pose<FltType>& p1,
+  friend Pose<FltType> operator*(const Pose<FltType>& lhs,
+                                 const FltType factor) {
+    return {lhs.x * factor, lhs.y * factor, lhs.theta * factor};
+  }
+
+  friend Pose<FltType> operator/(const Pose<FltType>& lhs,
                                  const FltType divisor) {
     if (divisor == 0.0) {
       std::perror("division by zero!");
       return {};
     }
-    return Pose<FltType>{p1.x / divisor, p1.y / divisor, p1.theta / divisor};
+    return {lhs.x / divisor, lhs.y / divisor, lhs.theta / divisor};
   }
 
   /* transformation of small movements from robot frame into world frame  */
   friend Pose<FltType> pRF2pWF(const Pose<FltType>& pose, FltType th) {
-    return Pose<FltType>{pose.x * cos(th) - pose.y * sin(th),
-                         pose.x * sin(th) + pose.y * cos(th), pose.theta};
+    return {pose.x * cos(th) - pose.y * sin(th),
+            pose.x * sin(th) + pose.y * cos(th), pose.theta};
   }
 
   /* transformation of small movements from world frame into robot frame  */
   friend Pose<FltType> pWF2pRF(const Pose<FltType>& d_pose, FltType th) {
-    return Pose<FltType>{d_pose.x * cos(th) + d_pose.y * sin(th),
-                         -d_pose.x * sin(th) + d_pose.y * cos(th),
-                         d_pose.theta};
+    return {d_pose.x * cos(th) + d_pose.y * sin(th),
+            -d_pose.x * sin(th) + d_pose.y * cos(th), d_pose.theta};
   }
 };
 

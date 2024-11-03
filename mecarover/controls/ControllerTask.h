@@ -39,7 +39,7 @@ class ControllerTask {
   RtosTask drehzahlregler_thread{call_wheel_control_task, "WheelControllerTask",
                                  MAIN_TASK_STACK_SIZE, this,
                                  WHEEL_CONTROLLER_PRIORITY};
-  RtosSemaphore pose_ctrl_sem{10, 0};  // TODO: why even 10 to begin with
+  RtosSemaphore pose_ctrl_sem{10, 0};
 
   RtosMutexObject<std::array<T, N_WHEEL>> vel_wheel_sp;
   RtosMutexObject<mrc_stat> error_status{MRC_NOERR};
@@ -116,7 +116,6 @@ class ControllerTask {
           controller.vRF2vWheel(controller.pose_control_get_vel_rframe(
               pose_delta, pose_cur.theta, vel_wframe_sp));
       auto vel_wheel_sp = std::array<T, N_WHEEL>{};
-      // TODO: refactor to use Eigen::Map
       std::copy(std::begin(vel_wheel_sp_mtx), std::end(vel_wheel_sp_mtx),
                 begin(vel_wheel_sp));
       this->vel_wheel_sp.set(vel_wheel_sp);
@@ -171,7 +170,6 @@ class ControllerTask {
       } else if (controllerMode != CtrlMode::OFF) {
         VelWheel correcting_vel_matrix = controller.wheel_pid_control(
             VelWheel(vel_wheel_sp.data()), VelWheel(vel_wheel_actual.data()));
-        // TODO: refactor to use Eigen::Map
         std::copy(std::begin(correcting_vel_matrix),
                   std::end(correcting_vel_matrix), begin(vel_wheel_corrected));
       }
