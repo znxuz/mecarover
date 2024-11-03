@@ -3,8 +3,8 @@
 #include <tim.h>
 
 #ifdef __cplusplus
-#include <array>
 #include <application/robot_params.hpp>
+#include <array>
 
 void hal_init();
 void hal_wheel_vel_set_pwm(const std::array<real_t, N_WHEEL>& duty_cycle);

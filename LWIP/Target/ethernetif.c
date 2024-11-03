@@ -51,7 +51,6 @@
 
 /* USER CODE BEGIN 1 */
 #include "semphr.h"
-
 /* USER CODE END 1 */
 
 /* Private variables ---------------------------------------------------------*/

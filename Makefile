@@ -1,6 +1,6 @@
-NAME := mecarover
+NAME := application
 
-APP_DIR := application
+APP_DIR := $(NAME)
 BUILD_DIR := build
 DIR_GUARD = @mkdir -p "$(@D)"
 
@@ -24,7 +24,6 @@ OPT := -Os
 DEBUG := # -DDEBUG -g3
 ULOG_ENABLED := -DULOG_ENABLED
 USE_LEGACY := # -DLEGACY
-
 
 BIN := $(BUILD_DIR)/$(NAME).bin
 EXECUTABLE := $(BUILD_DIR)/$(NAME).elf
@@ -84,6 +83,7 @@ FLAGS = \
 		-MT"$@" \
 		$(INCL_PATHS) \
 		$(ULOG_ENABLED) \
+		$(USE_LEGACY) \
 		-DMICRO_ROS_AGENT_IP=$(MICRO_ROS_AGENT_IP) \
 		-DMICRO_ROS_AGENT_PORT=$(MICRO_ROS_AGENT_PORT) \
 		-DROS_DOMAIN_ID=$(ROS_DOMAIN_ID)
@@ -207,9 +207,6 @@ clangd_db: clean
 	@bear --output build/compile_commands.json -- $(MAKE) -j
 
 # misc
-
-print:
-	@echo $(MICRO_ROS_AGENT_IP)
 
 print_c_srcs:
 	@echo $(C_SRCS)

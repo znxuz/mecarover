@@ -62,7 +62,6 @@ struct sampling_time_t {
   uint32_t ratio_pose_wheel;
 };
 
-// ASK: why l_w_half is used rather than a+b for the velocity transformations?
 inline constexpr robot_param_t robot_params = {
     .increments = 48.0,  // 4 x 1024 //4096
     .gear_ratio = 64.0,  // gear ratio //68

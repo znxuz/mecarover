@@ -1,6 +1,6 @@
 #include <application/legacy/controls/ControllerTask.h>
 #include <application/legacy/lidar/lidar.h>
-#include <application/micro_ros/eth_transport.h>
+#include <application/micro_ros/udp_transport.h>
 #include <geometry_msgs/msg/twist.h>
 #include <lwip.h>
 #include <rcl/rcl.h>
@@ -87,7 +87,7 @@ void start_Scan_cb(const void* start_Scan) {
     laser_scanner.Start();
   } else {
     laser_scanner.stop();
-    ULOG_INFO("LaserScanner Stop");
+    log_message(log_info, "LaserScanner Stop");
   }
 }
 
@@ -126,8 +126,8 @@ void timer_cb(rcl_timer_t* timer, int64_t last_call_time) {
 
 void cmd_cb(const void* cmd_msg) {
   const auto* msg = reinterpret_cast<const geometry_msgs__msg__Twist*>(cmd_msg);
-  ULOG_INFO("v_x: %f, v_y: %f, omega: %f", msg->linear.x, msg->linear.y,
-            msg->angular.z);
+  log_message(log_info, "v_x: %f, v_y: %f, omega: %f", msg->linear.x,
+              msg->linear.y, msg->angular.z);
 
   imsl::vPose<real_t> v_ref;
   v_ref.vx = msg->linear.x * 1000.0;  // m/s -> mm/s
@@ -143,10 +143,10 @@ void enable_topic_cb(const void* enable_topic) {
       reinterpret_cast<const std_msgs__msg__Bool*>(enable_topic);
   if (enable->data) {
     controller->ctrl_mode.set(imsl::vehiclecontrol::CtrlMode::TWIST);
-    ULOG_INFO("amplifiers enabled, set mode TWIST");
+    log_message(log_info, "amplifiers enabled, set mode TWIST");
   } else {
     controller->ctrl_mode.set(vehiclecontrol::CtrlMode::OFF);
-    ULOG_INFO("amplifiers disabled, set mode OFF");
+    log_message(log_info, "amplifiers disabled, set mode OFF");
   }
 }
 
@@ -158,11 +158,11 @@ void micro_ros_legacy(void* arg) {
   controller = reinterpret_cast<vehiclecontrol::ControllerTask<real_t>*>(arg);
 
   // ethernet communication, change to the local lan ip address
-  eth_transport_params_t default_params = {
+  udp_transport_params_t default_params = {
       {0, 0, 0}, {MICRO_ROS_AGENT_IP}, {MICRO_ROS_AGENT_PORT}};
   rcl_ret_check(rmw_uros_set_custom_transport(
-      false, (void*)&default_params, eth_transport_open, eth_transport_close,
-      eth_transport_write, eth_transport_read));
+      false, (void*)&default_params, udp_transport_open, udp_transport_close,
+      udp_transport_write, udp_transport_read));
 
   rcl_allocator_t allocator = rcl_get_default_allocator();
   rcl_init_options_t init_options = rcl_get_zero_initialized_init_options();
@@ -171,22 +171,21 @@ void micro_ros_legacy(void* arg) {
   rcl_ret_check(rcl_init_options_set_domain_id(&init_options, domain_id));
   rclc_support_t support;
 
-  vTaskDelay(pdMS_TO_TICKS(5000));  // delay for the agent to be available
-
   /* probing the agent until success or timeout */
   for (uint8_t cnt = 0, max_cnt = 20; cnt < max_cnt; ++cnt) {
     if (rmw_uros_ping_agent(50, 2) == RCL_RET_OK) break;
     rcl_ret_check(cnt + 1 == max_cnt);
-    ULOG_WARNING("agent not responding, retrying...");
+    log_message(log_info, "agent not responding, retrying...");
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
   rcl_ret_check(rclc_support_init_with_options(&support, 0, NULL, &init_options,
                                                &allocator));
-  ULOG_INFO("free heap: %d, free stack: %lu", xPortGetMinimumEverFreeHeapSize(),
-            uxTaskGetStackHighWaterMark(NULL));
+  log_message(log_info, "free heap: %d, free stack: %lu",
+              xPortGetMinimumEverFreeHeapSize(),
+              uxTaskGetStackHighWaterMark(NULL));
 
   rcl_node_t node;
-  rcl_ret_check(rclc_node_init_default(&node, "test_node", "", &support));
+  rcl_ret_check(rclc_node_init_default(&node, "ros_node", "", &support));
 
   rcl_subscription_t sub_startScan;
   rcl_subscription_t sub_cmd_vel;
@@ -252,7 +251,7 @@ void micro_ros_legacy(void* arg) {
                                                &start_Scan, &start_Scan_cb,
                                                ON_NEW_DATA));
 
-  ULOG_INFO("micro_ros agent intialized - start spinning");
+  log_message(log_info, "micro_ros agent intialized - start spinning");
   while (true) {
     rcl_ret_check(rclc_executor_spin_some(
         &executor,

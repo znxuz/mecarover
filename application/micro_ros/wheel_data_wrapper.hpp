@@ -4,13 +4,12 @@
 #include <std_msgs/msg/float64_multi_array.h>
 
 #include <algorithm>
-#include <iterator>
+#include <application/robot_params.hpp>
 #include <cmath>
 #include <cstring>
-#include <application/robot_params.hpp>
 #include <type_traits>
 
-#include "WheelDataType.hpp"
+#include "wheel_data_type.hpp"
 
 template <typename T>
 concept FltNum = std::is_same_v<T, float> || std::is_same_v<T, double>;

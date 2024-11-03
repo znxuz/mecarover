@@ -1,15 +1,15 @@
 #pragma once
 
 #include <application/legacy/mrlogger/mrlogger.h>
+#include <application/legacy/rtos_utils.h>
 #include <application/rtos_config.h>
-#include <application/rtos_utils.h>
 
 #include <algorithm>
-#include <array>
-#include <cstring>
 #include <application/hal/hal.hpp>
 #include <application/mrcpptypes.hpp>
 #include <application/robot_params.hpp>
+#include <array>
+#include <cstring>
 
 #include "MecanumController.h"
 

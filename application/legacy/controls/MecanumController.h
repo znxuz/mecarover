@@ -5,9 +5,9 @@
 #include <Eigen/Core>
 #include <Eigen/LU>
 #include <algorithm>
-#include <cmath>
 #include <application/mrcpptypes.hpp>
 #include <application/robot_params.hpp>
+#include <cmath>
 
 namespace imsl::vehiclecontrol {
 
@@ -24,7 +24,7 @@ class MecanumController {
  private:
   Robot2WheelMatrix bt_matrix;
   Wheel2RobotMatrix ft_matrix;
-  T epsilon1 = 0;  // Verkopplungsfehler // ASK: what is this
+  T epsilon1 = 0;
   VelWheel prev_errors = VelWheel::Zero();
   VelWheel cumulated_integral = VelWheel::Zero();
 

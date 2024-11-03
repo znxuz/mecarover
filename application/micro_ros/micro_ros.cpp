@@ -1,7 +1,7 @@
 #include "micro_ros.hpp"
 
-#include <lwip.h>
 #include <application/legacy/lidar/lidar.h>
+#include <lwip.h>
 #include <rcl/allocator.h>
 #include <rcl/types.h>
 #include <rclc/executor.h>
@@ -9,17 +9,17 @@
 #include <rmw_microros/rmw_microros.h>
 #include <ulog.h>
 
-#include "eth_transport.h"
 #include "interpolation.hpp"
 #include "odometry.hpp"
 #include "rcl_ret_check.hpp"
+#include "udp_transport.h"
 #include "wheel_ctrl.hpp"
 
 extern LaserScanner laser_scanner;
 
 extern "C" {
 /* cannot be const, because the transport function requires non const */
-static eth_transport_params_t TRANSPORT_PARAMS = {
+static udp_transport_params_t TRANSPORT_PARAMS = {
     {0, 0, 0}, {MICRO_ROS_AGENT_IP}, {MICRO_ROS_AGENT_PORT}};
 
 static rcl_node_t node;
@@ -33,8 +33,8 @@ static void init() {
 
   rcl_ret_check(rmw_uros_set_custom_transport(
       false,  // framing disable here. udp should use packet-oriented mode
-      (void*)&TRANSPORT_PARAMS, eth_transport_open, eth_transport_close,
-      eth_transport_write, eth_transport_read));
+      (void*)&TRANSPORT_PARAMS, udp_transport_open, udp_transport_close,
+      udp_transport_write, udp_transport_read));
 
   allocator = rcl_get_default_allocator();
   init_options = rcl_get_zero_initialized_init_options();

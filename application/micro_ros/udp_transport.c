@@ -1,7 +1,7 @@
 // Example from the eth implementation for the Olimex STM32-E407 with Zephyr
 // https://github.com/micro-ROS/micro_ros_zephyr_module
 
-#include "eth_transport.h"
+#include "udp_transport.h"
 
 #include <netdb.h>
 #include <socket.h>
@@ -10,8 +10,8 @@
 #include <string.h>
 #include <uxr/client/transport.h>
 
-bool eth_transport_open(struct uxrCustomTransport* transport) {
-  eth_transport_params_t* params = (eth_transport_params_t*)transport->args;
+bool udp_transport_open(struct uxrCustomTransport* transport) {
+  udp_transport_params_t* params = (udp_transport_params_t*)transport->args;
 
   bool rv = false;
   params->poll_fd.fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -40,15 +40,15 @@ bool eth_transport_open(struct uxrCustomTransport* transport) {
   return rv;
 }
 
-bool eth_transport_close(struct uxrCustomTransport* transport) {
-  eth_transport_params_t* params = (eth_transport_params_t*)transport->args;
+bool udp_transport_close(struct uxrCustomTransport* transport) {
+  udp_transport_params_t* params = (udp_transport_params_t*)transport->args;
 
   return (-1 == params->poll_fd.fd) ? true : (0 == close(params->poll_fd.fd));
 }
 
-size_t eth_transport_write(struct uxrCustomTransport* transport,
+size_t udp_transport_write(struct uxrCustomTransport* transport,
                            const uint8_t* buf, size_t len, uint8_t* err) {
-  eth_transport_params_t* params = (eth_transport_params_t*)transport->args;
+  udp_transport_params_t* params = (udp_transport_params_t*)transport->args;
 
   size_t rv = 0;
   ssize_t bytes_sent = lwip_send(params->poll_fd.fd, (void*)buf, len, 0);
@@ -61,9 +61,9 @@ size_t eth_transport_write(struct uxrCustomTransport* transport,
   return rv;
 }
 
-size_t eth_transport_read(struct uxrCustomTransport* transport, uint8_t* buf,
+size_t udp_transport_read(struct uxrCustomTransport* transport, uint8_t* buf,
                           size_t len, int timeout, uint8_t* err) {
-  eth_transport_params_t* params = (eth_transport_params_t*)transport->args;
+  udp_transport_params_t* params = (udp_transport_params_t*)transport->args;
 
   size_t rv = 0;
   int poll_rv = poll(&params->poll_fd, 1, timeout);

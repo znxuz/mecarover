@@ -2,9 +2,9 @@
 
 #include <tim.h>
 
+#include <application/robot_params.hpp>
 #include <array>
 #include <cstdint>
-#include <application/robot_params.hpp>
 
 #include "encoder.hpp"
 #include "motor.hpp"
@@ -59,7 +59,7 @@ void stm_encoder_cb(TIM_HandleTypeDef* htim) {
   for (size_t i = 0; i < N_WHEEL; ++i) {
     if (htim->Instance == encoder_timer[i]->Instance) {
       encoders[i].update_offset();
-      break;
+      return;
     }
   }
 }

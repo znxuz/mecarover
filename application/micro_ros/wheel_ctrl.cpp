@@ -13,8 +13,8 @@
 #include <application/robot_params.hpp>
 #include <utility>
 
-#include "WheelDataWrapper.hpp"
 #include "rcl_ret_check.hpp"
+#include "wheel_data_wrapper.hpp"
 
 static constexpr uint8_t N_EXEC_HANDLES = 2;
 
