@@ -6,14 +6,14 @@
 #include <rclc/publisher.h>
 #include <rclc/subscription.h>
 #include <rclc/timer.h>
+#include <ulog.h>
 
 #include <algorithm>
-#include <mecarover/hal/stm_hal.hpp>
+#include <mecarover/hal/hal.hpp>
+#include <mecarover/robot_params.hpp>
 #include <utility>
 
 #include "WheelDataWrapper.hpp"
-#include "mecarover/mrtypes.h"
-#include "mecarover/robot_params.hpp"
 #include "rcl_ret_check.hpp"
 
 static constexpr uint8_t N_EXEC_HANDLES = 2;
@@ -41,7 +41,7 @@ static rcl_subscription_t sub_wheel_vel;
 static auto msg_wheel_vel_sp =
     WheelDataWrapper<real_t, WheelDataType::VEL_SP>{};
 
-static VelWheel wheel_vel_cur{};
+static VelWheel wheel_vel_actual{};
 static VelWheel wheel_vel_sp{};
 
 static void wheel_vel_sp_cb(const void* arg) {
@@ -49,25 +49,25 @@ static void wheel_vel_sp_cb(const void* arg) {
   std::copy(msg->data.data, msg->data.data + N_WHEEL, std::begin(wheel_vel_sp));
 }
 
-static VelWheel vel_pid(const real_t dt) {
-  static constexpr real_t k_p = 0.40, k_i = 0.015, k_d = 0, i_gain_max = 100;
+static VelWheel wheel_vel_pid_ctrl(const real_t dt) {
+  static constexpr real_t K_P = 0.40, K_I = 0.015, K_D = 0, MAX_INTEGRAL = 100;
   static auto integral = VelWheel{}, prev_err = VelWheel{};
 
-  const auto err = wheel_vel_sp - wheel_vel_cur;
+  const auto err = wheel_vel_sp - wheel_vel_actual;
 
-  const auto proportional = k_p * err;
+  const auto proportional = K_P * err;
 
-  integral += k_i * err * dt;
+  integral += K_I * err * dt;
   integral = integral.unaryExpr(
-      [&](real_t val) { return std::clamp(val, i_gain_max, -i_gain_max); });
+      [&](real_t val) { return std::clamp(val, MAX_INTEGRAL, -MAX_INTEGRAL); });
   if (std::any_of(std::begin(integral), std::end(integral),
-                  [](real_t val) { return val >= 0.8 * i_gain_max; })) {
-    ULOG_DEBUG("[wheel_ctrl]: pid I gain: [%0.2f, %.02f, %.02f, %.02f]",
-               integral(0), integral(1), integral(2), integral(3));
+                  [](real_t val) { return val >= 0.8 * MAX_INTEGRAL; })) {
+    ULOG_WARNING("[wheel_ctrl]: PID integral: [%0.2f, %.02f, %.02f, %.02f]",
+                 integral(0), integral(1), integral(2), integral(3));
   }
 
   const auto derivative =
-      k_d * (err - std::exchange(prev_err, err)) / dt;  // unused
+      K_D * (err - std::exchange(prev_err, err)) / dt;  // unused
 
   return wheel_vel_sp + proportional + integral + derivative;
 }
@@ -81,17 +81,18 @@ static void wheel_ctrl_cb(rcl_timer_t* timer, int64_t last_call_time) {
   rcl_ret_softcheck(rcl_publish(&pub_encoder_data, &enc_data.msg, NULL));
 
   std::transform(begin(enc_delta_rad), end(enc_delta_rad),
-                 std::begin(wheel_vel_cur),
+                 std::begin(wheel_vel_actual),
                  [dt, r = robot_params.wheel_radius](real_t enc_delta) {
                    return enc_delta * r / dt;
                  });
 
-  const auto vel_corrected = vel_pid(dt);
+  const auto vel_corrected = wheel_vel_pid_ctrl(dt);
   hal_wheel_vel_set_pwm(vel_to_duty_cycle(vel_corrected));
 }
 
 rclc_executor_t* wheel_ctrl_init(rcl_node_t* node, rclc_support_t* support,
                                  const rcl_allocator_t* allocator) {
+  hal_init();
   rcl_ret_check(rclc_executor_init(&wheel_ctrl_exe, &support->context,
                                    N_EXEC_HANDLES, allocator));
 

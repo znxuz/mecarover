@@ -15,7 +15,7 @@
 #include <ulog.h>
 #include <uxr/client/config.h>
 
-#include <mecarover/hal/stm_hal.hpp>
+#include <mecarover/hal/hal.hpp>
 #include <mecarover/micro_ros/rcl_ret_check.hpp>
 
 #include "eth_transport.h"

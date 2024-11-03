@@ -14,7 +14,9 @@ MICRO_ROS_LIB := -L$(MICRO_ROS_LIB_DIR) -lmicroros
 EIGEN_DIR := eigen
 ULOG_DIR := ulog/src
 
-OPT := 0
+OPT := -Os
+DEBUG := # -DDEBUG -g3
+
 ULOG_ENABLED := -DULOG_ENABLED
 
 # micro ros agent ip on the host machine, also where the code is normally compiled on
@@ -61,12 +63,11 @@ INCL_PATHS := \
 
 FLAGS = \
 		-mcpu=cortex-m7 \
-		-g3 \
-		-DDEBUG \
+		$(DEBUG) \
+		$(OPT) \
 		-DUSE_HAL_DRIVER \
 		-DSTM32F767xx \
 		-c \
-		-O$(OPT) \
 		-ffunction-sections \
 		-fdata-sections \
 		-Wall \
@@ -76,6 +77,7 @@ FLAGS = \
 		-MF"$(@:%.o=%.d)" \
 		-MT"$@" \
 		--specs=nano.specs \
+		--specs=nosys.specs \
 		-mfpu=fpv5-d16 \
 		-mfloat-abi=hard \
 		-mthumb \
@@ -96,23 +98,23 @@ CPPFLAGS = \
 		   -fno-use-cxa-atexit
 
 LD_FLAGS = \
+		   $(DEBUG) \
 		   $(MICRO_ROS_LIB) \
 		   -mcpu=cortex-m7 \
-		   -T$(LD_FILE) \
+		   -mfpu=fpv5-d16 \
+		   -mfloat-abi=hard \
+		   --specs=nano.specs \
 		   --specs=nosys.specs \
+		   -mthumb \
+		   -T$(LD_FILE) \
 		   -Wl,-Map=$(MAP_FILES) \
 		   -Wl,--gc-sections \
 		   -static \
 		   -u_printf_float \
-		   --specs=nano.specs \
-		   -mfpu=fpv5-d16 \
-		   -mfloat-abi=hard \
-		   -mthumb \
 		   -Wl,--start-group \
 		   -lc \
 		   -lm \
 		   -lstdc++ \
-		   -lsupc++ \
 		   -Wl,--end-group
 
 STARTUP_FLAGS = \
@@ -140,15 +142,15 @@ SRCS_PATHS := \
 			  $(MICRO_ROS_DIR) \
 			  $(ULOG_DIR)
 C_SRCS_EXCLS :=  \
-		  $(MICRO_ROS_DIR)/extra_sources/microros_transports/dma_transport.c \
-		  $(MICRO_ROS_DIR)/extra_sources/microros_transports/it_transport.c \
-		  $(MICRO_ROS_DIR)/extra_sources/microros_transports/udp_transport.c \
-		  $(MICRO_ROS_DIR)/extra_sources/microros_transports/usb_cdc_transport.c \
-		  $(MICRO_ROS_DIR)/sample_main.c \
-		  $(MICRO_ROS_DIR)/sample_main_embeddedrtps.c \
-		  $(MICRO_ROS_DIR)/sample_main_udp.c \
-		  $(ST_DIR_CORE)/Src/syscalls.c \
-		  $(ST_DIR_CORE)/Src/sysmem.c
+				 $(MICRO_ROS_DIR)/extra_sources/microros_transports/dma_transport.c \
+				 $(MICRO_ROS_DIR)/extra_sources/microros_transports/it_transport.c \
+				 $(MICRO_ROS_DIR)/extra_sources/microros_transports/udp_transport.c \
+				 $(MICRO_ROS_DIR)/extra_sources/microros_transports/usb_cdc_transport.c \
+				 $(MICRO_ROS_DIR)/sample_main.c \
+				 $(MICRO_ROS_DIR)/sample_main_embeddedrtps.c \
+				 $(MICRO_ROS_DIR)/sample_main_udp.c \
+				 $(ST_DIR_CORE)/Src/syscalls.c \
+				 $(ST_DIR_CORE)/Src/sysmem.c
 C_SRCS := $(filter-out $(C_SRCS_EXCLS), $(shell find $(SRCS_PATHS) -type f -name "*.c"))
 CPP_SRCS_EXCLS :=
 CPP_SRCS := $(filter-out $(CPP_SRCS_EXCLS), $(shell find $(SRCS_PATHS) -type f -name "*.cpp"))
@@ -225,7 +227,7 @@ flash: all
 	@while ! st-flash --reset write $(EXECUTABLE:.elf=.bin) 0x8000000; do \
 		echo "st-flash failed, retrying..."; \
 		sleep 1; \
-	done
+		done
 
 reflash:
 	$(MAKE) clean

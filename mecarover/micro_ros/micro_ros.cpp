@@ -41,8 +41,6 @@ static void init() {
   rcl_ret_check(rcl_init_options_init(&init_options, allocator));
   rcl_ret_check(rcl_init_options_set_domain_id(&init_options, ROS_DOMAIN_ID));
 
-  // vTaskDelay(pdMS_TO_TICKS(4000));  // delay for the agent to be available
-
   /* probing the agent until success */
   while (rmw_uros_ping_agent(50, 2) != RCL_RET_OK) {
     ULOG_INFO("agent not responding yet, retrying...");
@@ -67,9 +65,9 @@ void micro_ros(void* arg) {
 
   ULOG_INFO("micro-ROS: starting executors");
   for (;;) {
-    rclc_executor_spin_some(wheel_ctrl_exe, RCL_MS_TO_NS(2));
-    rclc_executor_spin_some(odometry_exe, RCL_MS_TO_NS(2));
-    rclc_executor_spin_some(interpolation_exe, RCL_MS_TO_NS(2));
+    rclc_executor_spin_some(wheel_ctrl_exe, RCL_MS_TO_NS(10));
+    rclc_executor_spin_some(odometry_exe, RCL_MS_TO_NS(10));
+    rclc_executor_spin_some(interpolation_exe, RCL_MS_TO_NS(10));
   }
 }
 }

@@ -6,7 +6,7 @@
 #include <rclc/types.h>
 #include <ulog.h>
 
-#include <mecarover/hal/stm_hal.hpp>
+#include <mecarover/hal/hal.hpp>
 #include <mecarover/mrcpptypes.hpp>
 #include <mecarover/robot_params.hpp>
 

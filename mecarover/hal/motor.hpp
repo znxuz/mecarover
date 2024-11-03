@@ -5,9 +5,9 @@
 
 #include <algorithm>
 
-class STMMotorPWM {
+class Motor {
  public:
-  STMMotorPWM() = default;
+  Motor() = default;
   void init(TIM_HandleTypeDef* htim, uint32_t pwm_channel_a,
             uint32_t pwm_channel_b, int direction) {
     this->htim = htim;

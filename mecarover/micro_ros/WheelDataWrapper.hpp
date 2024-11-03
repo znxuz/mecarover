@@ -4,6 +4,7 @@
 #include <std_msgs/msg/float64_multi_array.h>
 
 #include <algorithm>
+#include <iterator>
 #include <cmath>
 #include <cstring>
 #include <mecarover/robot_params.hpp>
@@ -70,8 +71,6 @@ struct WheelDataWrapper {
     else
       return ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float64MultiArray);
   }
-
-  // TODO: iterator support
 
   const std::string_view label;
   const uint8_t size = N_WHEEL;

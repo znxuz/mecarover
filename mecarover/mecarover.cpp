@@ -7,7 +7,6 @@
 #include <ulog.h>
 #include <usart.h>
 
-#include <mecarover/hal/stm_hal.hpp>
 #include <mecarover/micro_ros/micro_ros.hpp>
 #include <mecarover/micro_ros/micro_ros_legacy.hpp>
 #include <mecarover/robot_params.hpp>
@@ -48,7 +47,6 @@ void mecarover_start(void) {
   retarget_init(&huart3);
   ULOG_INIT();
   ULOG_SUBSCRIBE(my_console_logger, ULOG_DEBUG_LEVEL);
-  hal_init();
 
   laser_scanner.init();
 
@@ -56,8 +54,8 @@ void mecarover_start(void) {
   // xTaskCreate(micro_ros_legacy, "micro_ros", MAIN_TASK_STACK_SIZE,
   //             controller_task, MICRO_ROS_TASK_PRIORITY, NULL);
 
-  xTaskCreate(micro_ros, "micro_ros", MAIN_TASK_STACK_SIZE, NULL,
-              MICRO_ROS_TASK_PRIORITY, NULL);
+  xTaskCreate(micro_ros, "micro_ros", 3000, NULL, MICRO_ROS_TASK_PRIORITY,
+              NULL);
 
   osKernelStart();
   Error_Handler();  // because osKernelStart should never return

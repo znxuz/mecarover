@@ -1,4 +1,4 @@
-#include "stm_hal.hpp"
+#include "hal.hpp"
 
 #include <tim.h>
 
@@ -6,8 +6,8 @@
 #include <cstdint>
 #include <mecarover/robot_params.hpp>
 
-#include "stm_encoder.hpp"
-#include "stm_motor_pwm.hpp"
+#include "encoder.hpp"
+#include "motor.hpp"
 
 static std::array encoder_timer{&htim3, &htim1, &htim2, &htim4};
 static std::array pwm_timer{&htim8, &htim5, &htim9, &htim8};
@@ -20,8 +20,8 @@ constexpr static std::array motor_direction{1, 1, -1, -1};
 constexpr static std::array encoder_direction{1, 1, 1, 1};
 // constexpr static std::array encoder_scaler{1.0, 1.0, 1.0, 1.0};
 
-static std::array<STMEncoder, N_WHEEL> encoders;
-static std::array<STMMotorPWM, N_WHEEL> pwm_motors;
+static std::array<Encoder, N_WHEEL> encoders;
+static std::array<Motor, N_WHEEL> pwm_motors;
 static std::array<int32_t, N_WHEEL> prev_encoder_val{};
 
 void hal_init() {

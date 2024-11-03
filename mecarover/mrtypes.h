@@ -8,6 +8,8 @@ extern "C" {
 
 typedef double real_t;
 
+// TODO: refactor away this file
+
 typedef struct {
   double x;
   double y;

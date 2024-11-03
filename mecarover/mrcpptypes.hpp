@@ -85,29 +85,29 @@ class vPose {
     return *this;
   }
 
-  friend vPose<FltType> operator*(const vPose<FltType>& lhs,
-                                  const FltType factor) {
+  friend constexpr vPose<FltType> operator*(const vPose<FltType>& lhs,
+                                            const FltType factor) {
     return {lhs.vx * factor, lhs.vy * factor, lhs.omega * factor};
   }
 
-  friend vPose<FltType> operator+(const vPose<FltType>& lhs,
-                                  const vPose<FltType>& rhs) {
+  friend constexpr vPose<FltType> operator+(const vPose<FltType>& lhs,
+                                            const vPose<FltType>& rhs) {
     return {lhs.vx + rhs.vx, lhs.vy + rhs.vy, lhs.omega + rhs.omega};
   }
 
-  friend vPose<FltType> operator-(const vPose<FltType>& lhs,
-                                  const vPose<FltType>& rhs) {
+  friend constexpr vPose<FltType> operator-(const vPose<FltType>& lhs,
+                                            const vPose<FltType>& rhs) {
     return {lhs.vx - rhs.vx, lhs.vy - rhs.vy, lhs.omega - rhs.omega};
   }
 
   /* transformation of velocities from robot frame into world frame  */
-  friend vPose<FltType> vRF2vWF(vPose<FltType> vRF, FltType theta) {
+  friend constexpr vPose<FltType> vRF2vWF(vPose<FltType> vRF, FltType theta) {
     return {vRF.vx * cos(theta) - vRF.vy * sin(theta),
             vRF.vx * sin(theta) + vRF.vy * cos(theta), vRF.omega};
   }
 
   /* transformation of velocities from world frame into robot frame  */
-  friend vPose<FltType> vWF2vRF(vPose<FltType> vWF, FltType theta) {
+  friend constexpr vPose<FltType> vWF2vRF(vPose<FltType> vWF, FltType theta) {
     return {vWF.vx * cos(theta) + vWF.vy * sin(theta),
             -vWF.vx * sin(theta) + vWF.vy * cos(theta), vWF.omega};
   }
@@ -139,23 +139,23 @@ class Pose {
     return *this;
   }
 
-  friend Pose<FltType> operator+(const Pose<FltType>& lhs,
-                                 const Pose<FltType>& rhs) {
+  friend constexpr Pose<FltType> operator+(const Pose<FltType>& lhs,
+                                           const Pose<FltType>& rhs) {
     return {lhs.x + rhs.x, lhs.y + rhs.y, lhs.theta + rhs.theta};
   }
 
-  friend Pose<FltType> operator-(const Pose<FltType>& lhs,
-                                 const Pose<FltType>& rhs) {
+  friend constexpr Pose<FltType> operator-(const Pose<FltType>& lhs,
+                                           const Pose<FltType>& rhs) {
     return {lhs.x - rhs.x, lhs.y - rhs.y, lhs.theta - rhs.theta};
   }
 
-  friend Pose<FltType> operator*(const Pose<FltType>& lhs,
-                                 const FltType factor) {
+  friend constexpr Pose<FltType> operator*(const Pose<FltType>& lhs,
+                                           const FltType factor) {
     return {lhs.x * factor, lhs.y * factor, lhs.theta * factor};
   }
 
-  friend Pose<FltType> operator/(const Pose<FltType>& lhs,
-                                 const FltType divisor) {
+  friend constexpr Pose<FltType> operator/(const Pose<FltType>& lhs,
+                                           const FltType divisor) {
     if (divisor == 0.0) {
       std::perror("division by zero!");
       return {};
@@ -164,13 +164,15 @@ class Pose {
   }
 
   /* transformation of small movements from robot frame into world frame  */
-  friend Pose<FltType> pRF2pWF(const Pose<FltType>& pose, FltType th) {
+  friend constexpr Pose<FltType> pRF2pWF(const Pose<FltType>& pose,
+                                         FltType th) {
     return {pose.x * cos(th) - pose.y * sin(th),
             pose.x * sin(th) + pose.y * cos(th), pose.theta};
   }
 
   /* transformation of small movements from world frame into robot frame  */
-  friend Pose<FltType> pWF2pRF(const Pose<FltType>& d_pose, FltType th) {
+  friend constexpr Pose<FltType> pWF2pRF(const Pose<FltType>& d_pose,
+                                         FltType th) {
     return {d_pose.x * cos(th) + d_pose.y * sin(th),
             -d_pose.x * sin(th) + d_pose.y * cos(th), d_pose.theta};
   }

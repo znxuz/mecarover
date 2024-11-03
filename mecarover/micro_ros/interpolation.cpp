@@ -2,7 +2,6 @@
 
 #include <geometry_msgs/msg/pose2_d.h>
 #include <geometry_msgs/msg/twist.h>
-#include <mecarover/mrtypes.h>
 #include <rcl/allocator.h>
 #include <rcl/node.h>
 #include <rcl/time.h>
@@ -43,7 +42,7 @@ static auto interpolation_timer = rcl_get_zero_initialized_timer();
 static rcl_publisher_t pub_wheel_vel;
 
 static auto vel_rf_target = vPose<real_t>{};
-static auto pose_cur = Pose<real_t>{};
+static auto pose_actual = Pose<real_t>{};
 
 static void cmd_vel_cb(const void* arg) {
   const auto* msg = reinterpret_cast<const geometry_msgs__msg__Twist*>(arg);
@@ -54,7 +53,21 @@ static void cmd_vel_cb(const void* arg) {
 
 static void pose_cb(const void* arg) {
   const auto* msg = reinterpret_cast<const geometry_msgs__msg__Pose2D*>(arg);
-  pose_cur = {msg->x, msg->y, msg->theta};
+  pose_actual = {msg->x, msg->y, msg->theta};
+}
+
+static constexpr vPose<real_t> velocity_smoothen(const vPose<real_t>& vel_sp,
+                                                 const vPose<real_t>& vel_old) {
+  constexpr auto FACTOR = 5;
+  auto diff_max = MAX_VELOCITY_MM_S * UROS_FREQ_MOD_INTERPOLATION_SEC / FACTOR;
+
+  auto vel_diff = vel_sp - vel_old;
+  vel_diff.vx = std::clamp(vel_diff.vx, -diff_max, diff_max);
+  vel_diff.vy = std::clamp(vel_diff.vy, -diff_max, diff_max);
+  diff_max /= robot_params.l_w_half;
+  vel_diff.omega = std::clamp(vel_diff.omega, -diff_max, diff_max);
+
+  return vel_old + vel_diff;
 }
 
 static constexpr void sanity_check(const Pose<real_t>& dpose) {
@@ -62,7 +75,7 @@ static constexpr void sanity_check(const Pose<real_t>& dpose) {
   if (abs(dpose.x) > MAX_LINEAR_DEVIATION ||
       abs(dpose.y) > MAX_LINEAR_DEVIATION ||
       abs(dpose.theta) > MAX_ANGULAR_DEVIATION) [[unlikely]]
-    ULOG_WARNING("[pose sanity check]: pose deviation too large");
+    ULOG_WARNING("[intrpl]: sanity check: pose deviation too large");
 }
 
 static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
@@ -73,9 +86,9 @@ static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
 
   sanity_check(err);
 
-  static constexpr real_t k_p = 0.20;
+  static constexpr real_t K_P = 0.10;
 
-  return err * k_p;
+  return err * K_P;
 }
 
 static void interpolation_cb(rcl_timer_t*, int64_t last_call_time) {
@@ -86,12 +99,12 @@ static void interpolation_cb(rcl_timer_t*, int64_t last_call_time) {
   const auto vel_rf_sp = velocity_smoothen(vel_rf_target, vel_prev);
   vel_prev = vel_rf_sp;
 
-  pose_sp += Pose<real_t>(vRF2vWF(vel_rf_sp, pose_cur.theta) * dt);
-  const auto d_vel_wf = vPose<real_t>(pose_ctrl(pose_sp, pose_cur) / dt);
+  pose_sp += Pose<real_t>(vRF2vWF(vel_rf_sp, pose_actual.theta) * dt);
+  const auto d_vel_wf = vPose<real_t>(pose_ctrl(pose_sp, pose_actual) / dt);
 
-  // TODO: refactor WheelDataWrapper and take pose in ctor
-  auto vel_rf_corrected = vel_rf_sp + vWF2vRF(d_vel_wf, pose_cur.theta);
-  auto msg_vel_wheel_sp = WheelDataWrapper<real_t, WheelDataType::VEL_SP>{
+  const auto vel_rf_corrected =
+      vel_rf_sp + vWF2vRF(d_vel_wf, pose_actual.theta);
+  const auto msg_vel_wheel_sp = WheelDataWrapper<real_t, WheelDataType::VEL_SP>{
       vRF2vWheel(VelRF{vel_rf_corrected.vx, vel_rf_corrected.vy,
                        vel_rf_corrected.omega, 0})};
   rcl_ret_softcheck(rcl_publish(&pub_wheel_vel, &msg_vel_wheel_sp.msg, NULL));

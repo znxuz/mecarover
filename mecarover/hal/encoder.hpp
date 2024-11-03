@@ -4,9 +4,9 @@
 
 inline constexpr uint16_t ARR_VALUE = 65535;
 
-class STMEncoder {
+class Encoder {
  public:
-  STMEncoder() = default;
+  Encoder() = default;
 
   void init(TIM_HandleTypeDef* htim) {
     this->offset = -(ARR_VALUE / 2);
