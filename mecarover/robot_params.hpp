@@ -17,7 +17,7 @@ static constexpr real_t MAX_ANGULAR_DEVIATION = M_PI;
 
 /* defines the frequencies of uros modules */
 inline constexpr real_t UROS_FREQ_MOD_WHEEL_CTRL_SEC = 0.05;
-inline constexpr real_t UROS_FREQ_MOD_INTERPOLATION_SEC = 0.15;
+inline constexpr real_t UROS_FREQ_MOD_INTERPOLATION_SEC = 0.10;
 inline constexpr uint16_t S_TO_MS = 1000;
 
 using VelWheel = Eigen::Matrix<real_t, N_WHEEL, 1>;

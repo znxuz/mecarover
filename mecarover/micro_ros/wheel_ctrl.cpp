@@ -50,7 +50,7 @@ static void wheel_vel_sp_cb(const void* arg) {
 }
 
 static VelWheel vel_pid(const real_t dt) {
-  static constexpr real_t k_p = 0.6, k_i = 0.015, k_d = 0, i_gain_max = 100;
+  static constexpr real_t k_p = 0.40, k_i = 0.015, k_d = 0, i_gain_max = 100;
   static auto integral = VelWheel{}, prev_err = VelWheel{};
 
   const auto err = wheel_vel_sp - wheel_vel_cur;

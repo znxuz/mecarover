@@ -73,7 +73,7 @@ static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
 
   sanity_check(err);
 
-  static constexpr real_t k_p = 0.15;
+  static constexpr real_t k_p = 0.20;
 
   return err * k_p;
 }
