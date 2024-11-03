@@ -6,9 +6,9 @@
 #include <rclc/types.h>
 #include <ulog.h>
 
-#include <mecarover/hal/hal.hpp>
-#include <mecarover/mrcpptypes.hpp>
-#include <mecarover/robot_params.hpp>
+#include <application/hal/hal.hpp>
+#include <application/mrcpptypes.hpp>
+#include <application/robot_params.hpp>
 
 #include "WheelDataWrapper.hpp"
 #include "ctrl_utils.hpp"

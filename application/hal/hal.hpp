@@ -4,7 +4,7 @@
 
 #ifdef __cplusplus
 #include <array>
-#include <mecarover/robot_params.hpp>
+#include <application/robot_params.hpp>
 
 void hal_init();
 void hal_wheel_vel_set_pwm(const std::array<real_t, N_WHEEL>& duty_cycle);

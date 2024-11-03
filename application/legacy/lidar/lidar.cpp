@@ -8,7 +8,6 @@
 #include "lidar.h"
 
 #include <math.h>
-#include <stdio.h>
 #include <tim.h>
 #include <ulog.h>
 #include <usart.h>

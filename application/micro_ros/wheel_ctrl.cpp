@@ -9,8 +9,8 @@
 #include <ulog.h>
 
 #include <algorithm>
-#include <mecarover/hal/hal.hpp>
-#include <mecarover/robot_params.hpp>
+#include <application/hal/hal.hpp>
+#include <application/robot_params.hpp>
 #include <utility>
 
 #include "WheelDataWrapper.hpp"

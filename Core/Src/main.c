@@ -28,7 +28,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <mecarover/hal/hal.hpp>
+#include <application/hal/hal.hpp>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

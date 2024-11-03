@@ -4,7 +4,7 @@
 
 #include <array>
 #include <cstdint>
-#include <mecarover/robot_params.hpp>
+#include <application/robot_params.hpp>
 
 #include "encoder.hpp"
 #include "motor.hpp"

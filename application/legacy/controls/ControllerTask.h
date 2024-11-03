@@ -1,16 +1,17 @@
 #pragma once
 
-#include <mecarover/controls/MecanumController.h>
-#include <mecarover/mrlogger/mrlogger.h>
-#include <mecarover/rtos_config.h>
-#include <mecarover/rtos_utils.h>
+#include <application/legacy/mrlogger/mrlogger.h>
+#include <application/rtos_config.h>
+#include <application/rtos_utils.h>
 
 #include <algorithm>
 #include <array>
 #include <cstring>
-#include <mecarover/hal/hal.hpp>
-#include <mecarover/mrcpptypes.hpp>
-#include <mecarover/robot_params.hpp>
+#include <application/hal/hal.hpp>
+#include <application/mrcpptypes.hpp>
+#include <application/robot_params.hpp>
+
+#include "MecanumController.h"
 
 extern "C" {
 void call_pose_control_task(void* arg);

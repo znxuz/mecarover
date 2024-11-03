@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 
-void mecarover_start(void);
+void application_start(void);
 
 #ifdef __cplusplus
 }

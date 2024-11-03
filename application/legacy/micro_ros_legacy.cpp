@@ -1,7 +1,8 @@
+#include <application/legacy/controls/ControllerTask.h>
+#include <application/legacy/lidar/lidar.h>
+#include <application/micro_ros/eth_transport.h>
 #include <geometry_msgs/msg/twist.h>
 #include <lwip.h>
-#include <mecarover/controls/ControllerTask.h>
-#include <mecarover/lidar/lidar.h>
 #include <rcl/rcl.h>
 #include <rclc/executor.h>
 #include <rclc/rclc.h>
@@ -15,10 +16,8 @@
 #include <ulog.h>
 #include <uxr/client/config.h>
 
-#include <mecarover/hal/hal.hpp>
-#include <mecarover/micro_ros/rcl_ret_check.hpp>
-
-#include "eth_transport.h"
+#include <application/hal/hal.hpp>
+#include <application/micro_ros/rcl_ret_check.hpp>
 
 using namespace imsl;
 using namespace imsl::vehiclecontrol;
@@ -160,7 +159,7 @@ void micro_ros_legacy(void* arg) {
 
   // ethernet communication, change to the local lan ip address
   eth_transport_params_t default_params = {
-      {0, 0, 0}, {"192.168.199.157"}, {"8888"}};
+      {0, 0, 0}, {MICRO_ROS_AGENT_IP}, {MICRO_ROS_AGENT_PORT}};
   rcl_ret_check(rmw_uros_set_custom_transport(
       false, (void*)&default_params, eth_transport_open, eth_transport_close,
       eth_transport_write, eth_transport_read));
@@ -168,7 +167,7 @@ void micro_ros_legacy(void* arg) {
   rcl_allocator_t allocator = rcl_get_default_allocator();
   rcl_init_options_t init_options = rcl_get_zero_initialized_init_options();
   rcl_ret_check(rcl_init_options_init(&init_options, allocator));
-  size_t domain_id = 42;
+  size_t domain_id = ROS_DOMAIN_ID;
   rcl_ret_check(rcl_init_options_set_domain_id(&init_options, domain_id));
   rclc_support_t support;
 

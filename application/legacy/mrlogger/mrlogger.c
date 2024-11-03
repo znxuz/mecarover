@@ -1,7 +1,7 @@
 #include "mrlogger.h"
 
 #include <FreeRTOS.h>
-#include <mecarover/rtos_config.h>
+#include <application/rtos_config.h>
 #include <queue.h>
 #include <semphr.h>
 #include <stdarg.h>

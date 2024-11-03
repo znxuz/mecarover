@@ -1,17 +1,17 @@
 #include <cmsis_os2.h>
-#include <mecarover/controls/ControllerTask.h>
-#include <mecarover/lidar/lidar.h>
-#include <mecarover/retarget.h>
+#include <application/legacy/controls/ControllerTask.h>
+#include <application/legacy/lidar/lidar.h>
+#include <application/retarget.h>
 #include <rtc.h>
 #include <tim.h>
 #include <ulog.h>
 #include <usart.h>
 
-#include <mecarover/micro_ros/micro_ros.hpp>
-#include <mecarover/micro_ros/micro_ros_legacy.hpp>
-#include <mecarover/robot_params.hpp>
+#include <application/micro_ros/micro_ros.hpp>
+#include <application/legacy/micro_ros_legacy.hpp>
+#include <application/robot_params.hpp>
 
-#include "mecarover/rtos_config.h"
+#include "application/rtos_config.h"
 
 LaserScanner laser_scanner;
 
@@ -43,19 +43,21 @@ void my_console_logger(ulog_level_t severity, char* msg) {
          ulog_level_name(severity), msg);
 }
 
-void mecarover_start(void) {
+void application_start(void) {
   retarget_init(&huart3);
   ULOG_INIT();
   ULOG_SUBSCRIBE(my_console_logger, ULOG_DEBUG_LEVEL);
 
   laser_scanner.init();
 
-  // auto* controller_task = new imsl::vehiclecontrol::ControllerTask<real_t>();
-  // xTaskCreate(micro_ros_legacy, "micro_ros", MAIN_TASK_STACK_SIZE,
-  //             controller_task, MICRO_ROS_TASK_PRIORITY, NULL);
-
+#ifdef LEGACY
+  auto* controller_task = new imsl::vehiclecontrol::ControllerTask<real_t>();
+  xTaskCreate(micro_ros_legacy, "micro_ros", MAIN_TASK_STACK_SIZE,
+              controller_task, MICRO_ROS_TASK_PRIORITY, NULL);
+#else
   xTaskCreate(micro_ros, "micro_ros", 3000, NULL, MICRO_ROS_TASK_PRIORITY,
               NULL);
+#endif
 
   osKernelStart();
   Error_Handler();  // because osKernelStart should never return

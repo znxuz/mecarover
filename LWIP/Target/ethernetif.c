@@ -33,7 +33,7 @@
 
 /* Within 'USER CODE' section, code will be kept by default at each generation */
 /* USER CODE BEGIN 0 */
-#include <mecarover/rtos_config.h>
+#include <application/rtos_config.h>
 /* USER CODE END 0 */
 
 /* Private define ------------------------------------------------------------*/

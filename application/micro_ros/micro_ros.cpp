@@ -1,7 +1,7 @@
 #include "micro_ros.hpp"
 
 #include <lwip.h>
-#include <mecarover/lidar/lidar.h>
+#include <application/legacy/lidar/lidar.h>
 #include <rcl/allocator.h>
 #include <rcl/types.h>
 #include <rclc/executor.h>

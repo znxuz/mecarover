@@ -1,6 +1,6 @@
 NAME := mecarover
 
-APP_DIR := $(NAME)
+APP_DIR := application
 BUILD_DIR := build
 DIR_GUARD = @mkdir -p "$(@D)"
 
@@ -14,16 +14,17 @@ MICRO_ROS_LIB := -L$(MICRO_ROS_LIB_DIR) -lmicroros
 EIGEN_DIR := eigen
 ULOG_DIR := ulog/src
 
-OPT := -Os
-DEBUG := # -DDEBUG -g3
-
-ULOG_ENABLED := -DULOG_ENABLED
-
 # micro ros agent ip on the host machine, also where the code is normally compiled on
 ETH_IF := wlp3s0
 MICRO_ROS_AGENT_IP := \"$(shell ip a s $(ETH_IF) | grep -Eo '[0-9]{3}.[0-9]{3}.[0-9]{0,3}.[0-9]{0,3}' | head -n1)\"
 MICRO_ROS_AGENT_PORT := \"8888\"
 ROS_DOMAIN_ID := 42
+
+OPT := -Os
+DEBUG := # -DDEBUG -g3
+ULOG_ENABLED := -DULOG_ENABLED
+USE_LEGACY := # -DLEGACY
+
 
 BIN := $(BUILD_DIR)/$(NAME).bin
 EXECUTABLE := $(BUILD_DIR)/$(NAME).elf
@@ -63,10 +64,15 @@ INCL_PATHS := \
 
 FLAGS = \
 		-mcpu=cortex-m7 \
-		$(DEBUG) \
-		$(OPT) \
+		--specs=nano.specs \
+		--specs=nosys.specs \
+		-mfpu=fpv5-d16 \
+		-mfloat-abi=hard \
+		-mthumb \
 		-DUSE_HAL_DRIVER \
 		-DSTM32F767xx \
+		$(DEBUG) \
+		$(OPT) \
 		-c \
 		-ffunction-sections \
 		-fdata-sections \
@@ -76,11 +82,6 @@ FLAGS = \
 		-MP \
 		-MF"$(@:%.o=%.d)" \
 		-MT"$@" \
-		--specs=nano.specs \
-		--specs=nosys.specs \
-		-mfpu=fpv5-d16 \
-		-mfloat-abi=hard \
-		-mthumb \
 		$(INCL_PATHS) \
 		$(ULOG_ENABLED) \
 		-DMICRO_ROS_AGENT_IP=$(MICRO_ROS_AGENT_IP) \
@@ -118,20 +119,20 @@ LD_FLAGS = \
 		   -Wl,--end-group
 
 STARTUP_FLAGS = \
+				$(DEBUG) \
 				-mcpu=cortex-m7 \
-				-g3 \
-				-DDEBUG \
+				--specs=nano.specs \
+				--specs=nosys.specs \
+				-mfpu=fpv5-d16 \
+				-mfloat-abi=hard \
+				-mthumb \
 				-c \
 				-x \
 				assembler-with-cpp \
 				-MMD \
 				-MP \
 				-MF"$(@:%.o=%.d)" \
-				-MT"$@" \
-				--specs=nano.specs \
-				-mfpu=fpv5-d16 \
-				-mfloat-abi=hard \
-				-mthumb
+				-MT"$@"
 
 SRCS_PATHS := \
 			  $(APP_DIR) \

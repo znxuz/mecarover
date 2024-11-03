@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <mecarover/rtos_config.h>
-#include <mecarover/rtos_utils.h>
+#include <application/rtos_config.h>
+#include <application/rtos_utils.h>
 #include <stdint.h>
 
 extern "C" {
