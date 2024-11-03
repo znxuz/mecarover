@@ -5,7 +5,7 @@
 #include <Eigen/Core>
 #include <Eigen/LU>
 
-#include "mrtypes.h"
+#include "real_t.h"
 
 inline constexpr uint8_t DOF = 4;
 inline constexpr uint8_t N_WHEEL = 4;
@@ -24,13 +24,32 @@ using VelRF = Eigen::Matrix<real_t, DOF, 1>;
 using Robot2WheelMatrix = Eigen::Matrix<real_t, N_WHEEL, DOF>;
 using Wheel2RobotMatrix = Eigen::Matrix<real_t, DOF, N_WHEEL>;
 
+struct robot_param_t {
+  double increments;     /* Geberinkremente (4 * Striche)   */
+  double gear_ratio;     /* Getriebeuebersetzung            */
+  double inc2rad;        /* Ink --> rad                     */
+  double length;         /* in mm Abstand der Achsen        */
+  double width;          /* in mm Abstand der Achsen        */
+  double l_w_half;       /* in mm 0.5 * (Breite + Laenge)   */
+  double wheel_radius;   /* in mm                           */
+  double JoystickBeschl; /* maximale Jostickbeschleunigung in mm/s/s */
+  // double rad2prm; /* rad/s --> RPM                   */
+  // double omega_max; /* Motornenndrehzahl in U/min      */
+  // double roll_radius; /* in mm                           */
+  // double VBahnMax; /* in mm/s                         */
+  // double VthetaMax; /* in rad/s                        */
+  // double MaxRPM[4]; /* Maximum Umdrehungen pro Minute Motor */
+};
+
 struct ctrl_param_t {
   double k_i;
   double k_d;
   double k_ctrl_output;
   double integral_limit;
-  Pose_t LageKv;
-  Pose_t LageSchleppMax;
+  double LageKv;
+  double LageSchleppMaxX;
+  double LageSchleppMaxY;
+  double LageSchleppMaxTheta;
   double Koppel; /* Faktor für Ausregelung des Verkopplungsfehlers */
                  // double ctrl_output_scaler[N_WHEEL]; // useless
                  // double DzrSchleppMax;
@@ -41,12 +60,6 @@ struct sampling_time_t {
   double dt_pose_ctrl;
   double dt_wheel_ctrl;
   uint32_t ratio_pose_wheel;
-};
-
-inline constexpr sampling_time_t sampling_times = {
-    .dt_pose_ctrl = 0.015,   // 15 ms sampling time of pose control loop
-    .dt_wheel_ctrl = 0.015,  // 5 ms sampling time of wheel control loop
-    .ratio_pose_wheel = 1    // 15 ms / 5 ms ratio pose / wheel
 };
 
 // ASK: why l_w_half is used rather than a+b for the velocity transformations?
@@ -72,10 +85,18 @@ inline constexpr ctrl_param_t ctrl_params = {
     .k_d = 0.0,
     .k_ctrl_output = 0.3,
     .integral_limit = 30.0,
-    .LageKv = {0.1, 0.1, 0.1},
-    .LageSchleppMax = {300.0, 300.0, 30.0},
+    .LageKv = 0.1,
+    .LageSchleppMaxX = 300,
+    .LageSchleppMaxY = 300,
+    .LageSchleppMaxTheta = 30,  // 30?! theta is never bigger than 2pi...
     .Koppel = 0.0
     // .ctrl_output_scaler = {1.0, 1.0, 1.0, 1.0},
     // .DzrSchleppMax = 0.0,
     // .DzrKoppel = {-0.1, 0.1, -0.1, 0.1},
+};
+
+inline constexpr sampling_time_t sampling_times = {
+    .dt_pose_ctrl = 0.015,   // 15 ms sampling time of pose control loop
+    .dt_wheel_ctrl = 0.015,  // 5 ms sampling time of wheel control loop
+    .ratio_pose_wheel = 1    // 15 ms / 5 ms ratio pose / wheel
 };

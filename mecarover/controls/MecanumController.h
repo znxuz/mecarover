@@ -61,10 +61,9 @@ class MecanumController {
                                     const Heading<T>& pose_cur_theta,
                                     const vPose<T>& vel_wframe_sp) const {
     vPose<T> vel_diff = {
-        pose_delta.x / sampling_times.dt_pose_ctrl * ctrl_params.LageKv.x,
-        pose_delta.y / sampling_times.dt_pose_ctrl * ctrl_params.LageKv.y,
-        pose_delta.theta / sampling_times.dt_pose_ctrl *
-            ctrl_params.LageKv.theta};
+        pose_delta.x / sampling_times.dt_pose_ctrl * ctrl_params.LageKv,
+        pose_delta.y / sampling_times.dt_pose_ctrl * ctrl_params.LageKv,
+        pose_delta.theta / sampling_times.dt_pose_ctrl * ctrl_params.LageKv};
 
     vPose<T> vel_rframe_corrected =
         vWF2vRF(vel_wframe_sp + vel_diff, pose_cur_theta);

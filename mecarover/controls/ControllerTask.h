@@ -41,7 +41,7 @@ class ControllerTask {
   RtosSemaphore pose_ctrl_sem{10, 0};
 
   RtosMutexObject<std::array<T, N_WHEEL>> vel_wheel_sp;
-  RtosMutexObject<mrc_stat> error_status{MRC_NOERR};
+  RtosMutexObject<bool> error_status{false};
 
  public:
   RtosMutexObject<CtrlMode> ctrl_mode;
@@ -97,12 +97,12 @@ class ControllerTask {
 
       auto pose_delta = pose_sp - pose_cur;
       using std::abs;
-      if (abs(pose_delta.x) > ctrl_params.LageSchleppMax.x ||
-          abs(pose_delta.y) > ctrl_params.LageSchleppMax.y ||
-          abs(pose_delta.theta) > ctrl_params.LageSchleppMax.theta)
+      if (abs(pose_delta.x) > ctrl_params.LageSchleppMaxX ||
+          abs(pose_delta.y) > ctrl_params.LageSchleppMaxY ||
+          abs(pose_delta.theta) > ctrl_params.LageSchleppMaxTheta)
           [[unlikely]] {
         ctrl_mode.set(CtrlMode::OFF);
-        error_status.set(MRC_LAGEERR);
+        error_status.set(true);
         log_message(log_error, "pose deviation too large");
         log_message(log_error, "sp: [x: %f, y: %f, theta: %f]", pose_sp.x,
                     pose_sp.y, static_cast<T>(pose_sp.theta));
