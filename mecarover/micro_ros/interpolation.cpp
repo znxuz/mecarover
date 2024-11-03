@@ -20,6 +20,8 @@
 
 #include "WheelDataWrapper.hpp"
 #include "ctrl_utils.hpp"
+#include "geometry_msgs/msg/pose2_d.h"
+#include "geometry_msgs/msg/twist.h"
 #include "rcl_ret_check.hpp"
 
 using namespace imsl;
@@ -43,14 +45,16 @@ static rcl_publisher_t pub_wheel_vel;
 static auto vel_rf_target = vPose<real_t>{};
 static auto pose_cur = Pose<real_t>{};
 
-static void cmd_vel_cb(const void*) {
-  vel_rf_target.vx = msg_cmd_vel.linear.x * 1000.0;  // m/s -> mm/s
-  vel_rf_target.vy = msg_cmd_vel.linear.y * 1000.0;  // m/s -> mm/s
-  vel_rf_target.omega = msg_cmd_vel.angular.z;       // rad/s
+static void cmd_vel_cb(const void* arg) {
+  const auto* msg = reinterpret_cast<const geometry_msgs__msg__Twist*>(arg);
+  vel_rf_target.vx = msg->linear.x * 1000.0;  // m/s -> mm/s
+  vel_rf_target.vy = msg->linear.y * 1000.0;  // m/s -> mm/s
+  vel_rf_target.omega = msg->angular.z;       // rad/s
 }
 
-static void pose_cb(const void*) {
-  pose_cur = {msg_odom_pose.x, msg_odom_pose.y, msg_odom_pose.theta};
+static void pose_cb(const void* arg) {
+  const auto* msg = reinterpret_cast<const geometry_msgs__msg__Pose2D*>(arg);
+  pose_cur = {msg->x, msg->y, msg->theta};
 }
 
 static void sanity_check(const Pose<real_t>& dpose) {
@@ -77,7 +81,7 @@ static void interpolation_cb(rcl_timer_t*, int64_t last_call_time) {
   //            vel_rf_sp.vy, vel_rf_sp.omega);
 
   pose_sp +=
-      vRF2vWF(vel_rf_sp, pose_cur.theta) * dt;
+      Pose<real_t>(vRF2vWF(vel_rf_sp, pose_cur.theta) * dt);
   // ULOG_DEBUG("%s: [x: %.2f, y: %.2f, theta: %.2f]",
   //            "[intrpl]: cumulated pose_sp from vel_rf", pose_sp.x,
   //            pose_sp.y, static_cast<real_t>(pose_sp.theta));
@@ -93,8 +97,10 @@ static void interpolation_cb(rcl_timer_t*, int64_t last_call_time) {
   static constexpr real_t k_v = 0.35;
 
   // TODO: refactor operator overloads and here
-  vPose<real_t> d_vel_wf = {dpose.x / dt * k_v, dpose.y / dt * k_v,
-                            dpose.theta / dt * k_v};
+  // vPose<real_t> d_vel_wf = {dpose.x / dt * k_v, dpose.y / dt * k_v,
+  //                           dpose.theta / dt * k_v};
+  vPose<real_t> d_vel_wf = vPose<real_t>(dpose / dt) * k_v;
+
   auto vel_rf_corrected = vel_rf_sp + vWF2vRF(d_vel_wf, pose_cur.theta);
   // ULOG_DEBUG("%s: [dx: %.2f, dy: %.2f, omega: %.2f]",
   //            "[intrpl]: (corrected) vel_rf_sp", vel_rf_corrected.vx,

@@ -31,6 +31,15 @@ TEST_F(PoseTest, ParameterizedConstructor) {
   EXPECT_EQ(static_cast<double>(pose1.theta), M_PI / 4);
 }
 
+TEST_F(PoseTest, PoseFromVPoseConversion) {
+  vPose<double> vpose{1.5, 2.5, 3.5};
+  Pose<double> pose_from_vpose(vpose);
+
+  EXPECT_EQ(pose_from_vpose.x, 1.5);
+  EXPECT_EQ(pose_from_vpose.y, 2.5);
+  EXPECT_EQ(static_cast<double>(pose_from_vpose.theta), Heading<double>(3.5));
+}
+
 TEST_F(PoseTest, RandomizedAddition) {
   for (int i = 0; i < 10000; ++i) {
     double random_x = dist(rng);
@@ -59,11 +68,11 @@ TEST_F(PoseTest, DivisionOperator) {
     if (divisor == 0.0) continue;
 
     Pose<double> p(x, y, theta);
-    vPose<double> result = p / divisor;
+    Pose<double> result = p / divisor;
 
-    EXPECT_NEAR(result.vx, x / divisor, tolerance);
-    EXPECT_NEAR(result.vy, y / divisor, tolerance);
-    EXPECT_NEAR(result.omega, Heading<double>(theta) / divisor, tolerance);
+    EXPECT_NEAR(result.x, x / divisor, tolerance);
+    EXPECT_NEAR(result.y, y / divisor, tolerance);
+    EXPECT_NEAR(result.theta, Heading<double>(theta) / divisor, tolerance);
   }
 }
 
@@ -187,12 +196,21 @@ TEST_F(vPoseTest, ScalarMultiplicationOperator) {
     double factor = dist(rng);
 
     vPose<double> v{vx, vy, omega};
-    Pose<double> scaled = v * factor;
+    vPose<double> scaled = v * factor;
 
-    EXPECT_EQ(scaled.x, vx * factor);
-    EXPECT_EQ(scaled.y, vy * factor);
-    EXPECT_EQ(scaled.theta, Heading<double>(omega * factor));
+    EXPECT_EQ(scaled.vx, vx * factor);
+    EXPECT_EQ(scaled.vy, vy * factor);
+    EXPECT_EQ(scaled.omega, omega * factor);
   }
+}
+
+TEST_F(vPoseTest, VPoseFromPoseConversion) {
+  Pose<double> pose{4.0, 5.0, Heading<double>(6.0)};
+  vPose<double> vpose_from_pose(pose);
+
+  EXPECT_EQ(vpose_from_pose.vx, 4.0);
+  EXPECT_EQ(vpose_from_pose.vy, 5.0);
+  EXPECT_EQ(static_cast<double>(vpose_from_pose.omega), Heading<double>(6.0));
 }
 
 TEST_F(vPoseTest, vRF2vWFTransformation) {
@@ -241,6 +259,20 @@ TEST_F(vPoseTest, vPoseTFBack2Back) {
     EXPECT_NEAR(tf.vy, pose.vy, tolerance);
     EXPECT_NEAR(tf.omega, pose.omega, tolerance);
   }
+}
+
+TEST(PoseMathTests, DivisionAndConversionTest) {
+    double k_v = 2.0;
+    double dt = 0.1;
+
+    Pose<double> dpose(10.0, 5.0, Heading<real_t>(M_PI / 4));
+    vPose<double> vpose_multiplied = vPose<real_t>(dpose / dt) * k_v;
+
+    // Check the results
+    EXPECT_DOUBLE_EQ(vpose_multiplied.vx, (dpose.x / dt) * k_v);
+    EXPECT_DOUBLE_EQ(vpose_multiplied.vy, (dpose.y / dt) * k_v);
+    EXPECT_DOUBLE_EQ(vpose_multiplied.omega,
+                     Heading<double>(dpose.theta / dt) * k_v);
 }
 
 int main(int argc, char **argv) {

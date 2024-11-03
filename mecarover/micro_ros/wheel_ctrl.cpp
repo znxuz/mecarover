@@ -75,9 +75,11 @@ static VelWheel vel_pid() {
 }
 
 static void wheel_ctrl_cb(const void* arg) {
-  if (arg)
-    std::copy(wheel_vel_buf.msg.data.data,
-              wheel_vel_buf.msg.data.data + N_WHEEL, std::begin(wheel_vel_sp));
+  if (arg) {
+    const auto* msg = reinterpret_cast<const MsgType<real_t>*>(arg);
+    std::copy(msg->data.data, msg->data.data + N_WHEEL,
+              std::begin(wheel_vel_sp));
+  }
 
   // ULOG_DEBUG("%s: %.2f, %.2f, %.2f, %.2f",
   //            "[wheel - wheel_ctrl_cb]: wheel_vel_sp from intrpl",
