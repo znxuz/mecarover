@@ -40,6 +40,7 @@
 /* The time to block waiting for input. */
 #define TIME_WAITING_FOR_INPUT ( portMAX_DELAY )
 /* USER CODE BEGIN OS_THREAD_STACK_SIZE_WITH_RTOS */
+#define INTERFACE_THREAD_STACK_SIZE ( 1024 )
 /* USER CODE END OS_THREAD_STACK_SIZE_WITH_RTOS */
 /* Network interface name */
 #define IFNAME0 's'
@@ -264,8 +265,8 @@ static void low_level_init(struct netif *netif)
 
   /* create the task that handles the ETH_MAC */
 /* USER CODE BEGIN OS_THREAD_NEW_CMSIS_RTOS_V2 */
-  xTaskCreate(ethernetif_input, "EthIf", ETH_STACK_SIZE, netif,
-              ETH_TASK_PRIORITY, NULL);
+  xTaskCreate(ethernetif_input, "EthIf", INTERFACE_THREAD_STACK_SIZE, netif,
+              osPriorityRealtime, NULL);
 /* USER CODE END OS_THREAD_NEW_CMSIS_RTOS_V2 */
 
 /* USER CODE BEGIN PHY_PRE_CONFIG */
@@ -789,7 +790,14 @@ void ethernet_link_thread(void* argument)
 
   struct netif *netif = (struct netif *) argument;
 /* USER CODE BEGIN ETH link init */
-
+  /* ETH_CODE: call HAL_ETH_Start_IT instead of HAL_ETH_Start
+   * This is required for operation with RTOS.
+   * This trick allows to keep this change through
+   * code re-generation by STM32CubeMX
+   */
+#define HAL_ETH_Start HAL_ETH_Start_IT
+  /* ETH_CODE: workaround to call LOCK_TCPIP_CORE when accessing netif link functions*/
+  LOCK_TCPIP_CORE();
 /* USER CODE END ETH link init */
 
   for(;;)
@@ -845,6 +853,11 @@ void ethernet_link_thread(void* argument)
 
 /* USER CODE BEGIN ETH link Thread core code for User BSP */
 
+  UNLOCK_TCPIP_CORE();
+  osDelay(100);
+  LOCK_TCPIP_CORE();
+  continue; /* skip next osDelay */
+
 /* USER CODE END ETH link Thread core code for User BSP */
 
     osDelay(100);
@@ -854,6 +867,7 @@ void ethernet_link_thread(void* argument)
 void HAL_ETH_RxAllocateCallback(uint8_t **buff)
 {
 /* USER CODE BEGIN HAL ETH RxAllocateCallback */
+
   struct pbuf_custom *p = LWIP_MEMPOOL_ALLOC(RX_POOL);
   if (p)
   {
@@ -924,5 +938,40 @@ void HAL_ETH_TxFreeCallback(uint32_t * buff)
 
 /* USER CODE BEGIN 8 */
 
+static osThreadId_t lwip_core_lock_holder_thread_id;
+static osThreadId_t lwip_tcpip_thread_id;
+
+void sys_lock_tcpip_core(void){
+	sys_mutex_lock(&lock_tcpip_core);
+	lwip_core_lock_holder_thread_id = osThreadGetId();
+}
+
+void sys_unlock_tcpip_core(void){
+	lwip_core_lock_holder_thread_id = 0;
+	sys_mutex_unlock(&lock_tcpip_core);
+}
+
+void sys_check_core_locking(void){
+  /* Embedded systems should check we are NOT in an interrupt context here */
+
+  LWIP_ASSERT("Function called from interrupt context", (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) == 0);
+
+  if (lwip_tcpip_thread_id != 0) {
+	  osThreadId_t current_thread_id = osThreadGetId();
+
+#if LWIP_TCPIP_CORE_LOCKING
+	LWIP_ASSERT("Function called without core lock", current_thread_id == lwip_core_lock_holder_thread_id);
+	/* ETH_CODE: to easily check that example has correct handling of core lock
+	 * This will trigger breakpoint (__BKPT)
+	 */
+#else /* LWIP_TCPIP_CORE_LOCKING */
+	LWIP_ASSERT("Function called from wrong thread", current_thread_id == lwip_tcpip_thread_id);
+#endif /* LWIP_TCPIP_CORE_LOCKING */
+	LWIP_UNUSED_ARG(current_thread_id); /* for LWIP_NOASSERT */
+  }
+}
+void sys_mark_tcpip_thread(void){
+	lwip_tcpip_thread_id = osThreadGetId();
+}
 /* USER CODE END 8 */
 

@@ -29,7 +29,7 @@
 #include <string.h>
 
 /* USER CODE BEGIN 0 */
-#include <application/rtos_config.h>
+
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
 static void ethernet_link_status_updated(struct netif *netif);
@@ -49,10 +49,15 @@ uint8_t IP_ADDRESS[4];
 uint8_t NETMASK_ADDRESS[4];
 uint8_t GATEWAY_ADDRESS[4];
 /* USER CODE BEGIN OS_THREAD_ATTR_CMSIS_RTOS_V2 */
+#define INTERFACE_THREAD_STACK_SIZE ( 1024 )
 /* USER CODE END OS_THREAD_ATTR_CMSIS_RTOS_V2 */
 
 /* USER CODE BEGIN 2 */
-
+static inline void tcpip_init_wrap(tcpip_init_done_fn tcpip_init_done, void *arg){
+	tcpip_init(tcpip_init_done, arg);
+	LOCK_TCPIP_CORE();
+}
+#define tcpip_init tcpip_init_wrap
 /* USER CODE END 2 */
 
 /**
@@ -99,12 +104,13 @@ void MX_LWIP_Init(void)
 
   /* Create the Ethernet link handler thread */
 /* USER CODE BEGIN H7_OS_THREAD_NEW_CMSIS_RTOS_V2 */
-  xTaskCreate(ethernet_link_thread, "EthLink", LWIP_STACK_SIZE, &gnetif,
-		  LWIP_TASK_PRIORITY, NULL);
+  xTaskCreate(ethernet_link_thread, "EthLink", INTERFACE_THREAD_STACK_SIZE,
+              &gnetif, osPriorityBelowNormal, NULL);
+
 /* USER CODE END H7_OS_THREAD_NEW_CMSIS_RTOS_V2 */
 
 /* USER CODE BEGIN 3 */
-
+  UNLOCK_TCPIP_CORE();
 /* USER CODE END 3 */
 }
 

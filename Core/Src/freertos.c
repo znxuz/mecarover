@@ -47,12 +47,12 @@
 /* USER CODE BEGIN Variables */
 
 /* USER CODE END Variables */
-/* Definitions for executor */
-osThreadId_t executorHandle;
-const osThreadAttr_t executor_attributes = {
-  .name = "executor",
-  .stack_size = 3000 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+/* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+  .name = "defaultTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -60,7 +60,7 @@ const osThreadAttr_t executor_attributes = {
 
 /* USER CODE END FunctionPrototypes */
 
-void rosinit(void *argument);
+void none(void *argument);
 
 extern void MX_LWIP_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -89,7 +89,7 @@ return 0;
   */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-  application_start(); // this should never return
+  application_start(); // intercept and should never return
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -109,8 +109,8 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of executor */
-  executorHandle = osThreadNew(rosinit, NULL, &executor_attributes);
+  /* creation of defaultTask */
+  defaultTaskHandle = osThreadNew(none, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -122,21 +122,20 @@ void MX_FREERTOS_Init(void) {
 
 }
 
-/* USER CODE BEGIN Header_rosinit */
+/* USER CODE BEGIN Header_none */
 /**
-  * @brief  Function implementing the executor thread.
+  * @brief  Function implementing the defaultTask thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_rosinit */
-void rosinit(void *argument)
+/* USER CODE END Header_none */
+void none(void *argument)
 {
   /* init code for LWIP */
   MX_LWIP_Init();
-  /* USER CODE BEGIN rosinit */
-  /* Infinite loop */
+  /* USER CODE BEGIN none */
   vTaskDelete(NULL);
-  /* USER CODE END rosinit */
+  /* USER CODE END none */
 }
 
 /* Private application code --------------------------------------------------*/
