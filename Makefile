@@ -98,7 +98,7 @@ CPPFLAGS = \
 		   -fno-rtti \
 		   -fno-use-cxa-atexit
 
-LD_FLAGS = \
+LDFLAGS = \
 		   $(DEBUG) \
 		   $(MICRO_ROS_LIB) \
 		   -mcpu=cortex-m7 \
@@ -181,7 +181,7 @@ $(BIN): $(EXECUTABLE)
 	arm-none-eabi-objcopy -O binary $(EXECUTABLE) $(EXECUTABLE:.elf=.bin)
 
 $(EXECUTABLE) $(MAP_FILES): $(OBJS) $(LD_FILE)
-	arm-none-eabi-g++ $(OBJS) $(LD_FLAGS) -o $(EXECUTABLE)
+	arm-none-eabi-g++ $(OBJS) $(LDFLAGS) -o $(EXECUTABLE)
 	@echo "Finished building target: $@"
 
 $(SIZE_OUTPUT): $(EXECUTABLE)

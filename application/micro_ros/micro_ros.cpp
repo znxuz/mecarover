@@ -9,25 +9,33 @@
 #include <rmw_microros/rmw_microros.h>
 #include <ulog.h>
 
+#include "application/micro_ros/lidar.hpp"
 #include "interpolation.hpp"
 #include "odometry.hpp"
+#include "rcl/time.h"
 #include "rcl_ret_check.hpp"
+#include "rcutils/allocator.h"
 #include "udp_transport.h"
 #include "wheel_ctrl.hpp"
 
-extern LaserScanner laser_scanner;
-
 extern "C" {
+void* microros_allocate(size_t size, void* state);
+void microros_deallocate(void* pointer, void* state);
+void* microros_reallocate(void* pointer, size_t size, void* state);
+void* microros_zero_allocate(size_t number_of_elements, size_t size_of_element,
+                             void* state);
+
 /* cannot be const, because the transport function requires non const */
 static udp_transport_params_t TRANSPORT_PARAMS = {
     {0, 0, 0}, {MICRO_ROS_AGENT_IP}, {MICRO_ROS_AGENT_PORT}};
 
+static rcl_allocator_t allocator = rcutils_get_zero_initialized_allocator();;
 static rcl_node_t node;
 static rclc_support_t support;
-static rcl_allocator_t allocator;
 static rcl_init_options_t init_options;
 
 static void init() {
+  ULOG_INFO("initializing micro-ROS module");
   MX_LWIP_Init();
   vTaskDelay(pdMS_TO_TICKS(200));
 
@@ -36,7 +44,10 @@ static void init() {
       (void*)&TRANSPORT_PARAMS, udp_transport_open, udp_transport_close,
       udp_transport_write, udp_transport_read));
 
-  allocator = rcl_get_default_allocator();
+  allocator.allocate = microros_allocate;
+  allocator.deallocate = microros_deallocate;
+  allocator.reallocate = microros_reallocate;
+  allocator.zero_allocate = microros_zero_allocate;
   init_options = rcl_get_zero_initialized_init_options();
   rcl_ret_check(rcl_init_options_init(&init_options, allocator));
   rcl_ret_check(rcl_init_options_set_domain_id(&init_options, ROS_DOMAIN_ID));
@@ -62,12 +73,14 @@ void micro_ros(void* arg) {
   auto* wheel_ctrl_exe = wheel_ctrl_init(&node, &support, &allocator);
   auto* odometry_exe = odometry_init(&node, &support, &allocator);
   auto* interpolation_exe = interpolation_init(&node, &support, &allocator);
+  // auto* lidar_exe = lidar_exe_init(&node, &support, &allocator);
 
   ULOG_INFO("micro-ROS: starting executors");
   for (;;) {
     rclc_executor_spin_some(wheel_ctrl_exe, RCL_MS_TO_NS(10));
     rclc_executor_spin_some(odometry_exe, RCL_MS_TO_NS(10));
     rclc_executor_spin_some(interpolation_exe, RCL_MS_TO_NS(10));
+    // rclc_executor_spin_some(lidar_exe, RCL_MS_TO_NS(10));
   }
 }
 }

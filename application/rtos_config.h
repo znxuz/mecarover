@@ -1,5 +1,7 @@
 #pragma once
 
+// TODO: delete this file
+
 /* definitions for FreeRTOS - 0 lowest priority 56 highest priority */
 
 #define POSE_CONTROLLER_PRIORITY 29

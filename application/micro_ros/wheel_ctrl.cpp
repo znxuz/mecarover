@@ -55,9 +55,7 @@ static VelWheel wheel_vel_pid_ctrl(const real_t dt) {
 
   const auto err = wheel_vel_sp - wheel_vel_actual;
 
-  const auto proportional = K_P * err;
-
-  integral += K_I * err * dt;
+  integral += err * dt;
   integral = integral.unaryExpr(
       [&](real_t val) { return std::clamp(val, MAX_INTEGRAL, -MAX_INTEGRAL); });
   if (std::any_of(std::begin(integral), std::end(integral),
@@ -66,10 +64,9 @@ static VelWheel wheel_vel_pid_ctrl(const real_t dt) {
                  integral(0), integral(1), integral(2), integral(3));
   }
 
-  const auto derivative =
-      K_D * (err - std::exchange(prev_err, err)) / dt;  // unused
+  const auto derivative = (err - std::exchange(prev_err, err)) / dt;  // unused
 
-  return wheel_vel_sp + proportional + integral + derivative;
+  return wheel_vel_sp + K_P * err + K_I * integral + K_D * derivative;
 }
 
 static void wheel_ctrl_cb(rcl_timer_t* timer, int64_t last_call_time) {

@@ -14,6 +14,7 @@ inline constexpr void rcl_ret_check(
     ULOG_ERROR("Failed status on line %d: %d in %s. Aborting.",
                static_cast<int>(location.line()), static_cast<int>(ret_code),
                location.file_name());
+    // TODO: set flag for uros superloop rather than hard delete
     vTaskDelete(NULL);
   }
 }

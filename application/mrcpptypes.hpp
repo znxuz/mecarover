@@ -164,17 +164,17 @@ class Pose {
   }
 
   /* transformation of small movements from robot frame into world frame  */
-  friend constexpr Pose<FltType> pRF2pWF(const Pose<FltType>& pose,
+  friend constexpr Pose<FltType> pRF2pWF(const Pose<FltType>& dpose,
                                          FltType th) {
-    return {pose.x * cos(th) - pose.y * sin(th),
-            pose.x * sin(th) + pose.y * cos(th), pose.theta};
+    return {dpose.x * cos(th) - dpose.y * sin(th),
+            dpose.x * sin(th) + dpose.y * cos(th), dpose.theta};
   }
 
   /* transformation of small movements from world frame into robot frame  */
-  friend constexpr Pose<FltType> pWF2pRF(const Pose<FltType>& d_pose,
+  friend constexpr Pose<FltType> pWF2pRF(const Pose<FltType>& dpose,
                                          FltType th) {
-    return {d_pose.x * cos(th) + d_pose.y * sin(th),
-            -d_pose.x * sin(th) + d_pose.y * cos(th), d_pose.theta};
+    return {dpose.x * cos(th) + dpose.y * sin(th),
+            -dpose.x * sin(th) + dpose.y * cos(th), dpose.theta};
   }
 };
 

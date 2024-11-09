@@ -42,10 +42,7 @@ static void odometry_cb(const void* arg) {
   Pose<real_t> dpose_rf{dpose_rf_mtx(0), dpose_rf_mtx(1), dpose_rf_mtx(2)};
   // update_epsilon(dpose_rframe_matrix(3)); // factor for this is zero anyway
 
-  // ASK: why divide the sum by 2
-  Pose<real_t> dpose_wf = pRF2pWF(
-      dpose_rf, pose_wf.theta + dpose_rf.theta / static_cast<real_t>(2));
-  pose_wf += dpose_wf;
+  pose_wf += pRF2pWF(dpose_rf, pose_wf.theta);
 
   // ULOG_DEBUG("%s: [x: %.02f, y: %.02f, theta: %.02f]",
   //            "[odometry]: pose cur from enc", pose_wf.x, pose_wf.y,

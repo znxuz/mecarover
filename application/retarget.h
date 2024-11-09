@@ -1,16 +1,4 @@
-/*
- * retarget.h
- *
- *  Created on: Apr 12, 2022
- *      Author: robot
- */
-
-// Allen Dank an Carmine Noviello für diesen Code
-// https://github.com/cnoviello/mastering-stm32/blob/master/nucleo-f030R8/system/include/retarget/retarget.h
-// Quelle: https://shawnhymel.com/1873/how-to-use-printf-on-stm32/
-
-#ifndef RETARGET_H_
-#define RETARGET_H_
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,5 +19,3 @@ int _fstat(int fd, struct stat *st);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* RETARGET_H_ */

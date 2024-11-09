@@ -14,7 +14,7 @@
 #include <application/micro_ros/micro_ros.hpp>
 #include <application/robot_params.hpp>
 
-LaserScanner laser_scanner;
+// LaserScanner lidar;
 
 extern "C" {
 
@@ -49,11 +49,10 @@ void application_start(void) {
   ULOG_INIT();
   ULOG_SUBSCRIBE(my_console_logger, ULOG_DEBUG_LEVEL);
 
-  laser_scanner.init();
-
 #ifdef LEGACY
   logger_init();
   hal_init();
+  lidar.init();
   auto* controller = new imsl::vehiclecontrol::ControllerTask<real_t>();
   xTaskCreate(micro_ros_legacy, "micro_ros", MAIN_TASK_STACK_SIZE, controller,
               MICRO_ROS_TASK_PRIORITY, NULL);
