@@ -44,10 +44,6 @@ static void odometry_cb(const void* arg) {
 
   pose_wf += pRF2pWF(dpose_rf, pose_wf.theta);
 
-  // ULOG_DEBUG("%s: [x: %.02f, y: %.02f, theta: %.02f]",
-  //            "[odometry]: pose cur from enc", pose_wf.x, pose_wf.y,
-  //            static_cast<real_t>(pose_wf.theta));
-
   auto msg = geometry_msgs__msg__Pose2D{pose_wf.x, pose_wf.y, pose_wf.theta};
   rcl_ret_softcheck(rcl_publish(&pub_odometry, &msg, NULL));
 }
@@ -57,7 +53,7 @@ rclc_executor_t* odometry_init(rcl_node_t* node, rclc_support_t* support,
   rcl_ret_check(rclc_executor_init(&odometry_exe, &support->context,
                                    N_EXEC_HANDLES, allocator));
 
-  rclc_subscription_init_default(
+  rclc_subscription_init_best_effort(
       &sub_encoder_data, node,
       WheelDataWrapper<real_t,
                        WheelDataType::ENC_DELTA_RAD>::get_msg_type_support(),
@@ -66,7 +62,7 @@ rclc_executor_t* odometry_init(rcl_node_t* node, rclc_support_t* support,
                                                &msg_enc_data.msg, &odometry_cb,
                                                ON_NEW_DATA));
 
-  rcl_ret_check(rclc_publisher_init_default(
+  rcl_ret_check(rclc_publisher_init_best_effort(
       &pub_odometry, node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Pose2D), "odometry"));
 

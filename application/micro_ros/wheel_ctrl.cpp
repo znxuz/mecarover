@@ -17,16 +17,17 @@
 #include "wheel_data_wrapper.hpp"
 
 static constexpr uint8_t N_EXEC_HANDLES = 2;
+static constexpr uint16_t TIMER_TIMEOUT_MS =
+    UROS_FREQ_MOD_WHEEL_CTRL_SEC * S_TO_MS;
 
 static std::array<real_t, N_WHEEL> vel_to_duty_cycle(const VelWheel& vel) {
   static constexpr real_t PERCENT = 100.0;
   auto ret = std::array<real_t, N_WHEEL>{};
 
-  std::transform(vel.data(), vel.data() + vel.size(), begin(ret),
-                 [](real_t elem) {
-                   return std::clamp(elem / MAX_VELOCITY_MM_S * PERCENT,
-                                     -PERCENT, PERCENT);
-                 });
+  std::transform(
+      vel.data(), vel.data() + vel.size(), begin(ret), [](real_t val) {
+        return std::clamp(val / MAX_VELOCITY_MM_S * PERCENT, -PERCENT, PERCENT);
+      });
   return ret;
 }
 
@@ -44,12 +45,12 @@ static auto msg_wheel_vel_sp =
 static VelWheel wheel_vel_actual{};
 static VelWheel wheel_vel_sp{};
 
-static void wheel_vel_sp_cb(const void* arg) {
+static void vel_sp_cb(const void* arg) {
   const auto* msg = reinterpret_cast<const MsgType<real_t>*>(arg);
   std::copy(msg->data.data, msg->data.data + N_WHEEL, std::begin(wheel_vel_sp));
 }
 
-static VelWheel wheel_vel_pid_ctrl(const real_t dt) {
+static VelWheel pid_ctrl(const real_t dt) {
   static constexpr real_t K_P = 0.40, K_I = 0.015, K_D = 0, MAX_INTEGRAL = 100;
   static auto integral = VelWheel{}, prev_err = VelWheel{};
 
@@ -83,7 +84,7 @@ static void wheel_ctrl_cb(rcl_timer_t* timer, int64_t last_call_time) {
                    return enc_delta * r / dt;
                  });
 
-  const auto vel_corrected = wheel_vel_pid_ctrl(dt);
+  const auto vel_corrected = pid_ctrl(dt);
   hal_wheel_vel_set_pwm(vel_to_duty_cycle(vel_corrected));
 }
 
@@ -93,21 +94,20 @@ rclc_executor_t* wheel_ctrl_init(rcl_node_t* node, rclc_support_t* support,
   rcl_ret_check(rclc_executor_init(&wheel_ctrl_exe, &support->context,
                                    N_EXEC_HANDLES, allocator));
 
-  rcl_ret_check(rclc_subscription_init_default(
+  rcl_ret_check(rclc_subscription_init_best_effort(
       &sub_wheel_vel, node,
       WheelDataWrapper<real_t, WheelDataType::VEL_SP>::get_msg_type_support(),
       "wheel_vel"));
   rcl_ret_check(rclc_executor_add_subscription(&wheel_ctrl_exe, &sub_wheel_vel,
                                                &msg_wheel_vel_sp.msg,
-                                               &wheel_vel_sp_cb, ON_NEW_DATA));
+                                               &vel_sp_cb, ON_NEW_DATA));
 
-  constexpr uint16_t TIMER_TIMEOUT_MS = UROS_FREQ_MOD_WHEEL_CTRL_SEC * S_TO_MS;
   rcl_ret_check(rclc_timer_init_default2(&wheel_ctrl_timer, support,
                                          RCL_MS_TO_NS(TIMER_TIMEOUT_MS),
                                          &wheel_ctrl_cb, true));
   rcl_ret_check(rclc_executor_add_timer(&wheel_ctrl_exe, &wheel_ctrl_timer));
 
-  rcl_ret_check(rclc_publisher_init_default(
+  rcl_ret_check(rclc_publisher_init_best_effort(
       &pub_encoder_data, node,
       WheelDataWrapper<real_t,
                        WheelDataType::ENC_DELTA_RAD>::get_msg_type_support(),

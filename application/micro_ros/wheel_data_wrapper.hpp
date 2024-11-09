@@ -38,7 +38,7 @@ struct WheelDataWrapper {
     this->msg.layout.dim.size = 1;
     this->msg.layout.dim.capacity = 1;
 
-    this->msg.data.data = new T[this->dim.size]{};
+    this->msg.data.data = this->data_buf;
     this->msg.data.size = this->dim.size;
     this->msg.data.capacity = this->dim.size;
   }
@@ -55,8 +55,6 @@ struct WheelDataWrapper {
   WheelDataWrapper(WheelDataWrapper&&) = delete;
   WheelDataWrapper& operator=(const WheelDataWrapper&) = delete;
   WheelDataWrapper& operator=(WheelDataWrapper&&) = delete;
-
-  ~WheelDataWrapper() { delete[] this->msg.data.data; }
 
   T& operator[](size_t i) { return this->msg.data.data[i]; }
 
@@ -77,4 +75,5 @@ struct WheelDataWrapper {
 
   MsgType<T> msg;
   std_msgs__msg__MultiArrayDimension dim;
+  T data_buf[N_WHEEL]{};
 };

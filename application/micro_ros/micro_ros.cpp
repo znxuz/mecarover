@@ -53,9 +53,9 @@ static void init() {
   rcl_ret_check(rcl_init_options_set_domain_id(&init_options, ROS_DOMAIN_ID));
 
   /* probing the agent until success */
-  while (rmw_uros_ping_agent(50, 2) != RCL_RET_OK) {
+  while (rmw_uros_ping_agent(50, 1) != RCL_RET_OK) {
     ULOG_INFO("agent not responding yet, retrying...");
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    vTaskDelay(pdMS_TO_TICKS(500));
   }
   ULOG_INFO("agent responded. continuing initialization...");
   rcl_ret_check(rclc_support_init_with_options(&support, 0, NULL, &init_options,
@@ -65,6 +65,9 @@ static void init() {
   ULOG_INFO("init finished; free heap: %d, free stack: %lu",
             xPortGetMinimumEverFreeHeapSize(),
             uxTaskGetStackHighWaterMark(NULL));
+
+  /* synchronize the ROS time for getting epoch time from rmw */
+  rcl_ret_softcheck(rmw_uros_sync_session(1000));
 }
 
 void micro_ros(void* arg) {
@@ -73,14 +76,15 @@ void micro_ros(void* arg) {
   auto* wheel_ctrl_exe = wheel_ctrl_init(&node, &support, &allocator);
   auto* odometry_exe = odometry_init(&node, &support, &allocator);
   auto* interpolation_exe = interpolation_init(&node, &support, &allocator);
-  // auto* lidar_exe = lidar_exe_init(&node, &support, &allocator);
+  auto* lidar_exe = lidar_exe_init(&node, &support, &allocator);
 
   ULOG_INFO("micro-ROS: starting executors");
   for (;;) {
-    rclc_executor_spin_some(wheel_ctrl_exe, RCL_MS_TO_NS(10));
-    rclc_executor_spin_some(odometry_exe, RCL_MS_TO_NS(10));
-    rclc_executor_spin_some(interpolation_exe, RCL_MS_TO_NS(10));
-    // rclc_executor_spin_some(lidar_exe, RCL_MS_TO_NS(10));
+    // TODO: rclc_executor_spin_period, or custom QOS struct
+    rclc_executor_spin_some(wheel_ctrl_exe, RCL_MS_TO_NS(5));
+    rclc_executor_spin_some(odometry_exe, RCL_MS_TO_NS(5));
+    rclc_executor_spin_some(interpolation_exe, RCL_MS_TO_NS(5));
+    rclc_executor_spin_some(lidar_exe, RCL_MS_TO_NS(5));
   }
 }
 }

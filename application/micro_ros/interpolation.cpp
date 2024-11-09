@@ -1,5 +1,6 @@
 #include "interpolation.hpp"
 
+#include <application/real_t.h>
 #include <geometry_msgs/msg/pose2_d.h>
 #include <geometry_msgs/msg/twist.h>
 #include <rcl/allocator.h>
@@ -18,8 +19,6 @@
 #include <cmath>
 
 #include "ctrl_utils.hpp"
-#include "geometry_msgs/msg/pose2_d.h"
-#include "geometry_msgs/msg/twist.h"
 #include "rcl_ret_check.hpp"
 #include "wheel_data_wrapper.hpp"
 
@@ -59,34 +58,31 @@ static void pose_cb(const void* arg) {
 static constexpr vPose<real_t> velocity_smoothen(const vPose<real_t>& vel_sp,
                                                  const vPose<real_t>& vel_old) {
   constexpr auto FACTOR = 5;
-  auto diff_max = MAX_VELOCITY_MM_S * UROS_FREQ_MOD_INTERPOLATION_SEC / FACTOR;
+  constexpr auto MAX_DIFF_LINEAR =
+      MAX_VELOCITY_MM_S * UROS_FREQ_MOD_INTERPOLATION_SEC / FACTOR;
+  constexpr auto MAX_DIFF_ANGULAR = MAX_DIFF_LINEAR / robot_params.l_w_half;
 
   auto vel_diff = vel_sp - vel_old;
-  vel_diff.vx = std::clamp(vel_diff.vx, -diff_max, diff_max);
-  vel_diff.vy = std::clamp(vel_diff.vy, -diff_max, diff_max);
-  diff_max /= robot_params.l_w_half;
-  vel_diff.omega = std::clamp(vel_diff.omega, -diff_max, diff_max);
+  using std::clamp;
+  vel_diff.vx = clamp(vel_diff.vx, -MAX_DIFF_LINEAR, MAX_DIFF_LINEAR);
+  vel_diff.vy = clamp(vel_diff.vy, -MAX_DIFF_LINEAR, MAX_DIFF_LINEAR);
+  vel_diff.omega = clamp(vel_diff.omega, -MAX_DIFF_LINEAR, MAX_DIFF_ANGULAR);
 
   return vel_old + vel_diff;
 }
 
-static constexpr void sanity_check(const Pose<real_t>& dpose) {
-  using std::abs;
-  if (abs(dpose.x) > MAX_LINEAR_DEVIATION ||
-      abs(dpose.y) > MAX_LINEAR_DEVIATION ||
-      abs(dpose.theta) > MAX_ANGULAR_DEVIATION) [[unlikely]]
-    ULOG_WARNING("[intrpl]: sanity check: pose deviation too large");
-}
-
 static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
                               const Pose<real_t>& pose_cur) {
-  auto err = pose_sp - pose_cur;
+  static constexpr real_t K_P = 0.17;
+
+  const auto err = pose_sp - pose_cur;
+  using std::abs;
+  if (abs(err.x) > MAX_LINEAR_DEVIATION || abs(err.y) > MAX_LINEAR_DEVIATION ||
+      abs(err.theta) > MAX_ANGULAR_DEVIATION) [[unlikely]]
+    ULOG_WARNING("[intrpl]: sanity check: pose deviation too large");
+
   ULOG_DEBUG("[intrpl]: delta pose: [x: %.2f, y: %.2f, theta: %.2f]", err.x,
              err.y, static_cast<real_t>(err.theta));
-
-  sanity_check(err);
-
-  static constexpr real_t K_P = 0.10;
 
   return err * K_P;
 }
@@ -115,14 +111,14 @@ rclc_executor_t* interpolation_init(rcl_node_t* node, rclc_support_t* support,
   rcl_ret_check(rclc_executor_init(&interpolation_exe, &support->context,
                                    N_EXEC_HANDLES, allocator));
 
-  rcl_ret_check(rclc_subscription_init_default(
+  rcl_ret_check(rclc_subscription_init_best_effort(
       &sub_cmd_vel, node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "cmd_vel"));
   rcl_ret_check(rclc_executor_add_subscription(&interpolation_exe, &sub_cmd_vel,
                                                &msg_cmd_vel, &cmd_vel_cb,
                                                ON_NEW_DATA));
 
-  rcl_ret_check(rclc_subscription_init_default(
+  rcl_ret_check(rclc_subscription_init_best_effort(
       &sub_odometry, node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Pose2D), "odometry"));
   rcl_ret_check(rclc_executor_add_subscription(&interpolation_exe,
@@ -135,7 +131,7 @@ rclc_executor_t* interpolation_init(rcl_node_t* node, rclc_support_t* support,
   rcl_ret_check(
       rclc_executor_add_timer(&interpolation_exe, &interpolation_timer));
 
-  rcl_ret_check(rclc_publisher_init_default(
+  rcl_ret_check(rclc_publisher_init_best_effort(
       &pub_wheel_vel, node,
       WheelDataWrapper<real_t, WheelDataType::VEL_SP>::get_msg_type_support(),
       "wheel_vel"));
