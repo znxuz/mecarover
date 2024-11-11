@@ -15,6 +15,7 @@
 #include "rcl_ret_check.hpp"
 
 using namespace imsl;
+using namespace robot_params;
 
 static constexpr uint8_t N_EXEC_HANDLES = 1;
 
@@ -34,18 +35,17 @@ static void odometry_cb(const void* arg) {
                                 enc_delta->back_left_wheel_velocity,
                                 enc_delta->back_right_wheel_velocity);
 
-  // FIXME: no r
   /*
    * odometry: encoder delta gets feeded directly into the inverted jacobian
    * matrix without dividing the dt for the reason being:
-   * d_enc in rad * r / dt = vel -> tf() = robot_vel * dt = dpose
+   * enc delta in rad / dt = vel in rad -> tf() = vel rf * dt = dpose
    * => dt can be spared because its unnecessary calculation
    */
-  VelRF dpose_rf_mtx = vWheel2vRF(enc_delta_mtx * robot_params.wheel_radius);
+  auto dpose_rf_mtx = vWheel2vRF(enc_delta_mtx);
   Pose<real_t> dpose_rf{dpose_rf_mtx(0), dpose_rf_mtx(1), dpose_rf_mtx(2)};
   // update_epsilon(dpose_rframe_matrix(3)); // factor for this is zero anyway
 
-  pose_wf += pRF2pWF(dpose_rf, pose_wf.theta);
+  pose_wf += pRF2pWF(dpose_rf, (pose_wf.theta + dpose_rf.theta) / 2);
 
   auto msg = geometry_msgs__msg__Pose2D{pose_wf.x, pose_wf.y, pose_wf.theta};
   rcl_ret_softcheck(rcl_publish(&pub_odometry, &msg, NULL));

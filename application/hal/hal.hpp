@@ -7,8 +7,9 @@
 #include <array>
 
 void hal_init();
-void hal_wheel_vel_set_pwm(const std::array<real_t, N_WHEEL>& duty_cycle);
-std::array<real_t, N_WHEEL> hal_encoder_delta_rad();
+void hal_wheel_vel_set_pwm(
+    const std::array<real_t, robot_params::N_WHEEL>& duty_cycle);
+std::array<real_t, robot_params::N_WHEEL> hal_encoder_delta_rad();
 bool hal_get_estop();
 
 extern "C" {

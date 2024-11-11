@@ -19,10 +19,11 @@
 #include <cmath>
 
 #include "ctrl_utils.hpp"
-#include "rcl_ret_check.hpp"
 #include "drive_state_wrapper.hpp"
+#include "rcl_ret_check.hpp"
 
 using namespace imsl;
+using namespace robot_params;
 
 static constexpr uint8_t N_EXEC_HANDLES = 3;
 static constexpr uint16_t TIMER_TIMEOUT_MS =
@@ -45,8 +46,8 @@ static auto pose_actual = Pose<real_t>{};
 
 static void cmd_vel_cb(const void* arg) {
   const auto* msg = reinterpret_cast<const geometry_msgs__msg__Twist*>(arg);
-  vel_rf_target.vx = msg->linear.x * 1000.0;  // m/s -> mm/s
-  vel_rf_target.vy = msg->linear.y * 1000.0;  // m/s -> mm/s
+  vel_rf_target.vx = msg->linear.x * 1000;  // m/s -> mm/s
+  vel_rf_target.vy = msg->linear.y * 1000;  // m/s -> mm/s
   vel_rf_target.omega = msg->angular.z;       // rad/s
 }
 
@@ -55,20 +56,20 @@ static void pose_cb(const void* arg) {
   pose_actual = {msg->x, msg->y, msg->theta};
 }
 
-static constexpr vPose<real_t> velocity_smoothen(const vPose<real_t>& vel_sp,
-                                                 const vPose<real_t>& vel_old) {
+static constexpr vPose<real_t> velocity_smoothen(
+    const vPose<real_t>& vel_target, const vPose<real_t>& vel_current) {
   constexpr auto FACTOR = 5;
   constexpr auto MAX_DIFF_LINEAR =
       MAX_VELOCITY_MM_S * UROS_FREQ_MOD_INTERPOLATION_SEC / FACTOR;
-  constexpr auto MAX_DIFF_ANGULAR = MAX_DIFF_LINEAR / robot_params.l_w_half;
+  constexpr auto MAX_DIFF_ANGULAR = MAX_DIFF_LINEAR / L_W_HALF;
 
-  auto vel_diff = vel_sp - vel_old;
+  auto vel_diff = vel_target - vel_current;
   using std::clamp;
   vel_diff.vx = clamp(vel_diff.vx, -MAX_DIFF_LINEAR, MAX_DIFF_LINEAR);
   vel_diff.vy = clamp(vel_diff.vy, -MAX_DIFF_LINEAR, MAX_DIFF_LINEAR);
   vel_diff.omega = clamp(vel_diff.omega, -MAX_DIFF_ANGULAR, MAX_DIFF_ANGULAR);
 
-  return vel_old + vel_diff;
+  return vel_current + vel_diff;
 }
 
 static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,

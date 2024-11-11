@@ -23,7 +23,7 @@ struct DriveStateWrapper {
     this->state.header.stamp.sec = RCL_NS_TO_S(nano_sec);
   }
 
-  DriveStateWrapper(const std::array<real_t, N_WHEEL>& data)
+  DriveStateWrapper(const std::array<real_t, robot_params::N_WHEEL>& data)
       : DriveStateWrapper() {
     this->state.front_right_wheel_velocity = data[0];
     this->state.front_left_wheel_velocity = data[1];
@@ -31,7 +31,7 @@ struct DriveStateWrapper {
     this->state.back_right_wheel_velocity = data[3];
   }
 
-  DriveStateWrapper(const VelRF& data) : DriveStateWrapper() {
+  DriveStateWrapper(const robot_params::VelRF& data) : DriveStateWrapper() {
     this->state.front_right_wheel_velocity = data(0);
     this->state.front_left_wheel_velocity = data(1);
     this->state.back_left_wheel_velocity = data(2);

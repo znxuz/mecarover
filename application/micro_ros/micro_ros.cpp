@@ -1,20 +1,19 @@
 #include "micro_ros.hpp"
 
-#include <application/legacy/lidar/lidar.h>
 #include <lwip.h>
 #include <rcl/allocator.h>
+#include <rcl/time.h>
 #include <rcl/types.h>
 #include <rclc/executor.h>
 #include <rclc/rclc.h>
+#include <rcutils/allocator.h>
 #include <rmw_microros/rmw_microros.h>
 #include <ulog.h>
 
-#include "application/micro_ros/lidar.hpp"
 #include "interpolation.hpp"
+#include "lidar.hpp"
 #include "odometry.hpp"
-#include "rcl/time.h"
 #include "rcl_ret_check.hpp"
-#include "rcutils/allocator.h"
 #include "udp_transport.h"
 #include "wheel_ctrl.hpp"
 
@@ -29,7 +28,7 @@ void* microros_zero_allocate(size_t number_of_elements, size_t size_of_element,
 static udp_transport_params_t TRANSPORT_PARAMS = {
     {0, 0, 0}, {MICRO_ROS_AGENT_IP}, {MICRO_ROS_AGENT_PORT}};
 
-static rcl_allocator_t allocator = rcutils_get_zero_initialized_allocator();;
+static auto allocator = rcutils_get_zero_initialized_allocator();
 static rcl_node_t node;
 static rclc_support_t support;
 static rcl_init_options_t init_options;
@@ -76,7 +75,7 @@ void micro_ros(void* arg) {
   auto* wheel_ctrl_exe = wheel_ctrl_init(&node, &support, &allocator);
   auto* odometry_exe = odometry_init(&node, &support, &allocator);
   auto* interpolation_exe = interpolation_init(&node, &support, &allocator);
-  // auto* lidar_exe = lidar_init(&node, &support, &allocator);
+  auto* lidar_exe = lidar_init(&node, &support, &allocator);
 
   ULOG_INFO("micro-ROS: starting executors");
   for (;;) {
@@ -84,7 +83,7 @@ void micro_ros(void* arg) {
     rclc_executor_spin_some(wheel_ctrl_exe, RCL_MS_TO_NS(5));
     rclc_executor_spin_some(odometry_exe, RCL_MS_TO_NS(5));
     rclc_executor_spin_some(interpolation_exe, RCL_MS_TO_NS(5));
-    // rclc_executor_spin_some(lidar_exe, RCL_MS_TO_NS(5));
+    rclc_executor_spin_some(lidar_exe, RCL_MS_TO_NS(5));
   }
 }
 }

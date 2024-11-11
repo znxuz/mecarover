@@ -16,6 +16,8 @@
 #include "rcl_ret_check.hpp"
 #include "drive_state_wrapper.hpp"
 
+using namespace robot_params;
+
 static constexpr uint8_t N_EXEC_HANDLES = 2;
 static constexpr uint16_t TIMER_TIMEOUT_MS =
     UROS_FREQ_MOD_WHEEL_CTRL_SEC * S_TO_MS;
@@ -57,6 +59,12 @@ static VelWheel pid_ctrl(const real_t dt) {
   static auto integral = VelWheel{}, prev_err = VelWheel{};
 
   const auto err = wheel_vel_sp - wheel_vel_actual;
+  // ULOG_DEBUG("[wheel_ctrl]: vel sp: [%.2f, %.2f, %.2f, %.2f]",
+  //            wheel_vel_sp(0), wheel_vel_sp(1), wheel_vel_sp(2),
+  //            wheel_vel_sp(3));
+  // ULOG_DEBUG("[wheel_ctrl]: vel actual: [%.2f, %.2f, %.2f, %.2f]",
+  //            wheel_vel_actual(0), wheel_vel_actual(1), wheel_vel_actual(2),
+  //            wheel_vel_actual(3));
 
   integral += err * dt;
   integral = integral.unaryExpr(
@@ -73,15 +81,15 @@ static VelWheel pid_ctrl(const real_t dt) {
 }
 
 static void wheel_ctrl_cb(rcl_timer_t* timer, int64_t last_call_time) {
-  auto enc_delta_rad = hal_encoder_delta_rad();
   const auto dt = RCL_NS_TO_S(static_cast<real_t>(last_call_time));
+  const auto enc_delta_rad = hal_encoder_delta_rad();
 
   DriveStateWrapper<DriveStateType::ENC_DELTA_RAD> enc_data{enc_delta_rad};
   rcl_ret_softcheck(rcl_publish(&pub_encoder_data, &enc_data.state, NULL));
 
   std::transform(begin(enc_delta_rad), end(enc_delta_rad),
                  std::begin(wheel_vel_actual),
-                 [dt, r = robot_params.wheel_radius](real_t enc_delta) {
+                 [dt, r = WHEEL_RADIUS](real_t enc_delta) {
                    return enc_delta * r / dt;
                  });
 

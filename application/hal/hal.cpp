@@ -9,6 +9,8 @@
 #include "encoder.hpp"
 #include "motor.hpp"
 
+using namespace robot_params;
+
 static std::array encoder_timer{&htim3, &htim1, &htim2, &htim4};
 static std::array pwm_timer{&htim8, &htim5, &htim9, &htim8};
 static constexpr std::array pwm_channels_a{TIM_CHANNEL_4, TIM_CHANNEL_1,
@@ -40,8 +42,7 @@ std::array<real_t, N_WHEEL> hal_encoder_delta_rad() {
   for (int i = 0; i < N_WHEEL; ++i) {
     auto encoder_val = encoders[i].get_val();
     encoder_delta[i] =
-        robot_params.inc2rad *
-        (static_cast<real_t>(encoder_val - prev_encoder_val[i])) *
+        INC2RAD * (static_cast<real_t>(encoder_val - prev_encoder_val[i])) *
         encoder_direction[i];  //  * encoder_scaler[i]
 
     prev_encoder_val[i] = encoder_val;

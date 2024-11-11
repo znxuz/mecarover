@@ -13,6 +13,8 @@
 #include "rcl_ret_check.hpp"
 #include "stm32f7xx_hal_uart.h"
 
+using namespace robot_params;
+
 static constexpr uint16_t TIMER_TIMEOUT_MS = UROS_FREQ_MOD_LIDAR_SEC * S_TO_MS;
 static constexpr uint8_t N_EXEC_HANDLES = 1;
 

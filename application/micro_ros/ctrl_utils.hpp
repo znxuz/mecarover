@@ -3,20 +3,20 @@
 #include <application/mrcpptypes.hpp>
 #include <application/robot_params.hpp>
 
-inline constexpr Robot2WheelMatrix bt_mtx{
-    {1.0, 1.0, robot_params.l_w_half, 1.0},
-    {1.0, -1.0, -robot_params.l_w_half, 1.0},
-    {1.0, 1.0, -robot_params.l_w_half, -1.0},
-    {1.0, -1.0, robot_params.l_w_half, -1.0}};
+inline constexpr robot_params::Robot2WheelMatrix bt_mtx{
+    {1.0, 1.0, robot_params::L_W_HALF, 1.0},
+    {1.0, -1.0, -robot_params::L_W_HALF, 1.0},
+    {1.0, 1.0, -robot_params::L_W_HALF, -1.0},
+    {1.0, -1.0, robot_params::L_W_HALF, -1.0}};
 
-inline constexpr Wheel2RobotMatrix ft_mtx{
+inline constexpr robot_params::Wheel2RobotMatrix ft_mtx{
     {1.0, 1.0, 1.0, 1.0},
     {1.0, -1.0, 1.0, -1.0},
-    {1.0 / robot_params.l_w_half, -1.0 / robot_params.l_w_half,
-     -1.0 / robot_params.l_w_half, 1.0 / robot_params.l_w_half},
-    {4.0 / robot_params.wheel_radius, 4.0 / robot_params.wheel_radius,
-     -4.0 / robot_params.wheel_radius, -4.0 / robot_params.wheel_radius}};
+    {1.0 / robot_params::L_W_HALF, -1.0 / robot_params::L_W_HALF,
+     -1.0 / robot_params::L_W_HALF, 1.0 / robot_params::L_W_HALF},
+    {4.0 / robot_params::WHEEL_RADIUS, 4.0 / robot_params::WHEEL_RADIUS,
+     -4.0 / robot_params::WHEEL_RADIUS, -4.0 / robot_params::WHEEL_RADIUS}};
 
-inline VelRF vWheel2vRF(const VelWheel& u) { return ft_mtx * u; }
+inline robot_params::VelRF vWheel2vRF(const robot_params::VelWheel& u) { return ft_mtx * u; }
 
-inline VelWheel vRF2vWheel(const VelRF& v) { return bt_mtx * v; }
+inline robot_params::VelWheel vRF2vWheel(const robot_params::VelRF& v) { return bt_mtx * v; }
