@@ -11,8 +11,8 @@
 #include <application/robot_params.hpp>
 
 #include "ctrl_utils.hpp"
+#include "drive_state_wrapper.hpp"
 #include "rcl_ret_check.hpp"
-#include "wheel_data_wrapper.hpp"
 
 using namespace imsl;
 
@@ -22,23 +22,26 @@ extern "C" {
 static auto odometry_exe = rclc_executor_get_zero_initialized_executor();
 
 static rcl_subscription_t sub_encoder_data;
-static auto msg_enc_data =
-    WheelDataWrapper<real_t, WheelDataType::ENC_DELTA_RAD>{};
+static auto enc_data_msg = DriveStateWrapper<DriveStateType::ENC_DELTA_RAD>{};
 static Pose<real_t> pose_wf;
 
 static rcl_publisher_t pub_odometry;
 
 static void odometry_cb(const void* arg) {
-  const auto* enc_delta = reinterpret_cast<const MsgType<real_t>*>(arg);
+  const auto* enc_delta = reinterpret_cast<const DriveState*>(arg);
+  auto enc_delta_mtx = VelWheel(enc_delta->front_right_wheel_velocity,
+                                enc_delta->front_left_wheel_velocity,
+                                enc_delta->back_left_wheel_velocity,
+                                enc_delta->back_right_wheel_velocity);
 
+  // FIXME: no r
   /*
    * odometry: encoder delta gets feeded directly into the inverted jacobian
    * matrix without dividing the dt for the reason being:
    * d_enc in rad * r / dt = vel -> tf() = robot_vel * dt = dpose
    * => dt can be spared because its unnecessary calculation
    */
-  VelRF dpose_rf_mtx =
-      vWheel2vRF(VelWheel(enc_delta->data.data) * robot_params.wheel_radius);
+  VelRF dpose_rf_mtx = vWheel2vRF(enc_delta_mtx * robot_params.wheel_radius);
   Pose<real_t> dpose_rf{dpose_rf_mtx(0), dpose_rf_mtx(1), dpose_rf_mtx(2)};
   // update_epsilon(dpose_rframe_matrix(3)); // factor for this is zero anyway
 
@@ -55,12 +58,11 @@ rclc_executor_t* odometry_init(rcl_node_t* node, rclc_support_t* support,
 
   rclc_subscription_init_best_effort(
       &sub_encoder_data, node,
-      WheelDataWrapper<real_t,
-                       WheelDataType::ENC_DELTA_RAD>::get_msg_type_support(),
+      DriveStateWrapper<DriveStateType::ENC_DELTA_RAD>::get_msg_type_support(),
       "encoder_data");
   rcl_ret_check(rclc_executor_add_subscription(&odometry_exe, &sub_encoder_data,
-                                               &msg_enc_data.msg, &odometry_cb,
-                                               ON_NEW_DATA));
+                                               &enc_data_msg.state,
+                                               &odometry_cb, ON_NEW_DATA));
 
   rcl_ret_check(rclc_publisher_init_best_effort(
       &pub_odometry, node,

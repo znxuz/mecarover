@@ -51,11 +51,11 @@ std::array<real_t, N_WHEEL> hal_encoder_delta_rad() {
 }
 
 void hal_wheel_vel_set_pwm(const std::array<real_t, N_WHEEL>& duty_cycle) {
-  for (size_t i = 0; i < N_WHEEL; ++i) pwm_motors[i].setPWM(duty_cycle[i]);
+  for (size_t i = 0; i < N_WHEEL; ++i) pwm_motors[i].set_pwm(duty_cycle[i]);
 }
 
 extern "C" {
-void stm_encoder_cb(TIM_HandleTypeDef* htim) {
+void encoder_tim_cb(TIM_HandleTypeDef* htim) {
   for (size_t i = 0; i < N_WHEEL; ++i) {
     if (htim->Instance == encoder_timer[i]->Instance) {
       encoders[i].update_offset();

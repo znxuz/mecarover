@@ -84,7 +84,7 @@ void micro_ros(void* arg) {
     rclc_executor_spin_some(wheel_ctrl_exe, RCL_MS_TO_NS(5));
     rclc_executor_spin_some(odometry_exe, RCL_MS_TO_NS(5));
     rclc_executor_spin_some(interpolation_exe, RCL_MS_TO_NS(5));
-    rclc_executor_spin_some(lidar_exe, RCL_MS_TO_NS(5));
+    // rclc_executor_spin_some(lidar_exe, RCL_MS_TO_NS(5));
   }
 }
 }

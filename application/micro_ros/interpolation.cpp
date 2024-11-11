@@ -20,7 +20,7 @@
 
 #include "ctrl_utils.hpp"
 #include "rcl_ret_check.hpp"
-#include "wheel_data_wrapper.hpp"
+#include "drive_state_wrapper.hpp"
 
 using namespace imsl;
 
@@ -66,7 +66,7 @@ static constexpr vPose<real_t> velocity_smoothen(const vPose<real_t>& vel_sp,
   using std::clamp;
   vel_diff.vx = clamp(vel_diff.vx, -MAX_DIFF_LINEAR, MAX_DIFF_LINEAR);
   vel_diff.vy = clamp(vel_diff.vy, -MAX_DIFF_LINEAR, MAX_DIFF_LINEAR);
-  vel_diff.omega = clamp(vel_diff.omega, -MAX_DIFF_LINEAR, MAX_DIFF_ANGULAR);
+  vel_diff.omega = clamp(vel_diff.omega, -MAX_DIFF_ANGULAR, MAX_DIFF_ANGULAR);
 
   return vel_old + vel_diff;
 }
@@ -100,10 +100,10 @@ static void interpolation_cb(rcl_timer_t*, int64_t last_call_time) {
 
   const auto vel_rf_corrected =
       vel_rf_sp + vWF2vRF(d_vel_wf, pose_actual.theta);
-  const auto msg_vel_wheel_sp = WheelDataWrapper<real_t, WheelDataType::VEL_SP>{
+  const auto msg_vel_wheel_sp = DriveStateWrapper<DriveStateType::VEL_SP>{
       vRF2vWheel(VelRF{vel_rf_corrected.vx, vel_rf_corrected.vy,
                        vel_rf_corrected.omega, 0})};
-  rcl_ret_softcheck(rcl_publish(&pub_wheel_vel, &msg_vel_wheel_sp.msg, NULL));
+  rcl_ret_softcheck(rcl_publish(&pub_wheel_vel, &msg_vel_wheel_sp.state, NULL));
 }
 
 rclc_executor_t* interpolation_init(rcl_node_t* node, rclc_support_t* support,
@@ -133,7 +133,7 @@ rclc_executor_t* interpolation_init(rcl_node_t* node, rclc_support_t* support,
 
   rcl_ret_check(rclc_publisher_init_best_effort(
       &pub_wheel_vel, node,
-      WheelDataWrapper<real_t, WheelDataType::VEL_SP>::get_msg_type_support(),
+      DriveStateWrapper<DriveStateType::VEL_SP>::get_msg_type_support(),
       "wheel_vel"));
 
   return &interpolation_exe;

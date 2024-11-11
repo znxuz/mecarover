@@ -14,7 +14,7 @@
 #include <utility>
 
 #include "rcl_ret_check.hpp"
-#include "wheel_data_wrapper.hpp"
+#include "drive_state_wrapper.hpp"
 
 static constexpr uint8_t N_EXEC_HANDLES = 2;
 static constexpr uint16_t TIMER_TIMEOUT_MS =
@@ -39,15 +39,17 @@ static auto wheel_ctrl_timer = rcl_get_zero_initialized_timer();
 static rcl_publisher_t pub_encoder_data;
 
 static rcl_subscription_t sub_wheel_vel;
-static auto msg_wheel_vel_sp =
-    WheelDataWrapper<real_t, WheelDataType::VEL_SP>{};
+static auto msg_wheel_vel_sp = DriveStateWrapper<DriveStateType::VEL_SP>{};
 
 static VelWheel wheel_vel_actual{};
 static VelWheel wheel_vel_sp{};
 
 static void vel_sp_cb(const void* arg) {
-  const auto* msg = reinterpret_cast<const MsgType<real_t>*>(arg);
-  std::copy(msg->data.data, msg->data.data + N_WHEEL, std::begin(wheel_vel_sp));
+  const auto* msg = reinterpret_cast<const DriveState*>(arg);
+  wheel_vel_sp(0) = msg->front_right_wheel_velocity;
+  wheel_vel_sp(1) = msg->front_left_wheel_velocity;
+  wheel_vel_sp(2) = msg->back_left_wheel_velocity;
+  wheel_vel_sp(3) = msg->back_right_wheel_velocity;
 }
 
 static VelWheel pid_ctrl(const real_t dt) {
@@ -74,9 +76,8 @@ static void wheel_ctrl_cb(rcl_timer_t* timer, int64_t last_call_time) {
   auto enc_delta_rad = hal_encoder_delta_rad();
   const auto dt = RCL_NS_TO_S(static_cast<real_t>(last_call_time));
 
-  WheelDataWrapper<real_t, WheelDataType::ENC_DELTA_RAD> enc_data{
-      enc_delta_rad};
-  rcl_ret_softcheck(rcl_publish(&pub_encoder_data, &enc_data.msg, NULL));
+  DriveStateWrapper<DriveStateType::ENC_DELTA_RAD> enc_data{enc_delta_rad};
+  rcl_ret_softcheck(rcl_publish(&pub_encoder_data, &enc_data.state, NULL));
 
   std::transform(begin(enc_delta_rad), end(enc_delta_rad),
                  std::begin(wheel_vel_actual),
@@ -96,10 +97,10 @@ rclc_executor_t* wheel_ctrl_init(rcl_node_t* node, rclc_support_t* support,
 
   rcl_ret_check(rclc_subscription_init_best_effort(
       &sub_wheel_vel, node,
-      WheelDataWrapper<real_t, WheelDataType::VEL_SP>::get_msg_type_support(),
+      DriveStateWrapper<DriveStateType::VEL_SP>::get_msg_type_support(),
       "wheel_vel"));
   rcl_ret_check(rclc_executor_add_subscription(&wheel_ctrl_exe, &sub_wheel_vel,
-                                               &msg_wheel_vel_sp.msg,
+                                               &msg_wheel_vel_sp.state,
                                                &vel_sp_cb, ON_NEW_DATA));
 
   rcl_ret_check(rclc_timer_init_default2(&wheel_ctrl_timer, support,
@@ -109,8 +110,7 @@ rclc_executor_t* wheel_ctrl_init(rcl_node_t* node, rclc_support_t* support,
 
   rcl_ret_check(rclc_publisher_init_best_effort(
       &pub_encoder_data, node,
-      WheelDataWrapper<real_t,
-                       WheelDataType::ENC_DELTA_RAD>::get_msg_type_support(),
+      DriveStateWrapper<DriveStateType::ENC_DELTA_RAD>::get_msg_type_support(),
       "encoder_data"));
 
   return &wheel_ctrl_exe;

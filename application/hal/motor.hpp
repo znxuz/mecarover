@@ -17,11 +17,13 @@ class Motor {
 
     HAL_TIM_PWM_Start(this->htim, this->pwm_channel_a);
     HAL_TIM_PWM_Start(this->htim, this->pwm_channel_b);
-    this->setPWM(0);
+    this->set_pwm(0);
+    this->ARR_VALUE = static_cast<real_t>(htim->Instance->ARR);
   }
 
-  void setPWM(real_t duty_cycle) {
-    duty_cycle = std::clamp(duty_cycle, -100.0, 100.0) * this->direction;
+  void set_pwm(real_t duty_cycle) {
+    duty_cycle = std::clamp(duty_cycle, -this->ARR_VALUE, this->ARR_VALUE) *
+                 this->direction;
     __HAL_TIM_SET_COMPARE(htim, this->pwm_channel_a,
                           duty_cycle > 0 ? duty_cycle : 0);
     __HAL_TIM_SET_COMPARE(htim, this->pwm_channel_b,
@@ -33,4 +35,5 @@ class Motor {
   uint32_t pwm_channel_a;
   uint32_t pwm_channel_b;
   int direction;
+  real_t ARR_VALUE;
 };

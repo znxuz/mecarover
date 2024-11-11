@@ -14,7 +14,7 @@ bool hal_get_estop();
 extern "C" {
 #endif
 
-void stm_encoder_cb(TIM_HandleTypeDef* htim);
+void encoder_tim_cb(TIM_HandleTypeDef* htim);
 
 #ifdef __cplusplus
 }
