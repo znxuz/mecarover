@@ -85,8 +85,7 @@ static void wheel_ctrl_cb(rcl_timer_t* timer, int64_t last_call_time) {
                    return enc_delta * r / dt;
                  });
 
-  const auto vel_corrected = pid_ctrl(dt);
-  hal_wheel_vel_set_pwm(vel_to_duty_cycle(vel_corrected));
+  hal_wheel_vel_set_pwm(vel_to_duty_cycle(pid_ctrl(dt)));
 }
 
 rclc_executor_t* wheel_ctrl_init(rcl_node_t* node, rclc_support_t* support,
