@@ -7,3 +7,6 @@
 [submodule "ulog"]
 	path = ulog
 	url = https://github.com/rdpoor/ulog
+[submodule "control_msgs"]
+	path = control_msgs
+	url = https://github.com/ros-controls/control_msgs.git
