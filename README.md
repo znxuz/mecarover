@@ -21,3 +21,7 @@ Or just the use the convenient script `micro_ros_static_lib_gen.sh`
 - assign a local IP address and a gateway address in `stm32cubemx`, which should
   be from the same subnet as micro-ROS agent, and regenerate the configuration
   files and compile
+
+# source `control_msgs` before for `ros2`
+
+- either install locally or build & source from the submodule

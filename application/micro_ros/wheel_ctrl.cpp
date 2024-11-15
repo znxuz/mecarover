@@ -26,10 +26,11 @@ static std::array<real_t, N_WHEEL> vel_to_duty_cycle(const VelWheel& vel) {
   static constexpr real_t PERCENT = 100.0;
   auto ret = std::array<real_t, N_WHEEL>{};
 
-  std::transform(
-      vel.data(), vel.data() + vel.size(), begin(ret), [](real_t val) {
-        return std::clamp(val / MAX_VELOCITY_MM_S * PERCENT, -PERCENT, PERCENT);
-      });
+  std::transform(vel.data(), vel.data() + vel.size(), begin(ret),
+                 [](real_t val) {
+                   return std::clamp(val / MAX_VELOCITY_WHEEL_ANGULAR * PERCENT,
+                                     -PERCENT, PERCENT);
+                 });
   return ret;
 }
 
@@ -41,7 +42,7 @@ static auto wheel_ctrl_timer = rcl_get_zero_initialized_timer();
 static rcl_publisher_t pub_encoder_data;
 
 static rcl_subscription_t sub_wheel_vel;
-static auto msg_wheel_vel_sp = DriveStateWrapper<DriveStateType::VEL_SP>{};
+static auto msg_wheel_vel_sp = DriveStateWrapper<DriveStateType::VEL_SP_ANGULAR>{};
 
 static VelWheel wheel_vel_actual{};
 static VelWheel wheel_vel_sp{};
@@ -55,16 +56,13 @@ static void vel_sp_cb(const void* arg) {
 }
 
 static VelWheel pid_ctrl(const real_t dt) {
-  static constexpr real_t K_P = 0.40, K_I = 0.015, K_D = 0, MAX_INTEGRAL = 100;
+  static constexpr real_t K_P = 0.4, K_I = 0, K_D = 0, MAX_INTEGRAL = 100;
   static auto integral = VelWheel{}, prev_err = VelWheel{};
 
   const auto err = wheel_vel_sp - wheel_vel_actual;
-  // ULOG_DEBUG("[wheel_ctrl]: vel sp: [%.2f, %.2f, %.2f, %.2f]",
-  //            wheel_vel_sp(0), wheel_vel_sp(1), wheel_vel_sp(2),
-  //            wheel_vel_sp(3));
-  // ULOG_DEBUG("[wheel_ctrl]: vel actual: [%.2f, %.2f, %.2f, %.2f]",
-  //            wheel_vel_actual(0), wheel_vel_actual(1), wheel_vel_actual(2),
-  //            wheel_vel_actual(3));
+
+  ULOG_DEBUG("[wheel_ctrl]: vel err: [%.2f, %.2f, %.2f, %.2f]", err(0), err(1),
+             err(2), err(3));
 
   integral += err * dt;
   integral = integral.unaryExpr(
@@ -89,9 +87,7 @@ static void wheel_ctrl_cb(rcl_timer_t* timer, int64_t last_call_time) {
 
   std::transform(begin(enc_delta_rad), end(enc_delta_rad),
                  std::begin(wheel_vel_actual),
-                 [dt, r = WHEEL_RADIUS](real_t enc_delta) {
-                   return enc_delta * r / dt;
-                 });
+                 [dt](real_t enc_delta) { return enc_delta / dt; });
 
   hal_wheel_vel_set_pwm(vel_to_duty_cycle(pid_ctrl(dt)));
 }
@@ -104,7 +100,7 @@ rclc_executor_t* wheel_ctrl_init(rcl_node_t* node, rclc_support_t* support,
 
   rcl_ret_check(rclc_subscription_init_best_effort(
       &sub_wheel_vel, node,
-      DriveStateWrapper<DriveStateType::VEL_SP>::get_msg_type_support(),
+      DriveStateWrapper<DriveStateType::VEL_SP_ANGULAR>::get_msg_type_support(),
       "wheel_vel"));
   rcl_ret_check(rclc_executor_add_subscription(&wheel_ctrl_exe, &sub_wheel_vel,
                                                &msg_wheel_vel_sp.state,

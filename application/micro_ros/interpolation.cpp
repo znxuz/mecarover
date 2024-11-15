@@ -48,7 +48,7 @@ static void cmd_vel_cb(const void* arg) {
   const auto* msg = reinterpret_cast<const geometry_msgs__msg__Twist*>(arg);
   vel_rf_target.vx = msg->linear.x * 1000;  // m/s -> mm/s
   vel_rf_target.vy = msg->linear.y * 1000;  // m/s -> mm/s
-  vel_rf_target.omega = msg->angular.z;       // rad/s
+  vel_rf_target.omega = msg->angular.z;     // rad/s
 }
 
 static void pose_cb(const void* arg) {
@@ -57,24 +57,25 @@ static void pose_cb(const void* arg) {
 }
 
 static constexpr vPose<real_t> velocity_smoothen(
-    const vPose<real_t>& vel_target, const vPose<real_t>& vel_current) {
+    const vPose<real_t>& vel_target, const vPose<real_t>& vel_cur) {
   constexpr auto FACTOR = 5;
   constexpr auto MAX_DIFF_LINEAR =
-      MAX_VELOCITY_MM_S * UROS_FREQ_MOD_INTERPOLATION_SEC / FACTOR;
+      MAX_VELOCITY_WHEEL_LINEAR * UROS_FREQ_MOD_INTERPOLATION_SEC / FACTOR;
   constexpr auto MAX_DIFF_ANGULAR = MAX_DIFF_LINEAR / L_W_HALF;
 
-  auto vel_diff = vel_target - vel_current;
+  auto vel_diff = vel_target - vel_cur;
   using std::clamp;
   vel_diff.vx = clamp(vel_diff.vx, -MAX_DIFF_LINEAR, MAX_DIFF_LINEAR);
   vel_diff.vy = clamp(vel_diff.vy, -MAX_DIFF_LINEAR, MAX_DIFF_LINEAR);
   vel_diff.omega = clamp(vel_diff.omega, -MAX_DIFF_ANGULAR, MAX_DIFF_ANGULAR);
 
-  return vel_current + vel_diff;
+  return vel_cur + vel_diff;
 }
 
 static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
                               const Pose<real_t>& pose_cur) {
-  static constexpr real_t K_P = 0.17;
+  // static constexpr real_t K_P = 0.17;
+  static constexpr real_t K_P = 0.0;
 
   const auto err = pose_sp - pose_cur;
   using std::abs;
@@ -101,9 +102,10 @@ static void interpolation_cb(rcl_timer_t*, int64_t last_call_time) {
 
   const auto vel_rf_corrected =
       vel_rf_sp + vWF2vRF(d_vel_wf, pose_actual.theta);
-  const auto msg_vel_wheel_sp = DriveStateWrapper<DriveStateType::VEL_SP>{
-      vRF2vWheel(VelRF{vel_rf_corrected.vx, vel_rf_corrected.vy,
-                       vel_rf_corrected.omega, 0})};
+  const auto msg_vel_wheel_sp =
+      DriveStateWrapper<DriveStateType::VEL_SP_ANGULAR>{
+          vRF2vWheel(VelRF{vel_rf_corrected.vx, vel_rf_corrected.vy,
+                           vel_rf_corrected.omega, 0})};
   rcl_ret_softcheck(rcl_publish(&pub_wheel_vel, &msg_vel_wheel_sp.state, NULL));
 }
 
@@ -134,7 +136,7 @@ rclc_executor_t* interpolation_init(rcl_node_t* node, rclc_support_t* support,
 
   rcl_ret_check(rclc_publisher_init_best_effort(
       &pub_wheel_vel, node,
-      DriveStateWrapper<DriveStateType::VEL_SP>::get_msg_type_support(),
+      DriveStateWrapper<DriveStateType::VEL_SP_ANGULAR>::get_msg_type_support(),
       "wheel_vel"));
 
   return &interpolation_exe;
