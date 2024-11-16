@@ -74,14 +74,14 @@ static constexpr vPose<real_t> velocity_smoothen(
 
 static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
                               const Pose<real_t>& pose_cur) {
-  static constexpr real_t K_P = 0.17;
+  static constexpr real_t K_P = 0.05;
 
   const auto err = pose_sp - pose_cur;
   using std::abs;
-  if (abs(err.x) > MAX_POSE_DEVIATION_LINEAR || abs(err.y) > MAX_POSE_DEVIATION_LINEAR ||
+  if (abs(err.x) > MAX_POSE_DEVIATION_LINEAR ||
+      abs(err.y) > MAX_POSE_DEVIATION_LINEAR ||
       abs(err.theta) > MAX_POSE_DEVIATION_ANGULAR) [[unlikely]]
     ULOG_WARNING("[intrpl]: sanity check: pose deviation too large");
-
   ULOG_DEBUG("[intrpl]: delta pose: [x: %.2f, y: %.2f, theta: %.2f]", err.x,
              err.y, static_cast<real_t>(err.theta));
 
@@ -97,8 +97,11 @@ static void interpolation_cb(rcl_timer_t*, int64_t last_call_time) {
   vel_prev = vel_rf_sp;
 
   pose_sp += Pose<real_t>(vRF2vWF(vel_rf_sp, pose_actual.theta) * dt);
-  const auto d_vel_wf = vPose<real_t>(pose_ctrl(pose_sp, pose_actual) / dt);
 
+  // TODO: maybe use pWF2pRF to get the dpose in rf and then convert into vel
+  // const auto dpose_wf = pose_ctrl(pose_sp, pose_actual);
+
+  const auto d_vel_wf = vPose<real_t>(pose_ctrl(pose_sp, pose_actual) / dt);
   const auto vel_rf_corrected =
       vel_rf_sp + vWF2vRF(d_vel_wf, pose_actual.theta);
   const auto msg_vel_wheel_sp =

@@ -13,8 +13,8 @@
 #include <application/robot_params.hpp>
 #include <utility>
 
-#include "rcl_ret_check.hpp"
 #include "drive_state_wrapper.hpp"
+#include "rcl_ret_check.hpp"
 
 using namespace robot_params;
 
@@ -42,7 +42,8 @@ static auto wheel_ctrl_timer = rcl_get_zero_initialized_timer();
 static rcl_publisher_t pub_encoder_data;
 
 static rcl_subscription_t sub_wheel_vel;
-static auto msg_wheel_vel_sp = DriveStateWrapper<DriveStateType::VEL_SP_ANGULAR>{};
+static auto msg_wheel_vel_sp =
+    DriveStateWrapper<DriveStateType::VEL_SP_ANGULAR>{};
 
 static VelWheel wheel_vel_actual{};
 static VelWheel wheel_vel_sp{};
@@ -56,10 +57,12 @@ static void vel_sp_cb(const void* arg) {
 }
 
 static VelWheel pid_ctrl(const real_t dt) {
-  static constexpr real_t K_P = 0.4, K_I = 0, K_D = 0, MAX_INTEGRAL = 100;
+  static constexpr real_t K_P = 0.025, K_I = 0.015, K_D = 0, MAX_INTEGRAL = 10;
   static auto integral = VelWheel{}, prev_err = VelWheel{};
 
   const auto err = wheel_vel_sp - wheel_vel_actual;
+  // ULOG_WARNING("[wheel_ctrl]: wheel vel err: [%0.2f, %.02f, %.02f, %.02f]",
+  //              err(0), err(1), err(2), err(3));
 
   integral += err * dt;
   integral = integral.unaryExpr(

@@ -37,8 +37,8 @@ static void odometry_cb(const void* arg) {
 
   /*
    * odometry: encoder delta gets feeded directly into the inverted jacobian
-   * matrix without dividing the dt for the reason being:
-   * enc delta in rad / dt = vel in rad -> tf() = vel rf * dt = dpose
+   * matrix vWheel2vRF() without dividing the dt for the reason being:
+   * enc delta in rad / dt = vel in rad -> vWheel2vRF(vel) = vel rf * dt = dpose
    * => dt can be spared because its unnecessary calculation
    */
   auto dpose_rf_mtx = vWheel2vRF(enc_delta_mtx);
@@ -46,6 +46,8 @@ static void odometry_cb(const void* arg) {
   // update_epsilon(dpose_rframe_matrix(3)); // factor for this is zero anyway
 
   pose_wf += pRF2pWF(dpose_rf, (pose_wf.theta + dpose_rf.theta) / 2);
+  // pose_wf +=
+  //     pRF2pWF(dpose_rf, (pose_wf.theta + (pose_wf.theta + dpose_rf.theta)) / 2);
 
   auto msg = geometry_msgs__msg__Pose2D{pose_wf.x, pose_wf.y, pose_wf.theta};
   rcl_ret_softcheck(rcl_publish(&pub_odometry, &msg, NULL));
