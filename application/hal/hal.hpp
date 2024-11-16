@@ -10,7 +10,7 @@ void hal_init();
 void hal_wheel_vel_set_pwm(
     const std::array<real_t, robot_params::N_WHEEL>& duty_cycle);
 std::array<real_t, robot_params::N_WHEEL> hal_encoder_delta_rad();
-bool hal_get_estop();
+std::array<uint32_t, robot_params::N_WHEEL> hal_encoder_val();
 
 extern "C" {
 #endif

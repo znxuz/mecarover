@@ -11,14 +11,20 @@ namespace robot_params {
 inline constexpr uint8_t DOF = 4;
 inline constexpr uint8_t N_WHEEL = 4;
 
-inline constexpr real_t INCREMENTS = 48.0;
-inline constexpr real_t GEAR_RATIO = 64.0;
+inline constexpr real_t GEAR_RATIO = 64.0; // wheel rotation : motor rotation
+inline constexpr real_t INCREMENTS = 48.0; // motor rotation : encoder increment
 inline constexpr real_t INC2RAD = 2.0 * M_PI / (INCREMENTS * GEAR_RATIO);
 inline constexpr real_t LENGTH = 325;
 inline constexpr real_t WIDTH = 300;
 inline constexpr real_t L_W_HALF = (LENGTH + WIDTH) / 2;
 inline constexpr real_t WHEEL_RADIUS = 50;
-inline constexpr real_t WHEEL_MAX_RPM = 120; // TODO: tune this value
+/*
+ * calculated from experiment:
+ *  encoder increment after 1 full rotation: GEAR_RATIO * INCREMENTS = 3072
+ *  encoder increment delta on max PWM in 1 second: ~5375
+ *  max rotation per minute = 5375 / 3072 * 60 ~= 105
+ */
+inline constexpr real_t WHEEL_MAX_RPM = 105;
 
 inline constexpr real_t MAX_VELOCITY_WHEEL_ANGULAR =
     WHEEL_MAX_RPM / 60 * (2 * M_PI);
