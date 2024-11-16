@@ -58,7 +58,7 @@ static void pose_cb(const void* arg) {
 
 static constexpr vPose<real_t> velocity_smoothen(
     const vPose<real_t>& vel_target, const vPose<real_t>& vel_cur) {
-  constexpr auto FACTOR = 5;
+  constexpr auto FACTOR = 4;
   constexpr auto MAX_DIFF_LINEAR =
       MAX_VELOCITY_WHEEL_LINEAR * UROS_FREQ_MOD_INTERPOLATION_SEC / FACTOR;
   constexpr auto MAX_DIFF_ANGULAR = MAX_DIFF_LINEAR / L_W_HALF;
@@ -74,8 +74,7 @@ static constexpr vPose<real_t> velocity_smoothen(
 
 static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
                               const Pose<real_t>& pose_cur) {
-  // static constexpr real_t K_P = 0.17;
-  static constexpr real_t K_P = 0.0;
+  static constexpr real_t K_P = 0.17;
 
   const auto err = pose_sp - pose_cur;
   using std::abs;

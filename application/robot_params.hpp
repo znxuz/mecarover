@@ -19,7 +19,6 @@ inline constexpr real_t WIDTH = 300;
 inline constexpr real_t L_W_HALF = (LENGTH + WIDTH) / 2;
 inline constexpr real_t WHEEL_RADIUS = 50;
 inline constexpr real_t WHEEL_MAX_RPM = 120; // TODO: tune this value
-inline constexpr real_t RADIUS_DIV_BY_FOUR = WHEEL_RADIUS / 4; // TODO: incorporate into ctrl_util
 
 inline constexpr real_t MAX_VELOCITY_WHEEL_ANGULAR =
     WHEEL_MAX_RPM / 60 * (2 * M_PI);

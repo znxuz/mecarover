@@ -61,9 +61,6 @@ static VelWheel pid_ctrl(const real_t dt) {
 
   const auto err = wheel_vel_sp - wheel_vel_actual;
 
-  ULOG_DEBUG("[wheel_ctrl]: vel err: [%.2f, %.2f, %.2f, %.2f]", err(0), err(1),
-             err(2), err(3));
-
   integral += err * dt;
   integral = integral.unaryExpr(
       [&](real_t val) { return std::clamp(val, MAX_INTEGRAL, -MAX_INTEGRAL); });

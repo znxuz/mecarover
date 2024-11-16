@@ -1,5 +1,4 @@
 #include <application/retarget.h>
-#include <application/rtos_config.h>
 #include <cmsis_os2.h>
 #include <rtc.h>
 #include <tim.h>
