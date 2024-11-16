@@ -24,4 +24,4 @@ Or just the use the convenient script `micro_ros_static_lib_gen.sh`
 
 # source `control_msgs` before for `ros2`
 
-- either install locally or build & source from the submodule
+- either install locally via the system's package manager, or build from source

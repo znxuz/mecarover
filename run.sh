@@ -50,13 +50,14 @@ main()
 	[[ -z "$ROS_DISTRO" ]] && echo "ros not sourced" >&2 && exit 1
 
 	if [[ "$1" = "test" ]]; then
-		drive_x 0.5 && sleep 3
-		clear_drive
-		drive_x -0.5 && sleep 3
-		clear_drive
-		turn 1 && sleep 3
-		turn -1 && sleep 3
-		clear_drive
+		drive_x 0.5 && sleep 3 && clear_drive
+		turn 1 && sleep 3 && clear_drive
+		drive_x -0.5 && sleep 3 && clear_drive
+		turn -1 && sleep 3 && clear_drive
+		drive_x 0.5 && sleep 3 && clear_drive
+		turn 1 && sleep 3 && clear_drive
+		drive_x -0.5 && sleep 3 && clear_drive
+		turn -1 && sleep 3 && clear_drive
 	elif [[ "$1" = "lidar" ]]; then
 		toggle_lidar "$2"
 		# set_scan_legacy "$2"

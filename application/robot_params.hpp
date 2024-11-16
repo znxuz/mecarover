@@ -29,9 +29,9 @@ inline constexpr real_t WHEEL_MAX_RPM = 105;
 inline constexpr real_t MAX_VELOCITY_WHEEL_ANGULAR =
     WHEEL_MAX_RPM / 60 * (2 * M_PI);
 inline constexpr real_t MAX_VELOCITY_WHEEL_LINEAR =
-    WHEEL_MAX_RPM / 60 * 2 * M_PI * WHEEL_RADIUS;
-inline constexpr real_t MAX_LINEAR_DEVIATION = 300;
-inline constexpr real_t MAX_ANGULAR_DEVIATION = M_PI;
+    MAX_VELOCITY_WHEEL_ANGULAR * WHEEL_RADIUS;
+inline constexpr real_t MAX_POSE_DEVIATION_LINEAR = 300;
+inline constexpr real_t MAX_POSE_DEVIATION_ANGULAR = M_PI;
 
 inline constexpr real_t UROS_FREQ_MOD_WHEEL_CTRL_SEC = 0.05;
 inline constexpr real_t UROS_FREQ_MOD_INTERPOLATION_SEC = 0.10;

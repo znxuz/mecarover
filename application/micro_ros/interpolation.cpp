@@ -78,8 +78,8 @@ static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
 
   const auto err = pose_sp - pose_cur;
   using std::abs;
-  if (abs(err.x) > MAX_LINEAR_DEVIATION || abs(err.y) > MAX_LINEAR_DEVIATION ||
-      abs(err.theta) > MAX_ANGULAR_DEVIATION) [[unlikely]]
+  if (abs(err.x) > MAX_POSE_DEVIATION_LINEAR || abs(err.y) > MAX_POSE_DEVIATION_LINEAR ||
+      abs(err.theta) > MAX_POSE_DEVIATION_ANGULAR) [[unlikely]]
     ULOG_WARNING("[intrpl]: sanity check: pose deviation too large");
 
   ULOG_DEBUG("[intrpl]: delta pose: [x: %.2f, y: %.2f, theta: %.2f]", err.x,
