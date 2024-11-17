@@ -96,10 +96,7 @@ static void interpolation_cb(rcl_timer_t*, int64_t last_call_time) {
   const auto vel_rf_sp = velocity_smoothen(vel_rf_target, vel_prev);
   vel_prev = vel_rf_sp;
 
-  pose_sp += Pose<real_t>(vRF2vWF(vel_rf_sp, pose_actual.theta) * dt);
-
-  // TODO: maybe use pWF2pRF to get the dpose in rf and then convert into vel
-  // const auto dpose_wf = pose_ctrl(pose_sp, pose_actual);
+  pose_sp += Pose<real_t>(vRF2vWF(vel_rf_sp, pose_sp.theta) * dt);
 
   const auto d_vel_wf = vPose<real_t>(pose_ctrl(pose_sp, pose_actual) / dt);
   const auto vel_rf_corrected =

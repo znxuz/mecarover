@@ -45,9 +45,9 @@ static void odometry_cb(const void* arg) {
   Pose<real_t> dpose_rf{dpose_rf_mtx(0), dpose_rf_mtx(1), dpose_rf_mtx(2)};
   // update_epsilon(dpose_rframe_matrix(3)); // factor for this is zero anyway
 
-  pose_wf += pRF2pWF(dpose_rf, (pose_wf.theta + dpose_rf.theta) / 2);
-  // pose_wf +=
-  //     pRF2pWF(dpose_rf, (pose_wf.theta + (pose_wf.theta + dpose_rf.theta)) / 2);
+  // use the theta average for more precise odometry calculation
+  pose_wf += pRF2pWF(
+      dpose_rf, (static_cast<real_t>(pose_wf.theta) * 2 + dpose_rf.theta) / 2);
 
   auto msg = geometry_msgs__msg__Pose2D{pose_wf.x, pose_wf.y, pose_wf.theta};
   rcl_ret_softcheck(rcl_publish(&pub_odometry, &msg, NULL));
