@@ -10,8 +10,8 @@
 #include <application/mrcpptypes.hpp>
 #include <application/robot_params.hpp>
 
-#include "ctrl_utils.hpp"
 #include "drive_state_wrapper.hpp"
+#include "jacobi_transformation.hpp"
 #include "rcl_ret_check.hpp"
 
 using namespace imsl;
@@ -36,14 +36,14 @@ static void odometry_cb(const void* arg) {
                                 enc_delta->back_right_wheel_velocity);
 
   /*
-   * odometry: encoder delta gets feeded directly into the inverted jacobian
-   * matrix vWheel2vRF() without dividing the dt for the reason being:
-   * enc delta in rad / dt = vel in rad -> vWheel2vRF(vel) = vel rf * dt = dpose
-   * => dt can be spared because its unnecessary calculation
+   * odometry: encoder delta gets fed directly into the inverted jacobian
+   * matrix without dividing the dt for the reason being:
+   * enc delta in rad / dt = vel -> forward_transform(vel) = vel_rf * dt = dpose
+   * => dt can be spared because it gets canceled out on both sides
    */
-  auto dpose_rf_mtx = vWheel2vRF(enc_delta_mtx);
+  auto dpose_rf_mtx = forward_transform(enc_delta_mtx);
   Pose<real_t> dpose_rf{dpose_rf_mtx(0), dpose_rf_mtx(1), dpose_rf_mtx(2)};
-  // update_epsilon(dpose_rframe_matrix(3)); // factor for this is zero anyway
+  // update_epsilon(dpose_rf_mtx(3)); // TODO
 
   // use the theta average for more precise odometry calculation
   pose_wf += pRF2pWF(

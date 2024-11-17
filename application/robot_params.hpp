@@ -19,7 +19,8 @@ inline constexpr real_t WIDTH = 300;
 inline constexpr real_t L_W_HALF = (LENGTH + WIDTH) / 2;
 inline constexpr real_t WHEEL_RADIUS = 50;
 /*
- * calculated from experiment:
+ * RPM given from the manufacturer: 120
+ * experiment:
  *  encoder increment after 1 full rotation: GEAR_RATIO * INCREMENTS = 3072
  *  encoder increment delta on max PWM in 1 second: ~5375
  *  max rotation per minute = 5375 / 3072 * 60 ~= 105
@@ -40,6 +41,4 @@ inline constexpr uint16_t S_TO_MS = 1000;
 
 using VelWheel = Eigen::Matrix<real_t, N_WHEEL, 1>;
 using VelRF = Eigen::Matrix<real_t, DOF, 1>;
-using Robot2WheelMatrix = Eigen::Matrix<real_t, N_WHEEL, DOF>;
-using Wheel2RobotMatrix = Eigen::Matrix<real_t, DOF, N_WHEEL>;
 }  // namespace robot_params

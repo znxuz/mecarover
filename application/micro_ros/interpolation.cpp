@@ -18,8 +18,8 @@
 #include <application/robot_params.hpp>
 #include <cmath>
 
-#include "ctrl_utils.hpp"
 #include "drive_state_wrapper.hpp"
+#include "jacobi_transformation.hpp"
 #include "rcl_ret_check.hpp"
 
 using namespace imsl;
@@ -103,8 +103,8 @@ static void interpolation_cb(rcl_timer_t*, int64_t last_call_time) {
       vel_rf_sp + vWF2vRF(d_vel_wf, pose_actual.theta);
   const auto msg_vel_wheel_sp =
       DriveStateWrapper<DriveStateType::VEL_SP_ANGULAR>{
-          vRF2vWheel(VelRF{vel_rf_corrected.vx, vel_rf_corrected.vy,
-                           vel_rf_corrected.omega, 0})};
+          backward_transform(VelRF{vel_rf_corrected.vx, vel_rf_corrected.vy,
+                                   vel_rf_corrected.omega, 0})};
   rcl_ret_softcheck(rcl_publish(&pub_wheel_vel, &msg_vel_wheel_sp.state, NULL));
 }
 
