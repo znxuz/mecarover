@@ -28,22 +28,23 @@ static Pose<real_t> pose_wf;
 
 static rcl_publisher_t pub_odometry;
 
-static void odometry_cb(const void* arg) {
-  const auto* enc_delta = reinterpret_cast<const DriveState*>(arg);
-  auto enc_delta_mtx = VelWheel(enc_delta->front_right_wheel_velocity,
-                                enc_delta->front_left_wheel_velocity,
-                                enc_delta->back_left_wheel_velocity,
-                                enc_delta->back_right_wheel_velocity);
+extern real_t epsilon;
 
+static void odometry_cb(const void* arg) {
+  const auto* enc_delta_rad = reinterpret_cast<const DriveState*>(arg);
   /*
    * odometry: encoder delta gets fed directly into the inverted jacobian
    * matrix without dividing the dt for the reason being:
    * enc delta in rad / dt = vel -> forward_transform(vel) = vel_rf * dt = dpose
    * => dt can be spared because it gets canceled out on both sides
    */
-  auto dpose_rf_mtx = forward_transform(enc_delta_mtx);
+  const auto dpose_rf_mtx =
+      forward_transform(VelWheel(enc_delta_rad->front_right_wheel_velocity,
+                                 enc_delta_rad->front_left_wheel_velocity,
+                                 enc_delta_rad->back_left_wheel_velocity,
+                                 enc_delta_rad->back_right_wheel_velocity));
   Pose<real_t> dpose_rf{dpose_rf_mtx(0), dpose_rf_mtx(1), dpose_rf_mtx(2)};
-  // update_epsilon(dpose_rf_mtx(3)); // TODO
+  epsilon += dpose_rf_mtx(3);
 
   // use the theta average for more precise odometry calculation
   pose_wf += pRF2pWF(
