@@ -36,7 +36,7 @@ inline constexpr real_t MAX_POSE_DEVIATION_ANGULAR = M_PI;
 
 inline constexpr real_t UROS_FREQ_MOD_WHEEL_CTRL_SEC = 0.05;
 inline constexpr real_t UROS_FREQ_MOD_INTERPOLATION_SEC = 0.10;
-inline constexpr real_t UROS_FREQ_MOD_LIDAR_SEC = 2;
+inline constexpr real_t UROS_FREQ_MOD_LIDAR_SEC = 0.5;
 inline constexpr uint16_t S_TO_MS = 1000;
 
 using VelWheel = Eigen::Matrix<real_t, N_WHEEL, 1>;
