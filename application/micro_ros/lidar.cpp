@@ -15,22 +15,24 @@
 #include <application/robot_params.hpp>
 
 #include "rcl_ret_check.hpp"
-#include "stm32f7xx_hal_uart.h"
-#include "ulog.h"
 
 using namespace robot_params;
 
 static constexpr uint16_t TIMER_TIMEOUT_MS = UROS_FREQ_MOD_LIDAR_SEC * S_TO_MS;
 static constexpr uint8_t N_EXEC_HANDLES = 2;
 
-static constexpr uint8_t START_CMD[2] = {0xA5, 0x20};
-static constexpr uint8_t STOP_CMD[2] = {0xA5, 0x25};
-static constexpr uint8_t RESET_CMD[2] = {0xA5, 0x40};
-static constexpr uint8_t GET_HEALTH_CMD[2] = {0xA5, 0x52};
+static constexpr uint8_t START_CMD[] = {0xA5, 0x20};
+static constexpr uint8_t STOP_CMD[] = {0xA5, 0x25};
+static constexpr uint8_t RESET_CMD[] = {0xA5, 0x40};
+static constexpr uint8_t GET_HEALTH_CMD[] = {0xA5, 0x52};
+
+static constexpr uint8_t RESP_FLAGS[] = {0xA5, 0x5A};
+
+static constexpr uint16_t LIDAR_RANGE = 360;
 
 extern "C" {
-static auto timer = rcl_get_zero_initialized_timer();
 
+static auto timer = rcl_get_zero_initialized_timer();
 static rclc_executor_t exe;
 
 static rcl_subscription_t enable_sub;
@@ -38,7 +40,31 @@ static std_msgs__msg__Bool enable_msg;
 
 static rcl_publisher_t data_sub;
 
-static uint8_t rx_buf[14];
+static uint8_t rx_buf[2048];
+static uint8_t process_buf[1024];
+static size_t read_bytes;
+volatile real_t distance[LIDAR_RANGE];
+volatile real_t quality[LIDAR_RANGE];
+
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
+                                uint16_t target_idx) {
+  static size_t idx = 0;
+
+  if (idx == target_idx) {
+    return;
+  } else if (idx < target_idx) {
+    read_bytes = target_idx - idx;
+  } else {
+    read_bytes = sizeof(rx_buf) - idx + target_idx;
+  }
+  // copy the bytes into process_buf for easier processing from start to end
+  for (size_t i = 0; i < read_bytes; ++i) {
+    process_buf[i] = rx_buf[idx++];
+    idx %= sizeof(rx_buf);
+  }
+
+  // extract distance and write into the distance array
+}
 
 static void init_lidar_motor(void) {
   HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1);
@@ -63,13 +89,12 @@ static void enable_cb(const void* arg) {
 static void timer_cb(rcl_timer_t* timer, int64_t last_call_time) {
   rcl_ret_softcheck(
       HAL_UART_Transmit_DMA(&huart2, GET_HEALTH_CMD, sizeof(GET_HEALTH_CMD)));
-  vTaskDelay(100);
+  for (size_t i = 0; i < read_bytes; ++i) {
+    printf("0x%02x ", process_buf[i]);
+  }
+  puts("");
 
-  ULOG_DEBUG(
-      "%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x",
-      rx_buf[0], rx_buf[1], rx_buf[2], rx_buf[3], rx_buf[4], rx_buf[5],
-      rx_buf[6], rx_buf[7], rx_buf[8], rx_buf[9], rx_buf[10], rx_buf[11],
-      rx_buf[12], rx_buf[13]);
+  // just use distance array
 }
 
 rclc_executor_t* lidar_init(rcl_node_t* node, rclc_support_t* support,
@@ -91,8 +116,16 @@ rclc_executor_t* lidar_init(rcl_node_t* node, rclc_support_t* support,
   rcl_ret_softcheck(rclc_executor_add_subscription(
       &exe, &enable_sub, &enable_msg, &enable_cb, ON_NEW_DATA));
 
-  // setup DMA for receiving
-  rcl_ret_softcheck(HAL_UART_Receive_DMA(&huart2, rx_buf, sizeof(rx_buf)));
+  /*
+   * setup DMA with idle line detecting interrupt for receiving:
+   * HAL_UARTEx_ReceiveToIdle_DMA will generate calls to user defined
+   * HAL_UARTEx_RxEventCallback for each occurrence of the following events:
+   * - DMA RX Half Transfer event (HT)
+   * - DMA RX Transfer Complete event (TC)
+   * - IDLE event on UART Rx line (indicating a pause is UART reception flow)
+   */
+  rcl_ret_softcheck(
+      HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rx_buf, sizeof(rx_buf)));
 
   init_lidar_motor();
 

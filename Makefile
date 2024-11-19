@@ -32,7 +32,6 @@ SIZE_OUTPUT := $(BUILD_DIR)/default.size.stdout
 
 INCL_PATHS := \
 			  -I$(CURDIR) \
-			  -I$(EIGEN_DIR) \
 			  -I$(ST_DIR_CORE)/Inc \
 			  -I$(ST_DIR_DRIVERS)/STM32F7xx_HAL_Driver/Inc \
 			  -I$(ST_DIR_DRIVERS)/CMSIS/Device/ST/STM32F7xx/Include \
@@ -55,9 +54,10 @@ INCL_PATHS := \
 			  -I$(ST_DIR_MW)/LwIP/src/include/compat/posix/sys \
 			  -I$(ST_DIR_MW)/LwIP/src/include/compat/stdc \
 			  -I$(ST_DIR_MW)/LwIP/system/arch \
-			  -I$(MICRO_ROS_LIB_DIR)/microros_include \
 			  -I$(ST_DIR_LWIP)/App \
 			  -I$(ST_DIR_LWIP)/Target \
+			  -I$(EIGEN_DIR) \
+			  -I$(MICRO_ROS_LIB_DIR)/microros_include \
 			  -I$(ULOG_DIR)
 
 FLAGS = \
