@@ -60,7 +60,7 @@ static void pose_cb(const void* arg) {
 
 static constexpr vPose<real_t> velocity_smoothen(
     const vPose<real_t>& vel_target, const vPose<real_t>& vel_cur) {
-  constexpr auto FACTOR = 4;
+  constexpr auto FACTOR = 2;
   constexpr auto MAX_DIFF_LINEAR =
       MAX_VELOCITY_WHEEL_LINEAR * UROS_FREQ_MOD_INTERPOLATION_SEC / FACTOR;
   constexpr auto MAX_DIFF_ANGULAR = MAX_DIFF_LINEAR / L_W_HALF;
@@ -75,8 +75,10 @@ static constexpr vPose<real_t> velocity_smoothen(
 }
 
 static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
-                              const Pose<real_t>& pose_cur) {
-  static constexpr real_t K_P = 0.05;
+                              const Pose<real_t>& pose_cur, real_t dt) {
+  static constexpr real_t K_P = 0.02;
+  static constexpr real_t K_D = 0.01;
+  static auto prev_err = Pose<real_t>{};
 
   const auto err = pose_sp - pose_cur;
   using std::abs;
@@ -87,7 +89,9 @@ static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
   ULOG_DEBUG("[intrpl]: delta pose: [x: %.2f, y: %.2f, theta: %.2f]", err.x,
              err.y, static_cast<real_t>(err.theta));
 
-  return err * K_P;
+  const auto err_diff = err - prev_err;
+
+  return err * K_P + err_diff / dt * K_D;
 }
 
 static void interpolation_cb(rcl_timer_t*, int64_t last_call_time) {
@@ -100,7 +104,7 @@ static void interpolation_cb(rcl_timer_t*, int64_t last_call_time) {
 
   pose_sp += Pose<real_t>(vRF2vWF(vel_rf_sp, pose_sp.theta) * dt);
 
-  const auto d_vel_wf = vPose<real_t>(pose_ctrl(pose_sp, pose_actual) / dt);
+  const auto d_vel_wf = vPose<real_t>(pose_ctrl(pose_sp, pose_actual, dt) / dt);
   const auto vel_rf_corrected =
       vel_rf_sp + vWF2vRF(d_vel_wf, pose_actual.theta);
   const auto msg_vel_wheel_sp =

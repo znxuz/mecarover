@@ -37,7 +37,7 @@ clear_drive()
 
 start_keyboard_control()
 {
-	echo "starting the keyboard control..." && /opt/ros/jazzy-base/bin/teleop_twist_keyboard
+	echo "starting the keyboard control..." && ros2 run teleop_twist_keyboard teleop_twist_keyboard
 }
 
 toggle_lidar()
@@ -50,21 +50,20 @@ main()
 	[[ -z "$ROS_DISTRO" ]] && echo "ros not sourced" >&2 && exit 1
 
 	if [[ "$1" = "test" ]]; then
-		drive_x 0.5 && sleep 3 && clear_drive
-		turn 1 && sleep 3 && clear_drive
-		drive_x -0.5 && sleep 3 && clear_drive
-		turn -1 && sleep 3 && clear_drive
-		drive_x 0.5 && sleep 3 && clear_drive
-		turn 1 && sleep 3 && clear_drive
-		drive_x -0.5 && sleep 3 && clear_drive
-		turn -1 && sleep 3 && clear_drive
+		drive_x 0.5 && sleep 2 && clear_drive
+		drive_x -0.5 && sleep 2 && clear_drive
+
+		drive_x 0.5 && sleep 2 && clear_drive
+		turn 3.14 && sleep 2 && clear_drive
+		drive_x 0.5 && sleep 2 && clear_drive
+		turn -3.14 && sleep 2 && clear_drive
 	elif [[ "$1" = "lidar" ]]; then
 		toggle_lidar "$2"
 		# set_scan_legacy "$2"
 	else
-		toggle_lidar 1
+		# toggle_lidar 1
 		start_keyboard_control
-		toggle_lidar 0
+		# toggle_lidar 0
 	fi
 }
 
