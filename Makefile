@@ -147,9 +147,7 @@ C_SRCS_EXCLS :=  \
 				 $(MICRO_ROS_DIR)/extra_sources/microros_transports/usb_cdc_transport.c \
 				 $(MICRO_ROS_DIR)/sample_main.c \
 				 $(MICRO_ROS_DIR)/sample_main_embeddedrtps.c \
-				 $(MICRO_ROS_DIR)/sample_main_udp.c \
-				 $(ST_DIR_CORE)/Src/syscalls.c \
-				 $(ST_DIR_CORE)/Src/sysmem.c
+				 $(MICRO_ROS_DIR)/sample_main_udp.c
 C_SRCS := $(filter-out $(C_SRCS_EXCLS), $(shell find $(SRCS_PATHS) -type f -name "*.c"))
 CPP_SRCS_EXCLS :=
 CPP_SRCS := $(filter-out $(CPP_SRCS_EXCLS), $(shell find $(SRCS_PATHS) -type f -name "*.cpp"))
