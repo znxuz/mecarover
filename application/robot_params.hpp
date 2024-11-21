@@ -8,6 +8,11 @@
 #include "real_t.h"
 
 namespace robot_params {
+inline constexpr real_t UROS_FREQ_MOD_WHEEL_CTRL_SEC = 0.05;
+inline constexpr real_t UROS_FREQ_MOD_INTERPOLATION_SEC = 0.10;
+inline constexpr real_t UROS_FREQ_MOD_LIDAR_SEC = 0.5;
+inline constexpr uint16_t S_TO_MS = 1000;
+
 inline constexpr uint8_t DOF = 4;
 inline constexpr uint8_t N_WHEEL = 4;
 
@@ -33,11 +38,6 @@ inline constexpr real_t MAX_VELOCITY_WHEEL_LINEAR =
     MAX_VELOCITY_WHEEL_ANGULAR * WHEEL_RADIUS;
 inline constexpr real_t MAX_POSE_DEVIATION_LINEAR = 300;
 inline constexpr real_t MAX_POSE_DEVIATION_ANGULAR = M_PI;
-
-inline constexpr real_t UROS_FREQ_MOD_WHEEL_CTRL_SEC = 0.05;
-inline constexpr real_t UROS_FREQ_MOD_INTERPOLATION_SEC = 0.10;
-inline constexpr real_t UROS_FREQ_MOD_LIDAR_SEC = 0.5;
-inline constexpr uint16_t S_TO_MS = 1000;
 
 using VelWheel = Eigen::Matrix<real_t, N_WHEEL, 1>;
 using VelRF = Eigen::Matrix<real_t, DOF, 1>;

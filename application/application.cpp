@@ -1,6 +1,7 @@
 #include <FreeRTOS.h>
 #include <cmsis_os2.h>
 #include <rtc.h>
+#include <stm32f7xx_hal_def.h>
 #include <stm32f7xx_hal_uart.h>
 #include <task.h>
 #include <tim.h>
@@ -18,7 +19,7 @@ int _write(int file, char* ptr, int len) {
   HAL_StatusTypeDef hstatus;
 
   if (file == STDOUT_FILENO || file == STDERR_FILENO) {
-    hstatus = HAL_UART_Transmit_DMA(&huart3, (uint8_t*)ptr, len);
+    hstatus = HAL_UART_Transmit(&huart3, (uint8_t*)ptr, len, HAL_MAX_DELAY);
 
     if (hstatus == HAL_OK)
       return len;
