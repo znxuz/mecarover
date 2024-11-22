@@ -76,9 +76,12 @@ static constexpr vPose<real_t> velocity_smoothen(
 
 static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
                               const Pose<real_t>& pose_cur, real_t dt) {
-  static constexpr real_t K_P = 0.02;
-  static constexpr real_t K_D = 0.01;
-  static auto prev_err = Pose<real_t>{};
+  static constexpr real_t K_P = 0.05;
+  static constexpr real_t K_I = 0.010;
+  static constexpr real_t K_D = 0.001;
+  static auto integral = Pose<real_t>{}, prev_err = Pose<real_t>{};
+  static constexpr real_t MAX_INTEGRAL_LINEAR = 200;
+  static constexpr real_t MAX_INTEGRAL_ANGULAR = M_PI;
 
   const auto err = pose_sp - pose_cur;
   using std::abs;
@@ -86,12 +89,19 @@ static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
       abs(err.y) > MAX_POSE_DEVIATION_LINEAR ||
       abs(err.theta) > MAX_POSE_DEVIATION_ANGULAR) [[unlikely]]
     ULOG_WARNING("[intrpl]: sanity check: pose deviation too large");
-  ULOG_DEBUG("[intrpl]: delta pose: [x: %.2f, y: %.2f, theta: %.2f]", err.x,
-             err.y, static_cast<real_t>(err.theta));
+  ULOG_DEBUG("[intrpl]: delta: [x: %.2f, y: %.2f, theta: %.2f]", err.x, err.y,
+             static_cast<real_t>(err.theta));
 
+  integral += err * dt;
+  integral.x =
+      std::clamp(integral.x, -MAX_INTEGRAL_LINEAR, MAX_INTEGRAL_LINEAR);
+  integral.y =
+      std::clamp(integral.y, -MAX_INTEGRAL_LINEAR, MAX_INTEGRAL_LINEAR);
+  integral.theta = std::clamp(static_cast<real_t>(integral.theta),
+                              -MAX_INTEGRAL_ANGULAR, MAX_INTEGRAL_ANGULAR);
   const auto err_diff = err - prev_err;
 
-  return err * K_P + err_diff / dt * K_D;
+  return err * K_P + integral * K_I + err_diff / dt * K_D;
 }
 
 static void interpolation_cb(rcl_timer_t*, int64_t last_call_time) {

@@ -68,10 +68,9 @@ static VelWheel pid_ctrl(const real_t dt) {
   integral = integral.unaryExpr(
       [&](real_t val) { return std::clamp(val, MAX_INTEGRAL, -MAX_INTEGRAL); });
   if (std::any_of(std::begin(integral), std::end(integral),
-                  [](real_t val) { return val >= 0.8 * MAX_INTEGRAL; })) {
+                  [](real_t val) { return val >= 0.8 * MAX_INTEGRAL; }))
     ULOG_WARNING("[wheel_ctrl]: PID integral: [%0.2f, %.02f, %.02f, %.02f]",
                  integral(0), integral(1), integral(2), integral(3));
-  }
 
   const auto derivative = (err - std::exchange(prev_err, err)) / dt;  // unused
 
