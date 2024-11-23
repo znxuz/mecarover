@@ -2,12 +2,14 @@
 
 #include <application/real_t.h>
 #include <rcl/subscription.h>
+#include <rcl/time.h>
 #include <rcl/timer.h>
 #include <rclc/executor.h>
 #include <rclc/executor_handle.h>
 #include <rclc/publisher.h>
 #include <rclc/subscription.h>
 #include <rclc/timer.h>
+#include <rmw_microros/time_sync.h>
 #include <sensor_msgs/msg/laser_scan.h>
 #include <std_msgs/msg/bool.h>
 #include <tim.h>
@@ -24,36 +26,41 @@ static constexpr uint8_t N_EXEC_HANDLES = 2;
 
 static constexpr uint8_t START_CMD[] = {0xA5, 0x20};
 static constexpr uint8_t STOP_CMD[] = {0xA5, 0x25};
-static constexpr uint8_t GET_HEALTH_CMD[] = {0xA5, 0x52};
 static constexpr uint8_t RESET_CMD[] = {0xA5, 0x40};
-
-static constexpr uint8_t RESP_FLAGS[] = {0xA5, 0x5A};
+// static constexpr uint8_t GET_HEALTH_CMD[] = {0xA5, 0x52};
 
 static constexpr uint16_t LIDAR_RANGE = 360;
 
 extern "C" {
-
 static auto timer = rcl_get_zero_initialized_timer();
 static rclc_executor_t exe;
 
 static rcl_subscription_t enable_sub;
 static std_msgs__msg__Bool enable_msg;
 
-static rcl_publisher_t data_sub;
+static rcl_publisher_t scan_pub;
+static sensor_msgs__msg__LaserScan scan_msg{};
 
 static uint8_t rxbuf[1024];
-static uint8_t tmpbuf[512];
-static volatile uint16_t distances_mm[LIDAR_RANGE];
-static volatile uint16_t qualities[LIDAR_RANGE];
+static uint16_t distances_mm[LIDAR_RANGE];
+static float qualities[LIDAR_RANGE];
 
-static size_t angle_cnt = 0;
-
+/*
+ * setup DMA with idle line detecting interrupt for receiving into the `rxbuf`:
+ * HAL_UARTEx_ReceiveToIdle_DMA will generate calls to user defined
+ * HAL_UARTEx_RxEventCallback for each occurrence of the following events:
+ * - DMA RX Half Transfer event (HT)
+ * - DMA RX Transfer Complete event (TC)
+ * - IDLE event on UART Rx line (indicating a pause of the UART reception flow)
+ *
+ * second parameter: value of the next, unwritten byte position in the range of
+ * [1, sizeof(rxbuf)] - meaning it should be the limit of where to stop to read
+ */
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
                                 uint16_t target_idx) {
   static size_t rxbuf_idx = 0;
   static uint16_t angle_idx = 0;
 
-  bool resp_flag_first_half = false;
   bool start_process_packet = false;
   uint8_t quality_cache = 0;
   uint16_t angle_cache = 0;
@@ -97,7 +104,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
           uint16_t parsed_angle =
               static_cast<uint16_t>((val << 7) | angle_cache) / 64;
           angle_idx = parsed_angle;
-          qualities[angle_idx] = quality_cache;
+          qualities[angle_idx] = static_cast<real_t>(quality_cache);
           break;
         }
         case 3: {
@@ -120,9 +127,30 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
   }
 }
 
-static void init_lidar_motor(void) {
+static void init_motor(void) {
   HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1);
   __HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1, 0);
+}
+
+static void init_ros_msg(void) {
+  /* msg imp. detail see `ros2 interface show sensor_msgs/msg/LaserScan` */
+
+  static char header_string[] = "scan data";
+  int64_t ns = rmw_uros_epoch_nanos();
+  scan_msg.header.stamp.nanosec = ns;
+  scan_msg.header.stamp.sec = RCL_NS_TO_S(ns);
+  scan_msg.header.frame_id.data = header_string;
+  scan_msg.header.frame_id.size = scan_msg.header.frame_id.capacity =
+      sizeof(header_string);
+
+  static constexpr real_t LIDAR_RANGE_RAD = (2 * M_PI) / LIDAR_RANGE;
+  scan_msg.angle_min = 0;
+  scan_msg.angle_max = LIDAR_RANGE_RAD * (LIDAR_RANGE - 1);  // 359 deg in rad
+  scan_msg.angle_increment = LIDAR_RANGE_RAD;
+  scan_msg.range_min = 0.15;
+  scan_msg.range_max = 12;
+  scan_msg.ranges.size = LIDAR_RANGE;
+  scan_msg.intensities.size = LIDAR_RANGE;
 }
 
 static void start(void) {
@@ -140,24 +168,23 @@ static void enable_cb(const void* arg) {
   reinterpret_cast<const std_msgs__msg__Bool*>(arg)->data ? start() : stop();
 }
 
-// static void lidar_check_health() {
-//   HAL_UART_Transmit_DMA(&huart2, GET_HEALTH_CMD, sizeof(GET_HEALTH_CMD));
-//
-//   for (size_t i = 0; i < sizeof(rxbuf); ++i) {
-//     printf("0x%02x ", rxbuf[i]);
-//   }
-//   puts("");
-// }
+static void timer_cb(rcl_timer_t* timer, int64_t) {
+  if (!enable_msg.data) return;
 
-static void timer_cb(rcl_timer_t* timer, int64_t last_call_time) {
-  if (!enable_msg.data)
-    return;
+  static float distances_m[LIDAR_RANGE]{};
 
-  puts("===================");
-  for (size_t i = 0; i < LIDAR_RANGE; ++i) {
-    printf("%u%s", distances_mm[i],
-           (i && !(i % 36)) || i + 1 == LIDAR_RANGE ? "\n" : " ");
-  }
+  // post process for the callback to be lightweight
+  for (size_t i = 0; i < LIDAR_RANGE; ++i)
+    distances_m[i] = static_cast<real_t>(distances_mm[i]) / 1000;
+
+  // puts("===============================");
+  // for (size_t i = 0; i < LIDAR_RANGE; ++i)
+  //   printf("%.02f ", distances_m[i]);
+  // puts("");
+
+  scan_msg.ranges.data = distances_m;
+  scan_msg.intensities.data = qualities;
+  rcl_ret_softcheck(rcl_publish(&scan_pub, &scan_msg, NULL));
 }
 
 rclc_executor_t* lidar_init(rcl_node_t* node, rclc_support_t* support,
@@ -169,30 +196,24 @@ rclc_executor_t* lidar_init(rcl_node_t* node, rclc_support_t* support,
       &timer, support, RCL_MS_TO_NS(TIMER_TIMEOUT_MS), &timer_cb, true));
   rcl_ret_softcheck(rclc_executor_add_timer(&exe, &timer));
 
-  rcl_ret_softcheck(rclc_publisher_init_best_effort(
-      &data_sub, node, ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, LaserScan),
-      "lidar_data"));
-
   rcl_ret_softcheck(rclc_subscription_init_best_effort(
       &enable_sub, node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool),
       "lidar_enable"));
   rcl_ret_softcheck(rclc_executor_add_subscription(
       &exe, &enable_sub, &enable_msg, &enable_cb, ON_NEW_DATA));
 
-  /*
-   * setup DMA with idle line detecting interrupt for receiving:
-   * HAL_UARTEx_ReceiveToIdle_DMA will generate calls to user defined
-   * HAL_UARTEx_RxEventCallback for each occurrence of the following events:
-   * - DMA RX Half Transfer event (HT)
-   * - DMA RX Transfer Complete event (TC)
-   * - IDLE event on UART Rx line (indicating a pause is UART reception flow)
-   */
+  rcl_ret_softcheck(rclc_publisher_init_best_effort(
+      &scan_pub, node, ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, LaserScan),
+      "lidar_scan"));
+
+  /* setup DMA receiving into `rxbuf` */
   rcl_ret_softcheck(
       HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxbuf, sizeof(rxbuf)));
 
-  HAL_UART_Transmit_DMA(&huart2, RESET_CMD, sizeof(RESET_CMD));
-
-  init_lidar_motor();
+  rcl_ret_softcheck(
+      HAL_UART_Transmit_DMA(&huart2, RESET_CMD, sizeof(RESET_CMD)));
+  init_motor();
+  init_ros_msg();
 
   return &exe;
 }
