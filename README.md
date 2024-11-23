@@ -1,7 +1,21 @@
 # Prerequisites
 
 - `docker`
-- `tmux`
+
+# ROS2 package dependencies
+
+- working `ros2` and `micro-ros-agent` in `jazzy`
+- `control_msgs`
+
+## `robot_description` package dependencies
+
+- `rviz2`
+- `xacro`
+- `joint_state_publisher`
+- `robot_state_publisher`
+- `slam_toolbox`
+
+Either install the dependencies locally via the system's package manager, or build from source
 
 # Pull/Update submodules
 
@@ -21,7 +35,3 @@ Or just the use the convenient script `micro_ros_static_lib_gen.sh`
 - assign a local IP address and a gateway address in `stm32cubemx`, which should
   be from the same subnet as micro-ROS agent, and regenerate the configuration
   files and compile
-
-# source `control_msgs` before for `ros2`
-
-- either install locally via the system's package manager, or build from source

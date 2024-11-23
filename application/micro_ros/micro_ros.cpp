@@ -84,7 +84,5 @@ void micro_ros(void* arg) {
     // rclc_executor_spin_some(interpolation_exe, 1);
     rclc_executor_spin_some(lidar_exe, 1);
   }
-  // TODO: clean up functions from the executor modules, or even better: RAII
-  // that shit
 }
 }
