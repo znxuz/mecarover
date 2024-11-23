@@ -155,7 +155,7 @@ static void init_ros_msg(void) {
 
 static void start(void) {
   __HAL_UART_CLEAR_IT(&huart2, UART_CLEAR_NEF | UART_CLEAR_OREF);
-  __HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1, 5000);
+  __HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1, htim11.Instance->ARR);
   HAL_UART_Transmit_DMA(&huart2, START_CMD, sizeof(START_CMD));
 }
 
@@ -202,7 +202,7 @@ rclc_executor_t* lidar_init(rcl_node_t* node, rclc_support_t* support,
   rcl_ret_softcheck(rclc_executor_add_subscription(
       &exe, &enable_sub, &enable_msg, &enable_cb, ON_NEW_DATA));
 
-  rcl_ret_softcheck(rclc_publisher_init_best_effort(
+  rcl_ret_softcheck(rclc_publisher_init_default(
       &scan_pub, node, ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, LaserScan),
       "lidar_scan"));
 
