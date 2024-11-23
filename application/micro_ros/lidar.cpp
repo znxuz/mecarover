@@ -24,8 +24,8 @@ static constexpr uint8_t N_EXEC_HANDLES = 2;
 
 static constexpr uint8_t START_CMD[] = {0xA5, 0x20};
 static constexpr uint8_t STOP_CMD[] = {0xA5, 0x25};
-// static constexpr uint8_t GET_HEALTH_CMD[] = {0xA5, 0x52};
-// static constexpr uint8_t RESET_CMD[] = {0xA5, 0x40};
+static constexpr uint8_t GET_HEALTH_CMD[] = {0xA5, 0x52};
+static constexpr uint8_t RESET_CMD[] = {0xA5, 0x40};
 
 static constexpr uint8_t RESP_FLAGS[] = {0xA5, 0x5A};
 
@@ -41,14 +41,17 @@ static std_msgs__msg__Bool enable_msg;
 
 static rcl_publisher_t data_sub;
 
-static uint8_t rxbuf[10240];
-volatile uint16_t distances[LIDAR_RANGE];
-volatile uint16_t qualities[LIDAR_RANGE];
+static uint8_t rxbuf[1024];
+static uint8_t tmpbuf[512];
+static volatile uint16_t distances_mm[LIDAR_RANGE];
+static volatile uint16_t qualities[LIDAR_RANGE];
+
+static size_t angle_cnt = 0;
 
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
                                 uint16_t target_idx) {
   static size_t rxbuf_idx = 0;
-  static size_t angle_idx = 0;
+  static uint16_t angle_idx = 0;
 
   bool resp_flag_first_half = false;
   bool start_process_packet = false;
@@ -61,44 +64,39 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
     /*
      * DMA in circular mode:
      * the target_idx will be $sizeof(rx_buf)$ instead of 0, if the whole buffer
-     * is just written completely and the DMA controller is ready to write the
-     * next byte at the start of the buffer. So when rxbuf_idx == sizeof(rxbuf),
-     * then it must have already read the whole buffer and should start reading
-     * at the beginning when continuing the while loop
+     * is already written completely and is ready to write the next byte at the
+     * start of the buffer, so when rxbuf_idx == sizeof(rxbuf), then it must
+     * have already read the whole buffer and should start reading at the
+     * beginning
      */
     rxbuf_idx %= sizeof(rxbuf);
 
     uint8_t val = rxbuf[rxbuf_idx];
-    if (val == RESP_FLAGS[0] && !start_process_packet) {
-      resp_flag_first_half = true;
-    } else if (val == RESP_FLAGS[1] && resp_flag_first_half) {
+    if (!start_process_packet && (val & 1) != (val & 2)) {
       start_process_packet = true;
-      resp_flag_first_half = false;
-      rxbuf_idx += 5;  // jump over the response descriptor
-    } else if (start_process_packet) [[likely]] {
+    }
+
+    if (start_process_packet) [[likely]] {
       switch (packet_idx) {
         case 0: {
-          if ((val & 1) == (val & 2)) [[unlikely]]
-            puts("error: packet start bit and inverted start bit are equal!");
-          if (val & 1) angle_idx = 0;
+          if (val & 1) [[unlikely]]
+            angle_idx = 0;
           quality_cache = val >> 2;
           break;
         }
         case 1: {
-          if (!(val & 1)) [[unlikely]]
-            puts("error: packet check bit is 0!");
+          if (!(val & 1)) [[unlikely]] {
+            start_process_packet = false;
+            packet_idx = 0;
+            return;
+          }
           angle_cache = val >> 1;
           break;
         }
         case 2: {
           uint16_t parsed_angle =
               static_cast<uint16_t>((val << 7) | angle_cache) / 64;
-          if (parsed_angle != angle_idx) [[unlikely]] {
-            printf(
-                "error: angle counter and parsed angle are not equal! [%u, %u]",
-                angle_idx, parsed_angle);
-            angle_idx = parsed_angle;
-          }
+          angle_idx = parsed_angle;
           qualities[angle_idx] = quality_cache;
           break;
         }
@@ -107,7 +105,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
           break;
         }
         case 4: {
-          distances[angle_idx] =
+          distances_mm[angle_idx] =
               static_cast<uint16_t>(dist_mm_cache | val << 8) / 4;
           angle_idx = ++angle_idx % LIDAR_RANGE;
           start_process_packet = false;
@@ -116,8 +114,6 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
       }
 
       packet_idx = ++packet_idx % 5;
-    } else {
-      resp_flag_first_half = false;
     }
 
     ++rxbuf_idx;
@@ -131,7 +127,7 @@ static void init_lidar_motor(void) {
 
 static void start(void) {
   __HAL_UART_CLEAR_IT(&huart2, UART_CLEAR_NEF | UART_CLEAR_OREF);
-  __HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1, htim11.Instance->ARR);
+  __HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1, 5000);
   HAL_UART_Transmit_DMA(&huart2, START_CMD, sizeof(START_CMD));
 }
 
@@ -144,13 +140,23 @@ static void enable_cb(const void* arg) {
   reinterpret_cast<const std_msgs__msg__Bool*>(arg)->data ? start() : stop();
 }
 
+// static void lidar_check_health() {
+//   HAL_UART_Transmit_DMA(&huart2, GET_HEALTH_CMD, sizeof(GET_HEALTH_CMD));
+//
+//   for (size_t i = 0; i < sizeof(rxbuf); ++i) {
+//     printf("0x%02x ", rxbuf[i]);
+//   }
+//   puts("");
+// }
+
 static void timer_cb(rcl_timer_t* timer, int64_t last_call_time) {
   if (!enable_msg.data)
     return;
 
+  puts("===================");
   for (size_t i = 0; i < LIDAR_RANGE; ++i) {
-    printf("%u ", distances[i]);
-    if (!(i % 36)) puts("");
+    printf("%u%s", distances_mm[i],
+           (i && !(i % 36)) || i + 1 == LIDAR_RANGE ? "\n" : " ");
   }
 }
 
@@ -183,6 +189,8 @@ rclc_executor_t* lidar_init(rcl_node_t* node, rclc_support_t* support,
    */
   rcl_ret_softcheck(
       HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxbuf, sizeof(rxbuf)));
+
+  HAL_UART_Transmit_DMA(&huart2, RESET_CMD, sizeof(RESET_CMD));
 
   init_lidar_motor();
 
