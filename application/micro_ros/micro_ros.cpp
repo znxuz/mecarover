@@ -72,16 +72,16 @@ static void init() {
 void micro_ros(void* arg) {
   init();
 
-  // auto* wheel_ctrl_exe = wheel_ctrl_init(&node, &support, &allocator);
-  // auto* odometry_exe = odometry_init(&node, &support, &allocator);
-  // auto* interpolation_exe = interpolation_init(&node, &support, &allocator);
+  auto* wheel_ctrl_exe = wheel_ctrl_init(&node, &support, &allocator);
+  auto* odometry_exe = odometry_init(&node, &support, &allocator);
+  auto* interpolation_exe = interpolation_init(&node, &support, &allocator);
   auto* lidar_exe = lidar_init(&node, &support, &allocator);
 
   ULOG_INFO("micro-ROS: starting executors");
   for (;;) {
-    // rclc_executor_spin_some(wheel_ctrl_exe, 1);
-    // rclc_executor_spin_some(odometry_exe, 1);
-    // rclc_executor_spin_some(interpolation_exe, 1);
+    rclc_executor_spin_some(wheel_ctrl_exe, 1);
+    rclc_executor_spin_some(odometry_exe, 1);
+    rclc_executor_spin_some(interpolation_exe, 1);
     rclc_executor_spin_some(lidar_exe, 1);
   }
 }

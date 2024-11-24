@@ -59,12 +59,12 @@ static float qualities[LIDAR_RANGE];
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
                                 uint16_t target_idx) {
   static size_t rxbuf_idx = 0;
-  static uint16_t angle_idx = 0;
 
-  bool start_process_packet = false;
-  uint8_t quality_cache = 0;
-  uint16_t angle_cache = 0;
-  uint16_t dist_mm_cache = 0;
+  uint8_t quality = 0;
+  uint16_t dist_mm = 0;
+  uint16_t angle = 0;
+
+  bool process_packet = false;
   size_t packet_idx = 0;
 
   while (rxbuf_idx != target_idx) {
@@ -79,48 +79,36 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
     rxbuf_idx %= sizeof(rxbuf);
 
     uint8_t val = rxbuf[rxbuf_idx];
-    if (!start_process_packet && (val & 1) != (val & 2)) {
-      start_process_packet = true;
-    }
+    if (!process_packet && (val & 1) != (val & 2))
+      process_packet = true;
 
-    if (start_process_packet) [[likely]] {
+    if (process_packet) [[likely]] {
       switch (packet_idx) {
-        case 0: {
-          if (val & 1) [[unlikely]]
-            angle_idx = 0;
-          quality_cache = val >> 2;
+        case 0:
+          quality = val >> 2;
           break;
-        }
-        case 1: {
+        case 1:
           if (!(val & 1)) [[unlikely]] {
-            start_process_packet = false;
+            process_packet = false;
             packet_idx = 0;
             return;
           }
-          angle_cache = val >> 1;
+          angle = val >> 1;
           break;
-        }
-        case 2: {
-          uint16_t parsed_angle =
-              static_cast<uint16_t>((val << 7) | angle_cache) / 64;
-          angle_idx = parsed_angle;
-          qualities[angle_idx] = static_cast<real_t>(quality_cache);
+        case 2:
+          angle = static_cast<uint16_t>(val << 7 | angle) / 64;
+          qualities[angle] = static_cast<float>(quality);
           break;
-        }
-        case 3: {
-          dist_mm_cache = val;
+        case 3:
+          dist_mm = val;
           break;
-        }
-        case 4: {
-          distances_mm[angle_idx] =
-              static_cast<uint16_t>(dist_mm_cache | val << 8) / 4;
-          angle_idx = ++angle_idx % LIDAR_RANGE;
-          start_process_packet = false;
+        case 4:
+          distances_mm[angle] = static_cast<uint16_t>(dist_mm | val << 8) / 4;
+          process_packet = false;
           break;
-        }
       }
 
-      packet_idx = ++packet_idx % 5;
+      packet_idx = ++packet_idx % 5; // i = ++i defined since c++17
     }
 
     ++rxbuf_idx;
