@@ -14,6 +14,7 @@
 
 extern "C" {
 
+#ifdef USE_UDP_TRANSPORT
 // redirect stdout stdout/stderr to uart
 int _write(int file, char* ptr, int len) {
   HAL_StatusTypeDef hstatus;
@@ -29,6 +30,7 @@ int _write(int file, char* ptr, int len) {
   errno = EBADF;
   return -1;
 }
+#endif
 
 volatile unsigned long ulHighFrequencyTimerTicks;
 

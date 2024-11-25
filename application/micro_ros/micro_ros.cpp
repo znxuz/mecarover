@@ -1,5 +1,6 @@
 #include "micro_ros.hpp"
 
+#include <usart.h>
 #include <lwip.h>
 #include <rcl/allocator.h>
 #include <rcl/time.h>
@@ -18,6 +19,14 @@
 #include "wheel_ctrl.hpp"
 
 extern "C" {
+bool cubemx_transport_open(struct uxrCustomTransport* transport);
+bool cubemx_transport_close(struct uxrCustomTransport* transport);
+// TODO: pull request to change buf to `const uint8_t*`
+size_t cubemx_transport_write(struct uxrCustomTransport* transport,
+                              const uint8_t* buf, size_t len, uint8_t* err);
+size_t cubemx_transport_read(struct uxrCustomTransport* transport, uint8_t* buf,
+                             size_t len, int timeout, uint8_t* err);
+
 void* microros_allocate(size_t size, void* state);
 void microros_deallocate(void* pointer, void* state);
 void* microros_reallocate(void* pointer, size_t size, void* state);
@@ -35,13 +44,18 @@ static rcl_init_options_t init_options;
 
 static void init() {
   ULOG_INFO("initializing micro-ROS module");
-  MX_LWIP_Init();
-  vTaskDelay(pdMS_TO_TICKS(200));
 
+#ifdef USE_UDP_TRANSPORT
+  MX_LWIP_Init();
   rcl_ret_check(rmw_uros_set_custom_transport(
       false,  // framing disable here. udp should use packet-oriented mode
       (void*)&TRANSPORT_PARAMS, udp_transport_open, udp_transport_close,
       udp_transport_write, udp_transport_read));
+#else
+  rcl_ret_check(rmw_uros_set_custom_transport(
+      true, (void*)&huart3, cubemx_transport_open, cubemx_transport_close,
+      cubemx_transport_write, cubemx_transport_read));
+#endif
 
   allocator.allocate = microros_allocate;
   allocator.deallocate = microros_deallocate;

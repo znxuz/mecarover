@@ -19,9 +19,10 @@ ETH_IF := wlp3s0
 MICRO_ROS_AGENT_IP := \"$(shell ip a s $(ETH_IF) | grep -Eo '[0-9]{3}.[0-9]{3}.[0-9]{0,3}.[0-9]{0,3}' | head -n1)\"
 MICRO_ROS_AGENT_PORT := \"8888\"
 ROS_DOMAIN_ID := 42
+# USE_UDP_TRANSPORT := -DUSE_UDP_TRANSPORT
 
-OPT := -Os
 # DEBUG := -DDEBUG -g3
+OPT := -Os
 ULOG_ENABLED := -DULOG_ENABLED
 
 BIN := $(BUILD_DIR)/$(NAME).bin
@@ -84,7 +85,8 @@ FLAGS = \
 		$(ULOG_ENABLED) \
 		-DMICRO_ROS_AGENT_IP=$(MICRO_ROS_AGENT_IP) \
 		-DMICRO_ROS_AGENT_PORT=$(MICRO_ROS_AGENT_PORT) \
-		-DROS_DOMAIN_ID=$(ROS_DOMAIN_ID)
+		-DROS_DOMAIN_ID=$(ROS_DOMAIN_ID) \
+		$(USE_UDP_TRANSPORT)
 
 CFLAGS = \
 		 $(FLAGS) \
@@ -141,7 +143,6 @@ SRCS_PATHS := \
 			  $(MICRO_ROS_DIR) \
 			  $(ULOG_DIR)
 C_SRCS_EXCLS :=  \
-				 $(MICRO_ROS_DIR)/extra_sources/microros_transports/dma_transport.c \
 				 $(MICRO_ROS_DIR)/extra_sources/microros_transports/it_transport.c \
 				 $(MICRO_ROS_DIR)/extra_sources/microros_transports/udp_transport.c \
 				 $(MICRO_ROS_DIR)/extra_sources/microros_transports/usb_cdc_transport.c \
