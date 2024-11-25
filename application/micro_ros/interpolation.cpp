@@ -76,9 +76,9 @@ static constexpr vPose<real_t> velocity_smoothen(
 
 static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
                               const Pose<real_t>& pose_cur, real_t dt) {
-  static constexpr real_t K_P = 0.05;
-  static constexpr real_t K_I = 0.010;
-  static constexpr real_t K_D = 0.001;
+  static constexpr real_t K_P = 0.025;
+  static constexpr real_t K_I = 0.01;
+  static constexpr real_t K_D = 0.01;
   static auto integral = Pose<real_t>{}, prev_err = Pose<real_t>{};
   static constexpr real_t MAX_INTEGRAL_LINEAR = 200;
   static constexpr real_t MAX_INTEGRAL_ANGULAR = M_PI;

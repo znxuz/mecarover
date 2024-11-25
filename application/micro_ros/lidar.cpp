@@ -67,6 +67,8 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
   bool process_packet = false;
   size_t packet_idx = 0;
 
+  // TODO: just write data into buf without processing and let the ros2 lidar
+  // timer callback process the data
   while (rxbuf_idx != target_idx) {
     /*
      * DMA in circular mode:
@@ -79,8 +81,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
     rxbuf_idx %= sizeof(rxbuf);
 
     uint8_t val = rxbuf[rxbuf_idx];
-    if (!process_packet && (val & 1) != (val & 2))
-      process_packet = true;
+    if (!process_packet && (val & 1) != (val & 2)) process_packet = true;
 
     if (process_packet) [[likely]] {
       switch (packet_idx) {
@@ -108,7 +109,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
           break;
       }
 
-      packet_idx = ++packet_idx % 5; // i = ++i defined since c++17
+      packet_idx = ++packet_idx % 5;  // i = ++i is defined since c++17
     }
 
     ++rxbuf_idx;

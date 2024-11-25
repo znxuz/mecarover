@@ -61,9 +61,7 @@ main()
 		toggle_lidar "$2"
 		# set_scan_legacy "$2"
 	else
-		toggle_lidar 1
 		start_keyboard_control
-		toggle_lidar 0
 	fi
 }
 
