@@ -35,9 +35,9 @@ static std::array<real_t, N_WHEEL> vel_to_duty_cycle(const VelWheel& vel) {
 }
 
 extern "C" {
-static auto wheel_ctrl_exe = rclc_executor_get_zero_initialized_executor();
+static auto exe = rclc_executor_get_zero_initialized_executor();
 
-static auto wheel_ctrl_timer = rcl_get_zero_initialized_timer();
+static auto timer = rcl_get_zero_initialized_timer();
 
 static rcl_publisher_t pub_encoder_data;
 
@@ -94,27 +94,28 @@ static void wheel_ctrl_cb(rcl_timer_t* timer, int64_t last_call_time) {
 rclc_executor_t* wheel_ctrl_init(rcl_node_t* node, rclc_support_t* support,
                                  const rcl_allocator_t* allocator) {
   hal_init();
-  rcl_ret_check(rclc_executor_init(&wheel_ctrl_exe, &support->context,
-                                   N_EXEC_HANDLES, allocator));
+
+  rcl_ret_check(
+      rclc_executor_init(&exe, &support->context, N_EXEC_HANDLES, allocator));
 
   rcl_ret_check(rclc_subscription_init_best_effort(
       &sub_wheel_vel, node,
       DriveStateWrapper<DriveStateType::VEL_SP_ANGULAR>::get_msg_type_support(),
       "wheel_vel"));
-  rcl_ret_check(rclc_executor_add_subscription(&wheel_ctrl_exe, &sub_wheel_vel,
-                                               &msg_wheel_vel_sp.state,
-                                               &vel_sp_cb, ON_NEW_DATA));
+  rcl_ret_check(rclc_executor_add_subscription(
+      &exe, &sub_wheel_vel, &msg_wheel_vel_sp.state, &vel_sp_cb, ON_NEW_DATA));
 
-  rcl_ret_check(rclc_timer_init_default2(&wheel_ctrl_timer, support,
-                                         RCL_MS_TO_NS(TIMER_TIMEOUT_MS),
-                                         &wheel_ctrl_cb, true));
-  rcl_ret_check(rclc_executor_add_timer(&wheel_ctrl_exe, &wheel_ctrl_timer));
+  rcl_ret_check(rclc_timer_init_default2(
+      &timer, support, RCL_MS_TO_NS(TIMER_TIMEOUT_MS), &wheel_ctrl_cb, true));
+  rcl_ret_check(rclc_executor_add_timer(&exe, &timer));
 
   rcl_ret_check(rclc_publisher_init_best_effort(
       &pub_encoder_data, node,
       DriveStateWrapper<DriveStateType::ENC_DELTA_RAD>::get_msg_type_support(),
       "encoder_data"));
 
-  return &wheel_ctrl_exe;
+  rclc_executor_set_semantics(&exe, RCLC_SEMANTICS_LOGICAL_EXECUTION_TIME);
+
+  return &exe;
 }
 }

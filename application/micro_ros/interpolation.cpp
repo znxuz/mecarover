@@ -30,7 +30,7 @@ static constexpr uint16_t TIMER_TIMEOUT_MS =
     UROS_FREQ_MOD_INTERPOLATION_SEC * S_TO_MS;
 
 extern "C" {
-static rclc_executor_t interpolation_exe;
+static rclc_executor_t exe;
 
 static rcl_subscription_t sub_cmd_vel;
 static geometry_msgs__msg__Twist msg_cmd_vel{};
@@ -38,7 +38,7 @@ static geometry_msgs__msg__Twist msg_cmd_vel{};
 static rcl_subscription_t sub_odometry;
 static geometry_msgs__msg__Pose2D msg_odom_pose{};
 
-static auto interpolation_timer = rcl_get_zero_initialized_timer();
+static auto timer = rcl_get_zero_initialized_timer();
 static rcl_publisher_t pub_wheel_vel;
 
 static auto vel_rf_target = vPose<real_t>{};
@@ -126,34 +126,33 @@ static void interpolation_cb(rcl_timer_t*, int64_t last_call_time) {
 
 rclc_executor_t* interpolation_init(rcl_node_t* node, rclc_support_t* support,
                                     const rcl_allocator_t* allocator) {
-  rcl_ret_check(rclc_executor_init(&interpolation_exe, &support->context,
-                                   N_EXEC_HANDLES, allocator));
+  rcl_ret_check(
+      rclc_executor_init(&exe, &support->context, N_EXEC_HANDLES, allocator));
 
   rcl_ret_check(rclc_subscription_init_best_effort(
       &sub_cmd_vel, node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "cmd_vel"));
-  rcl_ret_check(rclc_executor_add_subscription(&interpolation_exe, &sub_cmd_vel,
-                                               &msg_cmd_vel, &cmd_vel_cb,
-                                               ON_NEW_DATA));
+  rcl_ret_check(rclc_executor_add_subscription(&exe, &sub_cmd_vel, &msg_cmd_vel,
+                                               &cmd_vel_cb, ON_NEW_DATA));
 
   rcl_ret_check(rclc_subscription_init_best_effort(
       &sub_odometry, node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Pose2D), "odometry"));
-  rcl_ret_check(rclc_executor_add_subscription(&interpolation_exe,
-                                               &sub_odometry, &msg_odom_pose,
-                                               &pose_cb, ON_NEW_DATA));
+  rcl_ret_check(rclc_executor_add_subscription(
+      &exe, &sub_odometry, &msg_odom_pose, &pose_cb, ON_NEW_DATA));
 
-  rcl_ret_check(rclc_timer_init_default2(&interpolation_timer, support,
+  rcl_ret_check(rclc_timer_init_default2(&timer, support,
                                          RCL_MS_TO_NS(TIMER_TIMEOUT_MS),
                                          &interpolation_cb, true));
-  rcl_ret_check(
-      rclc_executor_add_timer(&interpolation_exe, &interpolation_timer));
+  rcl_ret_check(rclc_executor_add_timer(&exe, &timer));
 
   rcl_ret_check(rclc_publisher_init_best_effort(
       &pub_wheel_vel, node,
       DriveStateWrapper<DriveStateType::VEL_SP_ANGULAR>::get_msg_type_support(),
       "wheel_vel"));
 
-  return &interpolation_exe;
+  rclc_executor_set_semantics(&exe, RCLC_SEMANTICS_LOGICAL_EXECUTION_TIME);
+
+  return &exe;
 }
 }
