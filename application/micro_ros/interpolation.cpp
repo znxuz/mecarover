@@ -48,9 +48,9 @@ real_t epsilon = 0;
 
 static void cmd_vel_cb(const void* arg) {
   const auto* msg = reinterpret_cast<const geometry_msgs__msg__Twist*>(arg);
-  vel_rf_target.vx = msg->linear.x * 1000;  // m/s -> mm/s
-  vel_rf_target.vy = msg->linear.y * 1000;  // m/s -> mm/s
-  vel_rf_target.omega = msg->angular.z;     // rad/s
+  vel_rf_target.vx = msg->linear.x * S_TO_MS;
+  vel_rf_target.vy = msg->linear.y * S_TO_MS;
+  vel_rf_target.omega = msg->angular.z;  // rad/s
 }
 
 static void pose_cb(const void* arg) {
@@ -76,7 +76,7 @@ static constexpr vPose<real_t> velocity_smoothen(
 
 static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
                               const Pose<real_t>& pose_cur, real_t dt) {
-  static constexpr real_t K_P = 0.025;
+  static constexpr real_t K_P = 0.02;
   static constexpr real_t K_I = 0.01;
   static constexpr real_t K_D = 0.01;
   static auto integral = Pose<real_t>{}, prev_err = Pose<real_t>{};

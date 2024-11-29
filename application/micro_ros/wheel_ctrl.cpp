@@ -49,6 +49,8 @@ static VelWheel wheel_vel_actual{};
 static VelWheel wheel_vel_sp{};
 
 static void vel_sp_cb(const void* arg) {
+  if (!arg) return;
+
   const auto* msg = reinterpret_cast<const DriveState*>(arg);
   wheel_vel_sp(0) = msg->front_right_wheel_velocity;
   wheel_vel_sp(1) = msg->front_left_wheel_velocity;
@@ -103,7 +105,7 @@ rclc_executor_t* wheel_ctrl_init(rcl_node_t* node, rclc_support_t* support,
       DriveStateWrapper<DriveStateType::VEL_SP_ANGULAR>::get_msg_type_support(),
       "wheel_vel"));
   rcl_ret_check(rclc_executor_add_subscription(
-      &exe, &sub_wheel_vel, &msg_wheel_vel_sp.state, &vel_sp_cb, ON_NEW_DATA));
+      &exe, &sub_wheel_vel, &msg_wheel_vel_sp.state, &vel_sp_cb, ALWAYS));
 
   rcl_ret_check(rclc_timer_init_default2(
       &timer, support, RCL_MS_TO_NS(TIMER_TIMEOUT_MS), &wheel_ctrl_cb, true));
@@ -114,6 +116,7 @@ rclc_executor_t* wheel_ctrl_init(rcl_node_t* node, rclc_support_t* support,
       DriveStateWrapper<DriveStateType::ENC_DELTA_RAD>::get_msg_type_support(),
       "encoder_data"));
 
+  rclc_executor_set_trigger(&exe, rclc_executor_trigger_one, &timer);
   rclc_executor_set_semantics(&exe, RCLC_SEMANTICS_LOGICAL_EXECUTION_TIME);
 
   return &exe;
