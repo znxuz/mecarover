@@ -19,7 +19,7 @@ ETH_IF := wlp3s0
 MICRO_ROS_AGENT_IP := \"$(shell ip a s $(ETH_IF) | grep -Eo '[0-9]{3}.[0-9]{3}.[0-9]{0,3}.[0-9]{0,3}' | head -n1)\"
 MICRO_ROS_AGENT_PORT := \"8888\"
 ROS_DOMAIN_ID := 42
-# USE_UDP_TRANSPORT := -DUSE_UDP_TRANSPORT
+USE_UDP_TRANSPORT := -DUSE_UDP_TRANSPORT
 
 # DEBUG := -DDEBUG -g3
 OPT := -Os
