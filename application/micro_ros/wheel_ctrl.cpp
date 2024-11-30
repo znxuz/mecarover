@@ -14,7 +14,7 @@
 #include <utility>
 
 #include "drive_state_wrapper.hpp"
-#include "rcl_ret_check.hpp"
+#include "rcl_guard.hpp"
 
 using namespace robot_params;
 
@@ -84,7 +84,7 @@ static void wheel_ctrl_cb(rcl_timer_t* timer, int64_t last_call_time) {
   const auto enc_delta_rad = hal_encoder_delta_rad();
 
   DriveStateWrapper<DriveStateType::ENC_DELTA_RAD> enc_data{enc_delta_rad};
-  rcl_ret_softcheck(rcl_publish(&pub_encoder_data, &enc_data.state, NULL));
+  rcl_softguard(rcl_publish(&pub_encoder_data, &enc_data.state, NULL));
 
   std::transform(begin(enc_delta_rad), end(enc_delta_rad),
                  std::begin(wheel_vel_actual),
@@ -97,21 +97,21 @@ rclc_executor_t* wheel_ctrl_init(rcl_node_t* node, rclc_support_t* support,
                                  const rcl_allocator_t* allocator) {
   hal_init();
 
-  rcl_ret_check(
+  rcl_guard(
       rclc_executor_init(&exe, &support->context, N_EXEC_HANDLES, allocator));
 
-  rcl_ret_check(rclc_subscription_init_best_effort(
+  rcl_guard(rclc_subscription_init_best_effort(
       &sub_wheel_vel, node,
       DriveStateWrapper<DriveStateType::VEL_SP_ANGULAR>::get_msg_type_support(),
       "wheel_vel"));
-  rcl_ret_check(rclc_executor_add_subscription(
+  rcl_guard(rclc_executor_add_subscription(
       &exe, &sub_wheel_vel, &msg_wheel_vel_sp.state, &vel_sp_cb, ALWAYS));
 
-  rcl_ret_check(rclc_timer_init_default2(
+  rcl_guard(rclc_timer_init_default2(
       &timer, support, RCL_MS_TO_NS(TIMER_TIMEOUT_MS), &wheel_ctrl_cb, true));
-  rcl_ret_check(rclc_executor_add_timer(&exe, &timer));
+  rcl_guard(rclc_executor_add_timer(&exe, &timer));
 
-  rcl_ret_check(rclc_publisher_init_best_effort(
+  rcl_guard(rclc_publisher_init_best_effort(
       &pub_encoder_data, node,
       DriveStateWrapper<DriveStateType::ENC_DELTA_RAD>::get_msg_type_support(),
       "encoder_data"));

@@ -7,12 +7,12 @@
 #include <ulog.h>
 
 #include <application/hal/hal.hpp>
-#include <application/mrcpptypes.hpp>
+#include <application/pose_types.hpp>
 #include <application/robot_params.hpp>
 
 #include "drive_state_wrapper.hpp"
 #include "jacobi_transformation.hpp"
-#include "rcl_ret_check.hpp"
+#include "rcl_guard.hpp"
 
 using namespace imsl;
 using namespace robot_params;
@@ -51,23 +51,23 @@ static void odometry_cb(const void* arg) {
       dpose_rf, (static_cast<real_t>(pose_wf.theta) * 2 + dpose_rf.theta) / 2);
 
   auto msg = geometry_msgs__msg__Pose2D{pose_wf.x, pose_wf.y, pose_wf.theta};
-  rcl_ret_softcheck(rcl_publish(&pub_odometry, &msg, NULL));
+  rcl_softguard(rcl_publish(&pub_odometry, &msg, NULL));
 }
 
 rclc_executor_t* odometry_init(rcl_node_t* node, rclc_support_t* support,
                                const rcl_allocator_t* allocator) {
-  rcl_ret_check(rclc_executor_init(&odometry_exe, &support->context,
+  rcl_guard(rclc_executor_init(&odometry_exe, &support->context,
                                    N_EXEC_HANDLES, allocator));
 
   rclc_subscription_init_best_effort(
       &sub_encoder_data, node,
       DriveStateWrapper<DriveStateType::ENC_DELTA_RAD>::get_msg_type_support(),
       "encoder_data");
-  rcl_ret_check(rclc_executor_add_subscription(&odometry_exe, &sub_encoder_data,
+  rcl_guard(rclc_executor_add_subscription(&odometry_exe, &sub_encoder_data,
                                                &enc_data_msg.state,
                                                &odometry_cb, ON_NEW_DATA));
 
-  rcl_ret_check(rclc_publisher_init_best_effort(
+  rcl_guard(rclc_publisher_init_best_effort(
       &pub_odometry, node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Pose2D), "odometry"));
 

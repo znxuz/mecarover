@@ -14,7 +14,7 @@
 #include "interpolation.hpp"
 #include "lidar.hpp"
 #include "odometry.hpp"
-#include "rcl_ret_check.hpp"
+#include "rcl_guard.hpp"
 #include "udp_transport.h"
 #include "wheel_ctrl.hpp"
 
@@ -47,12 +47,12 @@ static void init() {
 
 #ifdef USE_UDP_TRANSPORT
   MX_LWIP_Init();
-  rcl_ret_check(rmw_uros_set_custom_transport(
+  rcl_guard(rmw_uros_set_custom_transport(
       false,  // framing disable here. udp should use packet-oriented mode
       (void*)&TRANSPORT_PARAMS, udp_transport_open, udp_transport_close,
       udp_transport_write, udp_transport_read));
 #else
-  rcl_ret_check(rmw_uros_set_custom_transport(
+  rcl_guard(rmw_uros_set_custom_transport(
       true, (void*)&huart3, cubemx_transport_open, cubemx_transport_close,
       cubemx_transport_write, cubemx_transport_read));
 #endif
@@ -62,8 +62,8 @@ static void init() {
   allocator.reallocate = microros_reallocate;
   allocator.zero_allocate = microros_zero_allocate;
   init_options = rcl_get_zero_initialized_init_options();
-  rcl_ret_check(rcl_init_options_init(&init_options, allocator));
-  rcl_ret_check(rcl_init_options_set_domain_id(&init_options, ROS_DOMAIN_ID));
+  rcl_guard(rcl_init_options_init(&init_options, allocator));
+  rcl_guard(rcl_init_options_set_domain_id(&init_options, ROS_DOMAIN_ID));
 
   /* probing the agent until success */
   while (rmw_uros_ping_agent(50, 1) != RCL_RET_OK) {
@@ -71,16 +71,16 @@ static void init() {
     vTaskDelay(pdMS_TO_TICKS(500));
   }
   ULOG_INFO("agent responded. continuing initialization...");
-  rcl_ret_check(rclc_support_init_with_options(&support, 0, NULL, &init_options,
+  rcl_guard(rclc_support_init_with_options(&support, 0, NULL, &init_options,
                                                &allocator));
-  rcl_ret_check(rclc_node_init_default(&node, "micro_ros_node", "", &support));
+  rcl_guard(rclc_node_init_default(&node, "micro_ros_node", "", &support));
 
   ULOG_INFO("init finished; free heap: %d, free stack: %lu",
             xPortGetMinimumEverFreeHeapSize(),
             uxTaskGetStackHighWaterMark(NULL));
 
   /* synchronize the ROS time for getting epoch time from rmw */
-  rcl_ret_softcheck(rmw_uros_sync_session(1000));
+  rcl_softguard(rmw_uros_sync_session(1000));
 }
 
 void micro_ros(void* arg) {

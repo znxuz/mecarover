@@ -2,11 +2,6 @@
 
 export ROS_DOMAIN_ID=42
 
-set_scan_legacy()
-{
-	ros2 topic pub --once /start_scan std_msgs/msg/Bool "data: $1"
-}
-
 drive_x()
 {
 	vel="${1:-0.5}"
@@ -59,7 +54,6 @@ main()
 		turn -3.14 && sleep 2 && clear_drive
 	elif [[ "$1" = "lidar" ]]; then
 		toggle_lidar "$2"
-		# set_scan_legacy "$2"
 	else
 		start_keyboard_control
 	fi

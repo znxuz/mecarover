@@ -14,13 +14,13 @@
 #include <rclc/types.h>
 #include <ulog.h>
 
-#include <application/mrcpptypes.hpp>
+#include <application/pose_types.hpp>
 #include <application/robot_params.hpp>
 #include <cmath>
 
 #include "drive_state_wrapper.hpp"
 #include "jacobi_transformation.hpp"
-#include "rcl_ret_check.hpp"
+#include "rcl_guard.hpp"
 
 using namespace imsl;
 using namespace robot_params;
@@ -121,32 +121,32 @@ static void interpolation_cb(rcl_timer_t*, int64_t last_call_time) {
       DriveStateWrapper<DriveStateType::VEL_SP_ANGULAR>{
           backward_transform(VelRF{vel_rf_corrected.vx, vel_rf_corrected.vy,
                                    vel_rf_corrected.omega, epsilon * 0.2})};
-  rcl_ret_softcheck(rcl_publish(&pub_wheel_vel, &msg_vel_wheel_sp.state, NULL));
+  rcl_softguard(rcl_publish(&pub_wheel_vel, &msg_vel_wheel_sp.state, NULL));
 }
 
 rclc_executor_t* interpolation_init(rcl_node_t* node, rclc_support_t* support,
                                     const rcl_allocator_t* allocator) {
-  rcl_ret_check(
+  rcl_guard(
       rclc_executor_init(&exe, &support->context, N_EXEC_HANDLES, allocator));
 
-  rcl_ret_check(rclc_subscription_init_best_effort(
+  rcl_guard(rclc_subscription_init_best_effort(
       &sub_cmd_vel, node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "cmd_vel"));
-  rcl_ret_check(rclc_executor_add_subscription(&exe, &sub_cmd_vel, &msg_cmd_vel,
+  rcl_guard(rclc_executor_add_subscription(&exe, &sub_cmd_vel, &msg_cmd_vel,
                                                &cmd_vel_cb, ON_NEW_DATA));
 
-  rcl_ret_check(rclc_subscription_init_best_effort(
+  rcl_guard(rclc_subscription_init_best_effort(
       &sub_odometry, node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Pose2D), "odometry"));
-  rcl_ret_check(rclc_executor_add_subscription(
+  rcl_guard(rclc_executor_add_subscription(
       &exe, &sub_odometry, &msg_odom_pose, &pose_cb, ON_NEW_DATA));
 
-  rcl_ret_check(rclc_timer_init_default2(&timer, support,
+  rcl_guard(rclc_timer_init_default2(&timer, support,
                                          RCL_MS_TO_NS(TIMER_TIMEOUT_MS),
                                          &interpolation_cb, true));
-  rcl_ret_check(rclc_executor_add_timer(&exe, &timer));
+  rcl_guard(rclc_executor_add_timer(&exe, &timer));
 
-  rcl_ret_check(rclc_publisher_init_best_effort(
+  rcl_guard(rclc_publisher_init_best_effort(
       &pub_wheel_vel, node,
       DriveStateWrapper<DriveStateType::VEL_SP_ANGULAR>::get_msg_type_support(),
       "wheel_vel"));

@@ -17,7 +17,7 @@
 
 #include <application/robot_params.hpp>
 
-#include "rcl_ret_check.hpp"
+#include "rcl_guard.hpp"
 
 using namespace robot_params;
 
@@ -67,8 +67,6 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
   bool process_packet = false;
   size_t packet_idx = 0;
 
-  // TODO: just write data into buf without processing and let the ros2 lidar
-  // timer callback process the data
   while (rxbuf_idx != target_idx) {
     /*
      * DMA in circular mode:
@@ -81,7 +79,8 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
     rxbuf_idx %= sizeof(rxbuf);
 
     uint8_t val = rxbuf[rxbuf_idx];
-    if (!process_packet && (val & 1) != (val & 2)) process_packet = true;
+    if (!process_packet && (val & 1) != (val & 2))
+      process_packet = true;
 
     if (process_packet) [[likely]] {
       switch (packet_idx) {
@@ -109,7 +108,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
           break;
       }
 
-      packet_idx = ++packet_idx % 5;  // i = ++i is defined since c++17
+      packet_idx = ++packet_idx % 5; // not 
     }
 
     ++rxbuf_idx;
@@ -173,33 +172,33 @@ static void timer_cb(rcl_timer_t* timer, int64_t) {
 
   scan_msg.ranges.data = distances_m;
   scan_msg.intensities.data = qualities;
-  rcl_ret_softcheck(rcl_publish(&scan_pub, &scan_msg, NULL));
+  rcl_softguard(rcl_publish(&scan_pub, &scan_msg, NULL));
 }
 
 rclc_executor_t* lidar_init(rcl_node_t* node, rclc_support_t* support,
                             const rcl_allocator_t* allocator) {
-  rcl_ret_softcheck(
+  rcl_softguard(
       rclc_executor_init(&exe, &support->context, N_EXEC_HANDLES, allocator));
 
-  rcl_ret_softcheck(rclc_timer_init_default2(
+  rcl_softguard(rclc_timer_init_default2(
       &timer, support, RCL_MS_TO_NS(TIMER_TIMEOUT_MS), &timer_cb, true));
-  rcl_ret_softcheck(rclc_executor_add_timer(&exe, &timer));
+  rcl_softguard(rclc_executor_add_timer(&exe, &timer));
 
-  rcl_ret_softcheck(rclc_subscription_init_best_effort(
+  rcl_softguard(rclc_subscription_init_best_effort(
       &enable_sub, node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool),
       "lidar_enable"));
-  rcl_ret_softcheck(rclc_executor_add_subscription(
+  rcl_softguard(rclc_executor_add_subscription(
       &exe, &enable_sub, &enable_msg, &enable_cb, ON_NEW_DATA));
 
-  rcl_ret_softcheck(rclc_publisher_init_default(
+  rcl_softguard(rclc_publisher_init_default(
       &scan_pub, node, ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, LaserScan),
       "lidar_scan"));
 
   /* setup DMA receiving into `rxbuf` */
-  rcl_ret_softcheck(
+  rcl_softguard(
       HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxbuf, sizeof(rxbuf)));
 
-  rcl_ret_softcheck(
+  rcl_softguard(
       HAL_UART_Transmit_DMA(&huart2, RESET_CMD, sizeof(RESET_CMD)));
   init_motor();
   init_ros_msg();

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <application/mrcpptypes.hpp>
+#include <application/pose_types.hpp>
 #include <application/robot_params.hpp>
 
 using BackwardKinematic =
