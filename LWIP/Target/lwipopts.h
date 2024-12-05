@@ -57,6 +57,8 @@
 #define MEM_ALIGNMENT 4
 /*----- Default Value for MEM_SIZE: 1600 ---*/
 #define MEM_SIZE 16360
+/*----- Default Value for F7/H7 devices: 0x30044000 -----*/
+#define LWIP_RAM_HEAP_POINTER 0x30004000
 /*----- Default Value for MEMP_NUM_TCP_SEG: 16 ---*/
 #define MEMP_NUM_TCP_SEG 17
 /*----- Value in opt.h for LWIP_ETHERNET: LWIP_ARP || PPPOE_SUPPORT -*/
@@ -121,7 +123,7 @@
 #define CHECKSUM_CHECK_ICMP6 0
 /*-----------------------------------------------------------------------------*/
 /* USER CODE BEGIN 1 */
-
+#undef LWIP_RAM_HEAP_POINTER // fix for cubemx 6.13, great job ST...
 /* USER CODE END 1 */
 
 #ifdef __cplusplus

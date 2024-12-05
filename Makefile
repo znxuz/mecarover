@@ -153,7 +153,7 @@ C_SRCS := $(filter-out $(C_SRCS_EXCLS), $(shell find $(SRCS_PATHS) -type f -name
 CPP_SRCS_EXCLS :=
 CPP_SRCS := $(filter-out $(CPP_SRCS_EXCLS), $(shell find $(SRCS_PATHS) -type f -name "*.cpp"))
 S_SRC := startup_stm32f767xx.s
-LD_FILE := STM32F767ZITx_FLASH.ld
+LD_FILE := stm32f767zitx_flash.ld
 OBJS := $(addprefix $(BUILD_DIR)/, $(C_SRCS:.c=.o)) \
 		$(addprefix $(BUILD_DIR)/, $(CPP_SRCS:.cpp=.o)) \
 		$(addprefix $(BUILD_DIR)/, $(S_SRC:.s=.o))
