@@ -1,19 +1,12 @@
 # Prerequisites
 
 - `docker`
+- `ros2` in jazzy
 
-# ROS2 package dependencies
+## ROS2 package dependencies
 
-- working `ros2` and `micro-ros-agent` in `jazzy`
+- `micro-ros-agent` in `jazzy`
 - `control_msgs`
-
-## `robot_description` package dependencies
-
-- `rviz2`
-- `xacro`
-- `joint_state_publisher`
-- `robot_state_publisher`
-- `slam_toolbox`
 
 Either install the dependencies locally via the system's package manager, or build from source
 
