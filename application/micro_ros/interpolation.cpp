@@ -47,6 +47,8 @@ static auto pose_actual = Pose<real_t>{};
 real_t epsilon = 0;
 
 static void cmd_vel_cb(const void* arg) {
+  if (!arg) return;
+
   const auto* msg = reinterpret_cast<const geometry_msgs__msg__Twist*>(arg);
   vel_rf_target.vx = msg->linear.x * S_TO_MS;
   vel_rf_target.vy = msg->linear.y * S_TO_MS;
@@ -54,6 +56,8 @@ static void cmd_vel_cb(const void* arg) {
 }
 
 static void pose_cb(const void* arg) {
+  if (!arg) return;
+
   const auto* msg = reinterpret_cast<const geometry_msgs__msg__Pose2D*>(arg);
   pose_actual = {msg->x, msg->y, msg->theta};
 }
@@ -133,17 +137,17 @@ rclc_executor_t* interpolation_init(rcl_node_t* node, rclc_support_t* support,
       &sub_cmd_vel, node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "cmd_vel"));
   rcl_guard(rclc_executor_add_subscription(&exe, &sub_cmd_vel, &msg_cmd_vel,
-                                               &cmd_vel_cb, ON_NEW_DATA));
+                                           &cmd_vel_cb, ALWAYS));
 
   rcl_guard(rclc_subscription_init_best_effort(
       &sub_odometry, node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Pose2D), "odometry"));
-  rcl_guard(rclc_executor_add_subscription(
-      &exe, &sub_odometry, &msg_odom_pose, &pose_cb, ON_NEW_DATA));
+  rcl_guard(rclc_executor_add_subscription(&exe, &sub_odometry, &msg_odom_pose,
+                                           &pose_cb, ALWAYS));
 
   rcl_guard(rclc_timer_init_default2(&timer, support,
-                                         RCL_MS_TO_NS(TIMER_TIMEOUT_MS),
-                                         &interpolation_cb, true));
+                                     RCL_MS_TO_NS(TIMER_TIMEOUT_MS),
+                                     &interpolation_cb, true));
   rcl_guard(rclc_executor_add_timer(&exe, &timer));
 
   rcl_guard(rclc_publisher_init_best_effort(
@@ -151,6 +155,7 @@ rclc_executor_t* interpolation_init(rcl_node_t* node, rclc_support_t* support,
       DriveStateWrapper<DriveStateType::VEL_SP_ANGULAR>::get_msg_type_support(),
       "wheel_vel"));
 
+  rclc_executor_set_trigger(&exe, rclc_executor_trigger_one, &timer);
   rclc_executor_set_semantics(&exe, RCLC_SEMANTICS_LOGICAL_EXECUTION_TIME);
 
   return &exe;
