@@ -36,7 +36,7 @@ static void odometry_cb(const void* arg) {
    * odometry: encoder delta gets fed directly into the inverted jacobian
    * matrix without dividing the dt for the reason being:
    * enc delta in rad / dt = vel -> forward_transform(vel) = vel_rf * dt = dpose
-   * => dt can be canceled out on both sides
+   * => dt gets canceled out on both sides
    */
   const auto dpose_rf_mtx =
       forward_transform(VelWheel(enc_delta_rad->front_right_wheel_velocity,
@@ -46,7 +46,7 @@ static void odometry_cb(const void* arg) {
   Pose<real_t> dpose_rf{dpose_rf_mtx(0), dpose_rf_mtx(1), dpose_rf_mtx(2)};
   epsilon += dpose_rf_mtx(3);
 
-  // use the theta average for more precise odometry calculation
+  // use the theta average for more precise angle calculation
   pose_wf += pRF2pWF(
       dpose_rf, (static_cast<real_t>(pose_wf.theta) * 2 + dpose_rf.theta) / 2);
 

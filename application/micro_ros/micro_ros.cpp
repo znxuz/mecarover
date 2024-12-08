@@ -34,7 +34,7 @@ void* microros_zero_allocate(size_t number_of_elements, size_t size_of_element,
                              void* state);
 
 /* cannot be const, because the transport function requires non const */
-static udp_transport_params_t TRANSPORT_PARAMS = {
+static eth_transport_params_t TRANSPORT_PARAMS = {
     {0, 0, 0}, {MICRO_ROS_AGENT_IP}, {MICRO_ROS_AGENT_PORT}};
 
 static auto allocator = rcutils_get_zero_initialized_allocator();
@@ -49,8 +49,8 @@ static void init() {
   MX_LWIP_Init();
   rcl_guard(rmw_uros_set_custom_transport(
       false,  // framing disable here. udp should use packet-oriented mode
-      (void*)&TRANSPORT_PARAMS, udp_transport_open, udp_transport_close,
-      udp_transport_write, udp_transport_read));
+      (void*)&TRANSPORT_PARAMS, eth_transport_open, eth_transport_close,
+      eth_transport_write, eth_transport_read));
 #else
   rcl_guard(rmw_uros_set_custom_transport(
       true, (void*)&huart3, cubemx_transport_open, cubemx_transport_close,

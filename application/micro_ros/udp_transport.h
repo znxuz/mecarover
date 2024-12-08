@@ -27,15 +27,15 @@ typedef struct {
   struct pollfd poll_fd;
   char ip[16];
   char port[5];
-} udp_transport_params_t;
+} eth_transport_params_t;
 
 #define MICRO_ROS_FRAMING_REQUIRED false
 
-bool udp_transport_open(struct uxrCustomTransport* transport);
-bool udp_transport_close(struct uxrCustomTransport* transport);
-size_t udp_transport_write(struct uxrCustomTransport* transport,
+bool eth_transport_open(struct uxrCustomTransport* transport);
+bool eth_transport_close(struct uxrCustomTransport* transport);
+size_t eth_transport_write(struct uxrCustomTransport* transport,
                            const uint8_t* buf, size_t len, uint8_t* err);
-size_t udp_transport_read(struct uxrCustomTransport* transport, uint8_t* buf,
+size_t eth_transport_read(struct uxrCustomTransport* transport, uint8_t* buf,
                           size_t len, int timeout, uint8_t* err);
 
 #ifdef __cplusplus

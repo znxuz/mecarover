@@ -8,9 +8,11 @@ using BackwardKinematic =
 using ForwardKinematic =
     Eigen::Matrix<real_t, robot_params::DOF, robot_params::N_WHEEL>;
 
-// avoid the runtime overhead for scalar multiplication by multiplying each elem
-// separately, because I haven't found a way to constexpr intialize the matrix
-// with scalar multiplication
+// avoid the runtime overhead for scalar multiplication by multiplying each
+// elem separately, because I haven't found a way to *constexpr intialize* the
+// matrix with scalar multiplication.
+// Just multiplying the matrix with the scalar using `*` would result the
+// multiplication being calculated every time in run time
 
 inline constexpr BackwardKinematic JACOBI_MTX{
     {1.0 / robot_params::WHEEL_RADIUS, 1.0 / robot_params::WHEEL_RADIUS,
