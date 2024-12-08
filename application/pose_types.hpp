@@ -2,14 +2,13 @@
 
 #include <application/real_t.h>
 
+#include <numbers>
 #include <cmath>
 #include <cstdio>
-#include <limits>
 
 namespace imsl {
 
-constexpr static inline real_t inf = std::numeric_limits<real_t>::infinity();
-constexpr static inline real_t eps = std::numeric_limits<real_t>::epsilon();
+using std::numbers::pi;
 
 template <typename T>
 concept FltType = std::is_same_v<T, float> || std::is_same_v<T, double>;
@@ -21,10 +20,10 @@ class Heading {
   FltType theta{};
 
   static constexpr FltType maxPI(FltType theta) {
-    while (theta > static_cast<FltType>(M_PI))
-      theta -= static_cast<FltType>(2 * M_PI);
-    while (theta < static_cast<FltType>(-M_PI))
-      theta += static_cast<FltType>(2 * M_PI);
+    while (theta > static_cast<FltType>(pi))
+      theta -= static_cast<FltType>(2 * pi);
+    while (theta < static_cast<FltType>(-pi))
+      theta += static_cast<FltType>(2 * pi);
     return theta;
   }
 

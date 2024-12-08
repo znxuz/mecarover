@@ -3,9 +3,10 @@
 #include <cstdio>
 #include <random>
 
-#include "../application/mrcpptypes.hpp"
+#include "../application/pose_types.hpp"
 
 using namespace imsl;
+using std::numbers::pi;
 
 static constexpr double tolerance = 1e-10;
 
@@ -14,8 +15,8 @@ class PoseTest : public ::testing::Test {
   std::mt19937 rng{std::random_device{}()};
   std::uniform_real_distribution<double> dist{-10000, 10000};
 
-  Pose<double> pose1{1.0, 2.0, Heading<double>(M_PI / 4)};
-  Pose<double> pose2{3.0, 4.0, Heading<double>(M_PI / 2)};
+  Pose<double> pose1{1.0, 2.0, Heading<double>(pi / 4)};
+  Pose<double> pose2{3.0, 4.0, Heading<double>(pi / 2)};
 };
 
 TEST_F(PoseTest, DefaultConstructor) {
@@ -28,7 +29,7 @@ TEST_F(PoseTest, DefaultConstructor) {
 TEST_F(PoseTest, ParameterizedConstructor) {
   EXPECT_EQ(pose1.x, 1.0);
   EXPECT_EQ(pose1.y, 2.0);
-  EXPECT_EQ(static_cast<double>(pose1.theta), M_PI / 4);
+  EXPECT_EQ(static_cast<double>(pose1.theta), pi / 4);
 }
 
 TEST_F(PoseTest, PoseFromVPoseConversion) {
@@ -61,7 +62,7 @@ TEST_F(PoseTest, RandomizedAddition) {
 TEST_F(PoseTest, ScalarMultiplicationOperator) {
   double factor = 2.5;
 
-  Pose<double> originalPose{2.0, 3.0, Heading<double>(M_PI / 3)};
+  Pose<double> originalPose{2.0, 3.0, Heading<double>(pi / 3)};
   Pose<double> expectedPose{originalPose.x * factor, originalPose.y * factor,
                             originalPose.theta * factor};
 
@@ -139,8 +140,8 @@ TEST_F(PoseTest, poseTFBack2Back) {
 }
 
 TEST_F(PoseTest, EqualityOperator) {
-  Pose<double> p1{1.0, 2.0, Heading<double>(M_PI / 4)};
-  Pose<double> p2{1.0, 2.0, Heading<double>(M_PI / 4)};
+  Pose<double> p1{1.0, 2.0, Heading<double>(pi / 4)};
+  Pose<double> p2{1.0, 2.0, Heading<double>(pi / 4)};
   EXPECT_TRUE(p1 == p2);
 }
 
@@ -279,7 +280,7 @@ TEST(PoseMathTests, DivisionAndConversionTest) {
   double k_v = 2.0;
   double dt = 0.1;
 
-  Pose<double> dpose(10.0, 5.0, Heading<real_t>(M_PI / 4));
+  Pose<double> dpose(10.0, 5.0, Heading<real_t>(pi / 4));
   vPose<double> vpose_multiplied = vPose<real_t>(dpose / dt) * k_v;
 
   // Check the results

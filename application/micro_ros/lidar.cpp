@@ -14,6 +14,7 @@
 #include <std_msgs/msg/bool.h>
 #include <tim.h>
 #include <usart.h>
+#include <numbers>
 
 #include <application/robot_params.hpp>
 
@@ -131,7 +132,8 @@ static void init_ros_msg(void) {
   scan_msg.header.frame_id.size = scan_msg.header.frame_id.capacity =
       sizeof(header_string);
 
-  static constexpr real_t LIDAR_RANGE_RAD = (2 * M_PI) / LIDAR_RANGE;
+  static constexpr real_t LIDAR_RANGE_RAD = (2 * std::numbers::pi) /
+      LIDAR_RANGE;
   scan_msg.angle_min = 0;
   scan_msg.angle_max = LIDAR_RANGE_RAD * (LIDAR_RANGE - 1);  // 359 deg in rad
   scan_msg.angle_increment = LIDAR_RANGE_RAD;
