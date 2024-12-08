@@ -8,11 +8,11 @@ ST_DIR_CORE := Core
 ST_DIR_DRIVERS := Drivers
 ST_DIR_MW := Middlewares/Third_Party
 ST_DIR_LWIP := LWIP
-MICRO_ROS_DIR := micro_ros_stm32cubemx_utils
-MICRO_ROS_LIB_DIR := micro_ros_stm32cubemx_utils/microros_static_library/libmicroros
+MICRO_ROS_DIR := third_party/micro_ros_stm32cubemx_utils
+MICRO_ROS_LIB_DIR := $(MICRO_ROS_DIR)/microros_static_library/libmicroros
 MICRO_ROS_LIB := -L$(MICRO_ROS_LIB_DIR) -lmicroros
-EIGEN_DIR := eigen
-ULOG_DIR := ulog/src
+EIGEN_DIR := third_party/eigen
+ULOG_DIR := third_party/ulog/src
 
 # micro ros agent ip on the host machine, also where the code is normally compiled on
 ETH_IF := wlp3s0
