@@ -44,7 +44,7 @@ static rcl_publisher_t pub_wheel_vel;
 static auto vel_rf_target = vPose<real_t>{};
 static auto pose_actual = Pose<real_t>{};
 
-real_t epsilon = 0;
+extern real_t epsilon;
 
 static void cmd_vel_cb(const void* arg) {
   if (!arg) return;
@@ -118,13 +118,17 @@ static void interpolation_cb(rcl_timer_t*, int64_t last_call_time) {
 
   pose_sp += Pose<real_t>(vRF2vWF(vel_rf_sp, pose_sp.theta) * dt);
 
+  taskENTER_CRITICAL();
+  const auto eps = epsilon;
+  taskEXIT_CRITICAL();
+
   const auto d_vel_wf = vPose<real_t>(pose_ctrl(pose_sp, pose_actual, dt) / dt);
   const auto vel_rf_corrected =
       vel_rf_sp + vWF2vRF(d_vel_wf, pose_actual.theta);
   const auto msg_vel_wheel_sp =
       DriveStateWrapper<DriveStateType::VEL_SP_ANGULAR>{
           backward_transform(VelRF{vel_rf_corrected.vx, vel_rf_corrected.vy,
-                                   vel_rf_corrected.omega, epsilon * 0.2})};
+                                   vel_rf_corrected.omega, eps * 0.2})};
   rcl_softguard(rcl_publish(&pub_wheel_vel, &msg_vel_wheel_sp.state, NULL));
 }
 

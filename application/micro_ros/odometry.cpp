@@ -10,6 +10,7 @@
 #include <application/hal/hal.hpp>
 #include <application/pose_types.hpp>
 #include <application/robot_params.hpp>
+#include <atomic>
 
 #include "drive_state_wrapper.hpp"
 #include "jacobi_transformation.hpp"
@@ -32,7 +33,7 @@ static Pose<real_t> pose_wf;
 static auto timer = rcl_get_zero_initialized_timer();
 static rcl_publisher_t pub_odometry;
 
-extern real_t epsilon;
+real_t epsilon;
 
 static void odometry_cb(const void* arg) {
   const auto* enc_delta_rad = reinterpret_cast<const DriveState*>(arg);
@@ -48,7 +49,10 @@ static void odometry_cb(const void* arg) {
                                  enc_delta_rad->back_left_wheel_velocity,
                                  enc_delta_rad->back_right_wheel_velocity));
   Pose<real_t> dpose_rf{dpose_rf_mtx(0), dpose_rf_mtx(1), dpose_rf_mtx(2)};
+
+  taskENTER_CRITICAL();
   epsilon += dpose_rf_mtx(3);
+  taskEXIT_CRITICAL();
 
   // aggregate into the pose sum and use the theta average for more precise
   // angle calculation
