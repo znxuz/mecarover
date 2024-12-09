@@ -49,7 +49,8 @@ static VelWheel wheel_vel_actual{};
 static VelWheel wheel_vel_sp{};
 
 static void vel_sp_cb(const void* arg) {
-  if (!arg) return;
+  if (!arg) [[likely]]
+    return;
 
   const auto* msg = reinterpret_cast<const DriveState*>(arg);
   wheel_vel_sp(0) = msg->front_right_wheel_velocity;

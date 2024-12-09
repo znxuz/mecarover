@@ -11,7 +11,7 @@ namespace robot_params {
 using std::numbers::pi;
 
 inline constexpr real_t UROS_FREQ_MOD_WHEEL_CTRL_SEC = 0.02;
-inline constexpr real_t UROS_FREQ_MOD_INTERPOLATION_SEC = 0.05;
+inline constexpr real_t UROS_FREQ_MOD_INTERPOLATION_SEC = 0.03;
 inline constexpr real_t UROS_FREQ_MOD_LIDAR_SEC = 0.5;
 inline constexpr uint16_t S_TO_MS = 1000;
 
