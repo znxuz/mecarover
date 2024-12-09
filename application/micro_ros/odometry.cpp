@@ -10,7 +10,6 @@
 #include <application/hal/hal.hpp>
 #include <application/pose_types.hpp>
 #include <application/robot_params.hpp>
-#include <atomic>
 
 #include "drive_state_wrapper.hpp"
 #include "jacobi_transformation.hpp"
@@ -20,8 +19,7 @@ using namespace imsl;
 using namespace robot_params;
 
 static constexpr uint8_t N_EXEC_HANDLES = 2;
-static constexpr uint16_t TIMER_TIMEOUT_MS =
-    UROS_FREQ_MOD_INTERPOLATION_SEC * S_TO_MS;
+static constexpr uint16_t TIMER_TIMEOUT_MS = INTERPOLATION_PERIOD_S * S_TO_MS;
 
 extern "C" {
 static auto exe = rclc_executor_get_zero_initialized_executor();

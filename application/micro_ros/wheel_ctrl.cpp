@@ -19,8 +19,7 @@
 using namespace robot_params;
 
 static constexpr uint8_t N_EXEC_HANDLES = 2;
-static constexpr uint16_t TIMER_TIMEOUT_MS =
-    UROS_FREQ_MOD_WHEEL_CTRL_SEC * S_TO_MS;
+static constexpr uint16_t TIMER_TIMEOUT_MS = WHEEL_CTRL_PERIOD_S * S_TO_MS;
 
 static std::array<real_t, N_WHEEL> vel_to_duty_cycle(const VelWheel& vel) {
   static constexpr real_t PERCENT = 100.0;

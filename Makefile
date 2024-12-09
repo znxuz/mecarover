@@ -200,7 +200,8 @@ clean:
 print_cflags:
 	@echo $(CFLAGS)
 
-clangd_db: clean
+build/compile_commands.json: clean
+	$(DIR_GUARD)
 	@bear --output build/compile_commands.json -- $(MAKE) -j
 
 # misc

@@ -10,16 +10,16 @@
 namespace robot_params {
 using std::numbers::pi;
 
-inline constexpr real_t UROS_FREQ_MOD_WHEEL_CTRL_SEC = 0.02;
-inline constexpr real_t UROS_FREQ_MOD_INTERPOLATION_SEC = 0.03;
-inline constexpr real_t UROS_FREQ_MOD_LIDAR_SEC = 0.5;
+inline constexpr real_t WHEEL_CTRL_PERIOD_S = 0.02;
+inline constexpr real_t INTERPOLATION_PERIOD_S = 0.03;
+inline constexpr real_t LIDAR_PERIOD_S = 0.5;
 inline constexpr uint16_t S_TO_MS = 1000;
 
 inline constexpr uint8_t DOF = 4;
 inline constexpr uint8_t N_WHEEL = 4;
 
-inline constexpr real_t GEAR_RATIO = 64.0; // wheel rotation : motor rotation
-inline constexpr real_t INCREMENTS = 48.0; // motor rotation : encoder increment
+inline constexpr real_t GEAR_RATIO = 64.0;  // 1 wheel rot = 64 motor rot
+inline constexpr real_t INCREMENTS = 48.0;  // 1 motor rot = 48 encoder incs
 inline constexpr real_t INC2RAD = 2.0 * pi / (INCREMENTS * GEAR_RATIO);
 inline constexpr real_t LENGTH = 325;
 inline constexpr real_t WIDTH = 300;

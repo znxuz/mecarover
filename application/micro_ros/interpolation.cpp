@@ -26,8 +26,7 @@ using namespace imsl;
 using namespace robot_params;
 
 static constexpr uint8_t N_EXEC_HANDLES = 3;
-static constexpr uint16_t TIMER_TIMEOUT_MS =
-    UROS_FREQ_MOD_INTERPOLATION_SEC * S_TO_MS;
+static constexpr uint16_t TIMER_TIMEOUT_MS = INTERPOLATION_PERIOD_S * S_TO_MS;
 
 extern "C" {
 static rclc_executor_t exe;
@@ -64,9 +63,7 @@ static void pose_cb(const void* arg) {
 
 static constexpr vPose<real_t> velocity_smoothen(
     const vPose<real_t>& vel_target, const vPose<real_t>& vel_cur) {
-  constexpr auto FACTOR = 1;
-  constexpr auto MAX_DIFF_LINEAR =
-      MAX_VELOCITY_WHEEL_LINEAR * UROS_FREQ_MOD_INTERPOLATION_SEC / FACTOR;
+  constexpr auto MAX_DIFF_LINEAR = MAX_VELOCITY_WHEEL_LINEAR * 0.03;
   constexpr auto MAX_DIFF_ANGULAR = MAX_DIFF_LINEAR / L_W_HALF;
 
   auto vel_diff = vel_target - vel_cur;
