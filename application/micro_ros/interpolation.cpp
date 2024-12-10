@@ -115,6 +115,7 @@ static void interpolation_cb(rcl_timer_t*, int64_t last_call_time) {
 
   pose_sp += Pose<real_t>(vRF2vWF(vel_rf_sp, pose_sp.theta) * dt);
 
+  constexpr real_t K_eps = -0.2;
   taskENTER_CRITICAL();
   const auto eps = epsilon;
   taskEXIT_CRITICAL();
@@ -125,7 +126,7 @@ static void interpolation_cb(rcl_timer_t*, int64_t last_call_time) {
   const auto msg_vel_wheel_sp =
       DriveStateWrapper<DriveStateType::VEL_SP_ANGULAR>{
           backward_transform(VelRF{vel_rf_corrected.vx, vel_rf_corrected.vy,
-                                   vel_rf_corrected.omega, eps * 0.2})};
+                                   vel_rf_corrected.omega, eps * K_eps})};
   rcl_softguard(rcl_publish(&pub_wheel_vel, &msg_vel_wheel_sp.state, NULL));
 }
 
