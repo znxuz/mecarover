@@ -19,7 +19,6 @@
 using namespace robot_params;
 
 static constexpr uint8_t N_EXEC_HANDLES = 2;
-static constexpr uint16_t TIMER_TIMEOUT_MS = WHEEL_CTRL_PERIOD_S * S_TO_MS;
 
 static std::array<real_t, N_WHEEL> vel_to_duty_cycle(const VelWheel& vel) {
   static constexpr real_t PERCENT = 100.0;
@@ -108,7 +107,7 @@ rclc_executor_t* wheel_ctrl_init(rcl_node_t* node, rclc_support_t* support,
       &exe, &sub_wheel_vel, &msg_wheel_vel_sp.state, &vel_sp_cb, ALWAYS));
 
   rcl_guard(rclc_timer_init_default2(
-      &timer, support, RCL_MS_TO_NS(TIMER_TIMEOUT_MS), &wheel_ctrl_cb, true));
+      &timer, support, RCL_S_TO_NS(WHEEL_CTRL_PERIOD_S), &wheel_ctrl_cb, true));
   rcl_guard(rclc_executor_add_timer(&exe, &timer));
 
   rcl_guard(rclc_publisher_init_best_effort(

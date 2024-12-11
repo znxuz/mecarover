@@ -26,7 +26,6 @@ using namespace imsl;
 using namespace robot_params;
 
 static constexpr uint8_t N_EXEC_HANDLES = 3;
-static constexpr uint16_t TIMER_TIMEOUT_MS = INTERPOLATION_PERIOD_S * S_TO_MS;
 
 extern "C" {
 static rclc_executor_t exe;
@@ -135,7 +134,7 @@ rclc_executor_t* interpolation_init(rcl_node_t* node, rclc_support_t* support,
   rcl_guard(
       rclc_executor_init(&exe, &support->context, N_EXEC_HANDLES, allocator));
 
-  rcl_guard(rclc_subscription_init_best_effort(
+  rcl_guard(rclc_subscription_init_default(
       &sub_cmd_vel, node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "cmd_vel"));
   rcl_guard(rclc_executor_add_subscription(&exe, &sub_cmd_vel, &msg_cmd_vel,
@@ -148,7 +147,7 @@ rclc_executor_t* interpolation_init(rcl_node_t* node, rclc_support_t* support,
                                            &pose_cb, ALWAYS));
 
   rcl_guard(rclc_timer_init_default2(&timer, support,
-                                     RCL_MS_TO_NS(TIMER_TIMEOUT_MS),
+                                     RCL_S_TO_NS(INTERPOLATION_PERIOD_S),
                                      &interpolation_cb, true));
   rcl_guard(rclc_executor_add_timer(&exe, &timer));
 

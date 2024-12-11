@@ -19,7 +19,6 @@ using namespace imsl;
 using namespace robot_params;
 
 static constexpr uint8_t N_EXEC_HANDLES = 2;
-static constexpr uint16_t TIMER_TIMEOUT_MS = INTERPOLATION_PERIOD_S * S_TO_MS;
 
 extern "C" {
 static auto exe = rclc_executor_get_zero_initialized_executor();
@@ -76,7 +75,7 @@ rclc_executor_t* odometry_init(rcl_node_t* node, rclc_support_t* support,
       &exe, &sub_enc_data, &enc_data_msg.state, &odometry_cb, ON_NEW_DATA));
 
   rcl_guard(rclc_timer_init_default2(
-      &timer, support, RCL_MS_TO_NS(TIMER_TIMEOUT_MS), &odom_pub_cb, true));
+      &timer, support, RCL_S_TO_NS(INTERPOLATION_PERIOD_S), &odom_pub_cb, true));
   rcl_guard(rclc_executor_add_timer(&exe, &timer));
 
   rcl_guard(rclc_publisher_init_best_effort(
