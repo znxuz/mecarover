@@ -93,10 +93,10 @@ void micro_ros(void* arg) {
 
   ULOG_INFO("micro-ROS: starting executors");
   for (;;) {
-    rclc_executor_spin_some(wheel_ctrl_exe, RCL_US_TO_NS(1));
-    rclc_executor_spin_some(odometry_exe, RCL_US_TO_NS(1));
-    rclc_executor_spin_some(interpolation_exe, RCL_US_TO_NS(1));
-    rclc_executor_spin_some(lidar_exe, RCL_US_TO_NS(1));
+    rclc_executor_spin_some(wheel_ctrl_exe, RCL_MS_TO_NS(1));
+    rclc_executor_spin_some(odometry_exe, RCL_MS_TO_NS(1));
+    rclc_executor_spin_some(interpolation_exe, RCL_MS_TO_NS(1));
+    rclc_executor_spin_some(lidar_exe, RCL_MS_TO_NS(1));
   }
 }
 }

@@ -22,7 +22,6 @@
 
 using namespace robot_params;
 
-static constexpr uint16_t TIMER_TIMEOUT_MS = LIDAR_PERIOD_S * S_TO_MS;
 static constexpr uint8_t N_EXEC_HANDLES = 2;
 
 static constexpr uint8_t START_CMD[] = {0xA5, 0x20};
@@ -33,18 +32,33 @@ static constexpr uint8_t RESET_CMD[] = {0xA5, 0x40};
 static constexpr uint16_t LIDAR_RANGE = 360;
 
 extern "C" {
-static auto timer = rcl_get_zero_initialized_timer();
 static rclc_executor_t exe;
 
 static rcl_subscription_t enable_sub;
 static std_msgs__msg__Bool enable_msg;
 
+static auto timer = rcl_get_zero_initialized_timer();
+static uint8_t dma_buf[4096];
 static rcl_publisher_t scan_pub;
 static sensor_msgs__msg__LaserScan scan_msg{};
-
-static uint8_t rxbuf[1024];
 static uint16_t distances_mm[LIDAR_RANGE];
 static float qualities[LIDAR_RANGE];
+static size_t target_idx;
+
+/*
+ * setup DMA with idle line detecting interrupt for receiving into the `rxbuf`:
+ * HAL_UARTEx_ReceiveToIdle_DMA will generate calls to user defined
+ * HAL_UARTEx_RxEventCallback for each occurrence of the following events:
+ * - DMA RX Half Transfer event (HT)
+ * - DMA RX Transfer Complete event (TC)
+ * - IDLE event on UART Rx line (indicating a pause of the UART reception flow)
+ *
+ * second parameter: index of the next, unwritten byte position in the range of
+ * [1, sizeof(rxbuf)] - meaning it should be the limit of where to stop to read
+ */
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart, uint16_t write_idx) {
+  target_idx = write_idx;
+}
 
 /*
  * setup DMA with idle line detecting interrupt for receiving into the `rxbuf`:
@@ -57,62 +71,70 @@ static float qualities[LIDAR_RANGE];
  * second parameter: value of the next, unwritten byte position in the range of
  * [1, sizeof(rxbuf)] - meaning it should be the limit of where to stop to read
  */
-void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
-                                uint16_t target_idx) {
-  static size_t rxbuf_idx = 0;
+// void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
+//                                 uint16_t write_idx) {
+//   static size_t read_idx = 0;
+//
+//   uint8_t quality = 0;
+//   uint16_t dist_mm = 0;
+//   uint16_t angle = 0;
+//
+//   bool process_packet = false;
+//   size_t packet_idx = 0;
+//
+//   while (read_idx != write_idx) {
+//     /*
+//      * DMA in circular mode:
+//      * the target_idx will be $sizeof(rx_buf)$ instead of 0, if the whole
+//      buffer
+//      * is already written completely and is ready to write the next byte at
+//      the
+//      * start of the buffer, so when rxbuf_idx == sizeof(rxbuf), then it must
+//      * have already read the whole buffer and should start reading at the
+//      * beginning
+//      */
+//     read_idx %= sizeof(dma_buf);
+//
+//     uint8_t val = dma_buf[read_idx];
+//     if (!process_packet && (val & 1) != (val & 2)) process_packet = true;
+//
+//     if (process_packet) [[likely]] {
+//       switch (packet_idx) {
+//         case 0:
+//           quality = val >> 2;
+//           break;
+//         case 1:
+//           if (!(val & 1)) [[unlikely]] {
+//             process_packet = false;
+//             packet_idx = 0;
+//             return;
+//           }
+//           angle = val >> 1;
+//           break;
+//         case 2:
+//           angle = static_cast<uint16_t>(val << 7 | angle) / 64;
+//           qualities[angle] = static_cast<float>(quality);
+//           break;
+//         case 3:
+//           dist_mm = val;
+//           break;
+//         case 4:
+//           distances_mm[angle] = static_cast<uint16_t>(dist_mm | val << 8) /
+//           4; process_packet = false; break;
+//       }
+//
+//       packet_idx = ++packet_idx % 5;
+//     }
+//
+//     ++read_idx;
+//   }
+// }
 
-  uint8_t quality = 0;
-  uint16_t dist_mm = 0;
-  uint16_t angle = 0;
+static void init_dma(void) {
+  rcl_softguard(
+      HAL_UARTEx_ReceiveToIdle_DMA(&huart2, dma_buf, sizeof(dma_buf)));
 
-  bool process_packet = false;
-  size_t packet_idx = 0;
-
-  while (rxbuf_idx != target_idx) {
-    /*
-     * DMA in circular mode:
-     * the target_idx will be $sizeof(rx_buf)$ instead of 0, if the whole buffer
-     * is already written completely and is ready to write the next byte at the
-     * start of the buffer, so when rxbuf_idx == sizeof(rxbuf), then it must
-     * have already read the whole buffer and should start reading at the
-     * beginning
-     */
-    rxbuf_idx %= sizeof(rxbuf);
-
-    uint8_t val = rxbuf[rxbuf_idx];
-    if (!process_packet && (val & 1) != (val & 2)) process_packet = true;
-
-    if (process_packet) [[likely]] {
-      switch (packet_idx) {
-        case 0:
-          quality = val >> 2;
-          break;
-        case 1:
-          if (!(val & 1)) [[unlikely]] {
-            process_packet = false;
-            packet_idx = 0;
-            return;
-          }
-          angle = val >> 1;
-          break;
-        case 2:
-          angle = static_cast<uint16_t>(val << 7 | angle) / 64;
-          qualities[angle] = static_cast<float>(quality);
-          break;
-        case 3:
-          dist_mm = val;
-          break;
-        case 4:
-          distances_mm[angle] = static_cast<uint16_t>(dist_mm | val << 8) / 4;
-          process_packet = false;
-          break;
-      }
-
-      packet_idx = ++packet_idx % 5;
-    }
-
-    ++rxbuf_idx;
-  }
+  rcl_softguard(HAL_UART_Transmit_DMA(&huart2, RESET_CMD, sizeof(RESET_CMD)));
 }
 
 static void init_motor(void) {
@@ -122,7 +144,6 @@ static void init_motor(void) {
 
 static void init_ros_msg(void) {
   /* msg imp. detail see `ros2 interface show sensor_msgs/msg/LaserScan` */
-
   static char header_string[] = "scan data";
   int64_t ns = rmw_uros_epoch_nanos();
   scan_msg.header.stamp.nanosec = ns;
@@ -157,19 +178,72 @@ static void enable_cb(const void* arg) {
   reinterpret_cast<const std_msgs__msg__Bool*>(arg)->data ? start() : stop();
 }
 
-static void timer_cb(rcl_timer_t* timer, int64_t) {
-  if (!enable_msg.data) return;
+static void timer_cb(rcl_timer_t*, int64_t) {
+  static size_t read_idx = 0;
+
+  uint8_t quality = 0;
+  uint16_t dist_mm = 0;
+  uint16_t angle = 0;
+  bool process_packet = false;
+  size_t packet_idx = 0;
+
+  taskENTER_CRITICAL();
+  size_t write_idx = target_idx;
+  taskEXIT_CRITICAL();
+
+  /*
+   * DMA in circular mode:
+   * the target_idx will be $sizeof(rx_buf)$ instead of 0, if the whole buffer
+   * is already written completely and is ready to write the next byte at the
+   * start of the buffer, so when rxbuf_idx == sizeof(rxbuf), then it must
+   * have already read the whole buffer and should start reading at the
+   * beginning
+   */
+  while (read_idx != write_idx) {
+    read_idx %= sizeof(dma_buf);
+
+    uint8_t val = dma_buf[read_idx];
+    if (!process_packet && (val & 1) != (val & 2)) process_packet = true;
+
+    if (process_packet) [[likely]] {
+      switch (packet_idx) {
+        case 0:
+          quality = val >> 2;
+          break;
+        case 1:
+          if (!(val & 1)) [[unlikely]] {
+            process_packet = false;
+            packet_idx = 0;
+            return;
+          }
+          angle = val >> 1;
+          break;
+        case 2:
+          angle = static_cast<uint16_t>(val << 7 | angle) / 64;
+          qualities[angle] = static_cast<float>(quality);
+          break;
+        case 3:
+          dist_mm = val;
+          break;
+        case 4:
+          distances_mm[angle] = static_cast<uint16_t>(dist_mm | val << 8) / 4;
+          process_packet = false;
+          break;
+      }
+
+      packet_idx = ++packet_idx % 5;
+    }
+
+    ++read_idx;
+  }
 
   static float distances_m[LIDAR_RANGE]{};
+  static uint8_t counter = 0;
+  if (!enable_msg.data || (counter = ++counter % 5)) return;
 
-  // post process for the callback to be lightweight
+  // post process for the data timer callback to be more lightweight
   for (size_t i = 0; i < LIDAR_RANGE; ++i)
     distances_m[i] = static_cast<real_t>(distances_mm[i]) / 1000;
-
-  // puts("===============================");
-  // for (size_t i = 0; i < LIDAR_RANGE; ++i)
-  //   printf("%.02f ", distances_m[i]);
-  // puts("");
 
   scan_msg.ranges.data = distances_m;
   scan_msg.intensities.data = qualities;
@@ -181,24 +255,21 @@ rclc_executor_t* lidar_init(rcl_node_t* node, rclc_support_t* support,
   rcl_softguard(
       rclc_executor_init(&exe, &support->context, N_EXEC_HANDLES, allocator));
 
-  rcl_softguard(rclc_timer_init_default2(
-      &timer, support, RCL_MS_TO_NS(TIMER_TIMEOUT_MS), &timer_cb, true));
-  rcl_softguard(rclc_executor_add_timer(&exe, &timer));
-
-  rcl_softguard(rclc_subscription_init_best_effort(
+  rcl_softguard(rclc_subscription_init_default(
       &enable_sub, node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool),
       "lidar_enable"));
   rcl_softguard(rclc_executor_add_subscription(&exe, &enable_sub, &enable_msg,
                                                &enable_cb, ON_NEW_DATA));
 
+  rcl_softguard(rclc_timer_init_default2(
+      &timer, support, RCL_S_TO_NS(LIDAR_PERIOD_S), &timer_cb, true));
+  rcl_softguard(rclc_executor_add_timer(&exe, &timer));
+  // FIXME: custom QoS
   rcl_softguard(rclc_publisher_init_default(
       &scan_pub, node, ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, LaserScan),
       "lidar_scan"));
 
-  /* setup DMA receiving into `rxbuf` */
-  rcl_softguard(HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxbuf, sizeof(rxbuf)));
-
-  rcl_softguard(HAL_UART_Transmit_DMA(&huart2, RESET_CMD, sizeof(RESET_CMD)));
+  init_dma();
   init_motor();
   init_ros_msg();
 
