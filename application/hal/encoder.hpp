@@ -28,9 +28,9 @@ class Encoder {
     if (!this->htim)
       return;  // need to check because the interrupt callback
                // `HAL_TIM_PeriodElapsedCallback` gets triggered immediately
-               // after `HAL_TIM_Base_Start_IT`, which calls this function while
-               // the whole thing not fully initialized yet and also the handle
-               // is still nullptr
+               // after calling `HAL_TIM_Base_Start_IT()` from the ctor, which
+               // calls this function while the whole thing not fully
+               // initialized yet and also the handle is still nullptr
 
     auto cnt = __HAL_TIM_GET_COUNTER(this->htim);
     if (cnt == this->counter) return;

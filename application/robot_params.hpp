@@ -38,8 +38,6 @@ inline constexpr real_t MAX_VELOCITY_WHEEL_ANGULAR =
     WHEEL_MAX_RPM / 60 * (2 * pi);
 inline constexpr real_t MAX_VELOCITY_WHEEL_LINEAR =
     MAX_VELOCITY_WHEEL_ANGULAR * WHEEL_RADIUS;
-inline constexpr real_t MAX_POSE_DEVIATION_LINEAR = 300;
-inline constexpr real_t MAX_POSE_DEVIATION_ANGULAR = pi;
 
 using VelWheel = Eigen::Matrix<real_t, N_WHEEL, 1>;
 using VelRF = Eigen::Matrix<real_t, DOF, 1>;

@@ -46,89 +46,19 @@ static float qualities[LIDAR_RANGE];
 static size_t target_idx;
 
 /*
- * setup DMA with idle line detecting interrupt for receiving into the `rxbuf`:
- * HAL_UARTEx_ReceiveToIdle_DMA will generate calls to user defined
+ * setup DMA with idle line detecting interrupt for receiving into the
+ * `dma_buf`: HAL_UARTEx_ReceiveToIdle_DMA will generate calls to user defined
  * HAL_UARTEx_RxEventCallback for each occurrence of the following events:
  * - DMA RX Half Transfer event (HT)
  * - DMA RX Transfer Complete event (TC)
  * - IDLE event on UART Rx line (indicating a pause of the UART reception flow)
  *
  * second parameter: index of the next, unwritten byte position in the range of
- * [1, sizeof(rxbuf)] - meaning it should be the limit of where to stop to read
+ * (0, sizeof(dma_buf)] - meaning it should be the limit of where to stop
  */
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart, uint16_t write_idx) {
   target_idx = write_idx;
 }
-
-/*
- * setup DMA with idle line detecting interrupt for receiving into the `rxbuf`:
- * HAL_UARTEx_ReceiveToIdle_DMA will generate calls to user defined
- * HAL_UARTEx_RxEventCallback for each occurrence of the following events:
- * - DMA RX Half Transfer event (HT)
- * - DMA RX Transfer Complete event (TC)
- * - IDLE event on UART Rx line (indicating a pause of the UART reception flow)
- *
- * second parameter: value of the next, unwritten byte position in the range of
- * [1, sizeof(rxbuf)] - meaning it should be the limit of where to stop to read
- */
-// void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
-//                                 uint16_t write_idx) {
-//   static size_t read_idx = 0;
-//
-//   uint8_t quality = 0;
-//   uint16_t dist_mm = 0;
-//   uint16_t angle = 0;
-//
-//   bool process_packet = false;
-//   size_t packet_idx = 0;
-//
-//   while (read_idx != write_idx) {
-//     /*
-//      * DMA in circular mode:
-//      * the target_idx will be $sizeof(rx_buf)$ instead of 0, if the whole
-//      buffer
-//      * is already written completely and is ready to write the next byte at
-//      the
-//      * start of the buffer, so when rxbuf_idx == sizeof(rxbuf), then it must
-//      * have already read the whole buffer and should start reading at the
-//      * beginning
-//      */
-//     read_idx %= sizeof(dma_buf);
-//
-//     uint8_t val = dma_buf[read_idx];
-//     if (!process_packet && (val & 1) != (val & 2)) process_packet = true;
-//
-//     if (process_packet) [[likely]] {
-//       switch (packet_idx) {
-//         case 0:
-//           quality = val >> 2;
-//           break;
-//         case 1:
-//           if (!(val & 1)) [[unlikely]] {
-//             process_packet = false;
-//             packet_idx = 0;
-//             return;
-//           }
-//           angle = val >> 1;
-//           break;
-//         case 2:
-//           angle = static_cast<uint16_t>(val << 7 | angle) / 64;
-//           qualities[angle] = static_cast<float>(quality);
-//           break;
-//         case 3:
-//           dist_mm = val;
-//           break;
-//         case 4:
-//           distances_mm[angle] = static_cast<uint16_t>(dist_mm | val << 8) /
-//           4; process_packet = false; break;
-//       }
-//
-//       packet_idx = ++packet_idx % 5;
-//     }
-//
-//     ++read_idx;
-//   }
-// }
 
 static void init_dma(void) {
   rcl_softguard(
@@ -192,11 +122,10 @@ static void timer_cb(rcl_timer_t*, int64_t) {
   taskEXIT_CRITICAL();
 
   /*
-   * DMA in circular mode:
-   * the target_idx will be $sizeof(rx_buf)$ instead of 0, if the whole buffer
-   * is already written completely and is ready to write the next byte at the
-   * start of the buffer, so when rxbuf_idx == sizeof(rxbuf), then it must
-   * have already read the whole buffer and should start reading at the
+   * DMA in circular mode: the write_idx will be $sizeof(dma_buf)$ instead of 0,
+   * when the whole buffer is written completely and is ready to write the next
+   * byte at the start of the buffer, so when read_idx == sizeof(dma_buf), then
+   * it must have already read the whole buffer and should start reading at the
    * beginning
    */
   while (read_idx != write_idx) {

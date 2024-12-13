@@ -14,9 +14,11 @@ MICRO_ROS_LIB := -L$(MICRO_ROS_LIB_DIR) -lmicroros
 EIGEN_DIR := third_party/eigen
 ULOG_DIR := third_party/ulog/src
 
-# micro ros agent ip on the host machine, also where the code is normally compiled on
+# ip on the host machine for the agent
 ETH_IF := wlp3s0
-MICRO_ROS_AGENT_IP := \"$(shell ip a s $(ETH_IF) | grep -Eo '[0-9]{3}.[0-9]{3}.[0-9]{0,3}.[0-9]{0,3}' | head -n1)\"
+MICRO_ROS_AGENT_IP := \"$(shell ip a s $(ETH_IF) \
+					  | grep -Eo '[0-9]{3}.[0-9]{3}.[0-9]{0,3}.[0-9]{0,3}' \
+					  | head -n1)\"
 MICRO_ROS_AGENT_PORT := \"8888\"
 ROS_DOMAIN_ID := 42
 USE_UDP_TRANSPORT := -DUSE_UDP_TRANSPORT
@@ -99,24 +101,24 @@ CPPFLAGS = \
 		   -fno-use-cxa-atexit
 
 LDFLAGS = \
-		   $(DEBUG) \
-		   $(MICRO_ROS_LIB) \
-		   -mcpu=cortex-m7 \
-		   -mfpu=fpv5-d16 \
-		   -mfloat-abi=hard \
-		   --specs=nano.specs \
-		   --specs=nosys.specs \
-		   -mthumb \
-		   -T$(LD_FILE) \
-		   -Wl,-Map=$(MAP_FILES) \
-		   -Wl,--gc-sections \
-		   -static \
-		   -u_printf_float \
-		   -Wl,--start-group \
-		   -lc \
-		   -lm \
-		   -lstdc++ \
-		   -Wl,--end-group
+		  $(DEBUG) \
+		  $(MICRO_ROS_LIB) \
+		  -mcpu=cortex-m7 \
+		  -mfpu=fpv5-d16 \
+		  -mfloat-abi=hard \
+		  --specs=nano.specs \
+		  --specs=nosys.specs \
+		  -mthumb \
+		  -T$(LD_FILE) \
+		  -Wl,-Map=$(MAP_FILES) \
+		  -Wl,--gc-sections \
+		  -static \
+		  -u_printf_float \
+		  -Wl,--start-group \
+		  -lc \
+		  -lm \
+		  -lstdc++ \
+		  -Wl,--end-group
 
 STARTUP_FLAGS = \
 				$(DEBUG) \
@@ -149,9 +151,11 @@ C_SRCS_EXCLS :=  \
 				 $(MICRO_ROS_DIR)/sample_main.c \
 				 $(MICRO_ROS_DIR)/sample_main_embeddedrtps.c \
 				 $(MICRO_ROS_DIR)/sample_main_udp.c
-C_SRCS := $(filter-out $(C_SRCS_EXCLS), $(shell find $(SRCS_PATHS) -type f -name "*.c"))
+C_SRCS := $(filter-out $(C_SRCS_EXCLS), \
+		  $(shell find $(SRCS_PATHS) -type f -name "*.c"))
 CPP_SRCS_EXCLS :=
-CPP_SRCS := $(filter-out $(CPP_SRCS_EXCLS), $(shell find $(SRCS_PATHS) -type f -name "*.cpp"))
+CPP_SRCS := $(filter-out $(CPP_SRCS_EXCLS), \
+			$(shell find $(SRCS_PATHS) -type f -name "*.cpp"))
 S_SRC := startup_stm32f767xx.s
 LD_FILE := stm32f767zitx_flash.ld
 OBJS := $(addprefix $(BUILD_DIR)/, $(C_SRCS:.c=.o)) \
