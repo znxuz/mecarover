@@ -17,6 +17,7 @@
 
 #include <application/robot_params.hpp>
 #include <numbers>
+#include <utility>
 
 #include "rcl_guard.hpp"
 
@@ -109,7 +110,8 @@ static void enable_cb(const void* arg) {
 }
 
 static void timer_cb(rcl_timer_t*, int64_t) {
-  static size_t read_idx = 0;
+  static size_t read_idx;
+  static bool scan_avail;
 
   uint8_t quality = 0;
   uint16_t dist_mm = 0;
@@ -150,6 +152,7 @@ static void timer_cb(rcl_timer_t*, int64_t) {
         case 2:
           angle = static_cast<uint16_t>(val << 7 | angle) / 64;
           qualities[angle] = static_cast<float>(quality);
+          scan_avail |= angle == LIDAR_RANGE - 1;  // true after 1 complete scan
           break;
         case 3:
           dist_mm = val;
@@ -168,7 +171,10 @@ static void timer_cb(rcl_timer_t*, int64_t) {
 
   static float distances_m[LIDAR_RANGE]{};
   static uint8_t counter = 0;
-  if (!enable_msg.data || (counter = ++counter % 5)) return;
+
+  if (!enable_msg.data || (counter = ++counter % 4) ||
+      !std::exchange(scan_avail, false))
+    return;
 
   // post process for the data timer callback to be more lightweight
   for (size_t i = 0; i < LIDAR_RANGE; ++i)
@@ -193,7 +199,6 @@ rclc_executor_t* lidar_init(rcl_node_t* node, rclc_support_t* support,
   rcl_softguard(rclc_timer_init_default2(
       &timer, support, RCL_S_TO_NS(LIDAR_PERIOD_S), &timer_cb, true));
   rcl_softguard(rclc_executor_add_timer(&exe, &timer));
-  // FIXME: custom QoS
   rcl_softguard(rclc_publisher_init_default(
       &scan_pub, node, ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, LaserScan),
       "lidar_scan"));
