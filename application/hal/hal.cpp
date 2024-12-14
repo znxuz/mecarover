@@ -5,6 +5,7 @@
 #include <application/robot_params.hpp>
 #include <array>
 #include <cstdint>
+#include <utility>
 
 #include "encoder.hpp"
 #include "motor.hpp"
@@ -20,7 +21,6 @@ static constexpr std::array pwm_channels_b{TIM_CHANNEL_3, TIM_CHANNEL_4,
 
 constexpr static std::array motor_direction{1, 1, -1, -1};
 constexpr static std::array encoder_direction{1, 1, 1, 1};
-// constexpr static std::array encoder_scaler{1.0, 1.0, 1.0, 1.0};
 
 static std::array<Encoder, N_WHEEL> encoders;
 static std::array<Motor, N_WHEEL> pwm_motors;
@@ -42,10 +42,9 @@ std::array<real_t, N_WHEEL> hal_encoder_delta_rad() {
   for (int i = 0; i < N_WHEEL; ++i) {
     auto encoder_val = encoders[i].get_val();
     encoder_delta[i] =
-        INC2RAD * (static_cast<real_t>(encoder_val - prev_encoder_val[i])) *
-        encoder_direction[i];  //  * encoder_scaler[i]
-
-    prev_encoder_val[i] = encoder_val;
+        INC2RAD *
+        (encoder_val - std::exchange(prev_encoder_val[i], encoder_val)) *
+        encoder_direction[i];
   }
 
   return encoder_delta;
@@ -53,9 +52,8 @@ std::array<real_t, N_WHEEL> hal_encoder_delta_rad() {
 
 std::array<uint32_t, N_WHEEL> hal_encoder_val() {
   auto ret = std::array<uint32_t, N_WHEEL>{};
-  for (size_t i = 0; i < N_WHEEL; ++i) {
-    ret[i] = encoders[i].get_val();
-  }
+  for (size_t i = 0; i < N_WHEEL; ++i) ret[i] = encoders[i].get_val();
+
   return ret;
 }
 
