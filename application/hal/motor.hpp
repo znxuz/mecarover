@@ -9,16 +9,17 @@ class Motor {
  public:
   Motor() = default;
   void init(TIM_HandleTypeDef* htim, uint32_t pwm_channel_a,
-            uint32_t pwm_channel_b, int direction) {
+            uint32_t pwm_channel_b, int direction)
+  {
     this->htim = htim;
     this->pwm_channel_a = pwm_channel_a;
     this->pwm_channel_b = pwm_channel_b;
     this->direction = direction;
+    this->ARR_VALUE = static_cast<real_t>(htim->Instance->ARR);
 
     HAL_TIM_PWM_Start(this->htim, this->pwm_channel_a);
     HAL_TIM_PWM_Start(this->htim, this->pwm_channel_b);
     this->set_pwm(0);
-    this->ARR_VALUE = static_cast<real_t>(htim->Instance->ARR);
   }
 
   void set_pwm(real_t duty_cycle) {
