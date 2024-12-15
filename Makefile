@@ -206,7 +206,7 @@ print_cflags:
 
 build/compile_commands.json: clean
 	$(DIR_GUARD)
-	@bear --output build/compile_commands.json -- $(MAKE) -j
+	@bear --output $@ -- $(MAKE) -j
 
 # misc
 
