@@ -18,9 +18,7 @@ static constexpr std::array pwm_channels_a{TIM_CHANNEL_4, TIM_CHANNEL_1,
                                            TIM_CHANNEL_1, TIM_CHANNEL_1};
 static constexpr std::array pwm_channels_b{TIM_CHANNEL_3, TIM_CHANNEL_4,
                                            TIM_CHANNEL_2, TIM_CHANNEL_2};
-
 constexpr static std::array motor_direction{1, 1, -1, -1};
-constexpr static std::array encoder_direction{1, 1, 1, 1};
 
 static std::array<Encoder, N_WHEEL> encoders;
 static std::array<Motor, N_WHEEL> pwm_motors;
@@ -43,8 +41,7 @@ std::array<real_t, N_WHEEL> hal_encoder_delta_rad() {
     auto encoder_val = encoders[i].get_val();
     encoder_delta[i] =
         INC2RAD *
-        (encoder_val - std::exchange(prev_encoder_val[i], encoder_val)) *
-        encoder_direction[i];
+        (encoder_val - std::exchange(prev_encoder_val[i], encoder_val));
   }
 
   return encoder_delta;
