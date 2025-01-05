@@ -75,7 +75,7 @@ rclc_executor_t* odometry_init(rcl_node_t* node, rclc_support_t* support,
       &exe, &sub_enc_data, &enc_data_msg.state, &odometry_cb, ON_NEW_DATA));
 
   rcl_guard(rclc_timer_init_default2(&timer, support,
-                                     RCL_S_TO_NS(INTERPOLATION_PERIOD_S),
+                                     RCL_S_TO_NS(POSE_CTRL_PERIOD_S),
                                      &odom_pub_cb, true));
   rcl_guard(rclc_executor_add_timer(&exe, &timer));
 

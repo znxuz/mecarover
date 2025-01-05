@@ -11,7 +11,7 @@ namespace robot_params {
 using std::numbers::pi;
 
 inline constexpr real_t WHEEL_CTRL_PERIOD_S = 0.02;
-inline constexpr real_t INTERPOLATION_PERIOD_S = 0.03;
+inline constexpr real_t POSE_CTRL_PERIOD_S = 0.03;
 inline constexpr real_t LIDAR_PERIOD_S = 0.2;
 inline constexpr uint16_t S_TO_MS = 1000;
 

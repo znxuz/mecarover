@@ -6,6 +6,6 @@
 #include <rclc/executor_handle.h>
 
 extern "C" {
-rclc_executor_t* interpolation_init(rcl_node_t* node, rclc_support_t* support,
+rclc_executor_t* pose_ctrl_init(rcl_node_t* node, rclc_support_t* support,
                                     const rcl_allocator_t* allocator);
 }

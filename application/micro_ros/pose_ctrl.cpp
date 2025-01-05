@@ -1,4 +1,4 @@
-#include "interpolation.hpp"
+#include "pose_ctrl.hpp"
 
 #include <application/real_t.h>
 #include <geometry_msgs/msg/pose2_d.h>
@@ -91,9 +91,9 @@ static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
   if (abs(err.x) > MAX_POSE_DEVIATION_LINEAR ||
       abs(err.y) > MAX_POSE_DEVIATION_LINEAR ||
       abs(err.theta) > MAX_POSE_DEVIATION_ANGULAR) [[unlikely]]
-    ULOG_WARNING("[intrpl]: sanity check: pose deviation too large");
-  ULOG_DEBUG("[intrpl]: delta: [x: %.2f, y: %.2f, theta: %.2f]", err.x, err.y,
-             static_cast<real_t>(err.theta));
+    ULOG_WARNING("[pose_ctrl]: sanity check: pose deviation too large");
+  ULOG_DEBUG("[pose_ctrl]: delta: [x: %.2f, y: %.2f, theta: %.2f]", err.x,
+             err.y, static_cast<real_t>(err.theta));
 
   integral += err * dt;
   integral.x =
@@ -108,7 +108,7 @@ static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
   return err * K_P + integral * K_I + derivative / dt * K_D;
 }
 
-static void interpolation_cb(rcl_timer_t*, int64_t last_call_time) {
+static void pose_ctrl_cb(rcl_timer_t*, int64_t last_call_time) {
   static auto vel_prev = vPose<real_t>{};
   static auto pose_sp = Pose<real_t>{};
   const auto dt = RCL_NS_TO_S(static_cast<real_t>(last_call_time));
@@ -133,7 +133,7 @@ static void interpolation_cb(rcl_timer_t*, int64_t last_call_time) {
   rcl_softguard(rcl_publish(&pub_wheel_vel, &msg_vel_wheel_sp.state, NULL));
 }
 
-rclc_executor_t* interpolation_init(rcl_node_t* node, rclc_support_t* support,
+rclc_executor_t* pose_ctrl_init(rcl_node_t* node, rclc_support_t* support,
                                     const rcl_allocator_t* allocator) {
   rcl_guard(
       rclc_executor_init(&exe, &support->context, N_EXEC_HANDLES, allocator));
@@ -151,8 +151,8 @@ rclc_executor_t* interpolation_init(rcl_node_t* node, rclc_support_t* support,
                                            &pose_cb, ALWAYS));
 
   rcl_guard(rclc_timer_init_default2(&timer, support,
-                                     RCL_S_TO_NS(INTERPOLATION_PERIOD_S),
-                                     &interpolation_cb, true));
+                                     RCL_S_TO_NS(POSE_CTRL_PERIOD_S),
+                                     &pose_ctrl_cb, true));
   rcl_guard(rclc_executor_add_timer(&exe, &timer));
 
   rcl_guard(rclc_publisher_init_best_effort(
