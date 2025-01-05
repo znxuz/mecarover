@@ -46,6 +46,7 @@ static void init() {
   ULOG_INFO("initializing micro-ROS module");
 
 #ifdef USE_UDP_TRANSPORT
+  ULOG_INFO("using UDP transport");
   MX_LWIP_Init();
   rcl_guard(rmw_uros_set_custom_transport(
       false,  // framing disable here. udp should use packet-oriented mode

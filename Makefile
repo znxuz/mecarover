@@ -16,10 +16,8 @@ ULOG_DIR := third_party/ulog/src
 
 # ip on the host machine for the agent
 ETH_IF := wlp3s0
-MICRO_ROS_AGENT_IP := \"$(shell ip a s $(ETH_IF) \
-					  | grep -Eo '[0-9]{3}.[0-9]{3}.[0-9]{0,3}.[0-9]{0,3}' \
-					  | head -n1)\"
-MICRO_ROS_AGENT_PORT := \"8888\"
+MICRO_ROS_AGENT_IP := 192.168.188.200
+MICRO_ROS_AGENT_PORT := 8888
 ROS_DOMAIN_ID := 42
 USE_UDP_TRANSPORT := -DUSE_UDP_TRANSPORT
 
@@ -85,8 +83,8 @@ FLAGS = \
 		-MT"$@" \
 		$(INCL_PATHS) \
 		$(ULOG_ENABLED) \
-		-DMICRO_ROS_AGENT_IP=$(MICRO_ROS_AGENT_IP) \
-		-DMICRO_ROS_AGENT_PORT=$(MICRO_ROS_AGENT_PORT) \
+		-DMICRO_ROS_AGENT_IP=\"$(MICRO_ROS_AGENT_IP)\" \
+		-DMICRO_ROS_AGENT_PORT=\"$(MICRO_ROS_AGENT_PORT)\" \
 		-DROS_DOMAIN_ID=$(ROS_DOMAIN_ID) \
 		$(USE_UDP_TRANSPORT)
 
@@ -228,6 +226,9 @@ flash: all
 		echo "st-flash failed, retrying..."; \
 		sleep 1; \
 		done
+
+agent_ip:
+	@echo $(MICRO_ROS_AGENT_IP)
 
 reflash:
 	$(MAKE) clean
