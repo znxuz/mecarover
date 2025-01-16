@@ -4,17 +4,18 @@
 
 #include <Eigen/Core>
 #include <Eigen/LU>
+#include <chrono>
 #include <numbers>
 
 #include "real_t.hpp"
 
 namespace robot_params {
 using std::numbers::pi;
+using namespace std::chrono;
 
-inline constexpr real_t WHEEL_CTRL_PERIOD_S = 0.02;
-inline constexpr real_t POSE_CTRL_PERIOD_S = 0.03;
-inline constexpr real_t LIDAR_PERIOD_S = 0.2;
-inline constexpr uint16_t S_TO_MS = 1000;
+inline constexpr std::chrono::milliseconds WHEEL_CTRL_PERIOD_MS = 20ms;
+inline constexpr std::chrono::milliseconds POSE_CTRL_PERIOD_MS = 33ms;
+inline constexpr std::chrono::milliseconds LIDAR_PERIOD_MS = 200ms;
 
 inline constexpr uint8_t DOF = 4;
 inline constexpr uint8_t N_WHEEL = 4;
