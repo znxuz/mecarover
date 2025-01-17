@@ -11,7 +11,7 @@ WARNINGS := -Wall -Wextra -Wpedantic -Weffc++ -Wconversion -Wshadow \
 	    -Wnull-dereference -Wno-unused-parameter -Wno-unused-function \
 	    -Wno-unused-variable
 OPTM := -O0
-INCL := -I../
+INCL := -I../ -I../third_party/eigen/
 
 CXXFLAGS := $(LANG) $(STD) $(WARNINGS) $(OPTM) $(INCL) -g
 

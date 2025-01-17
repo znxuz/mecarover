@@ -10,6 +10,28 @@ using std::numbers::pi;
 
 static constexpr double tolerance = 1e-10;
 
+/* Transformation of small movements from robot frame into world frame */
+template <typename FltType>
+constexpr Eigen::Matrix<FltType, 4, 1>
+pRF2pWF(const Eigen::Matrix<FltType, 4, 1> &dpose, FltType th) {
+  return Eigen::Matrix<FltType, 4, 4>{{std::cos(th), -std::sin(th), 0.0, 0.0},
+                                      {std::sin(th), std::cos(th), 0.0, 0.0},
+                                      {0.0, 0.0, 1.0, 0.0},
+                                      {0.0, 0.0, 0.0, 1.0}} *
+         dpose;
+}
+
+template <typename FltType>
+constexpr Eigen::Matrix<FltType, 4, 1>
+pWF2pRF(const Eigen::Matrix<FltType, 4, 1> &dpose, FltType th) {
+  return Eigen::Matrix<FltType, 4, 4>{{std::cos(th), std::sin(th), 0.0, 0.0},
+                                      {-std::sin(th), std::cos(th), 0.0, 0.0},
+                                      {0.0, 0.0, 1.0, 0.0},
+                                      {0.0, 0.0, 0.0, 1.0}} *
+         dpose;
+}
+
+
 class PoseTest : public ::testing::Test {
  protected:
   std::mt19937 rng{std::random_device{}()};
@@ -136,6 +158,52 @@ TEST_F(PoseTest, poseTFBack2Back) {
     EXPECT_NEAR(tf.x, pose.x, tolerance);
     EXPECT_NEAR(tf.y, pose.y, tolerance);
     EXPECT_NEAR(tf.theta, pose.theta, tolerance);
+  }
+}
+
+TEST_F(PoseTest, pRF2pWFTransformationComparison) {
+  for (int i = 0; i < 100; ++i) {
+    double x = dist(rng);
+    double y = dist(rng);
+    double theta = dist(rng);
+    double th = dist(rng);
+
+    // Use the friend function
+    imsl::Pose<double> pose(x, y, theta);
+    imsl::Pose<double> transformedFriend = pRF2pWF(pose, th);
+
+    // Use the matrix function
+    Eigen::Matrix<double, 4, 1> dpose;
+    dpose << x, y, Heading<double>(theta), 1.0;
+    Eigen::Matrix<double, 4, 1> transformedMatrix = pRF2pWF(dpose, th);
+
+    EXPECT_NEAR(transformedFriend.x, transformedMatrix(0), tolerance);
+    EXPECT_NEAR(transformedFriend.y, transformedMatrix(1), tolerance);
+    EXPECT_NEAR(static_cast<double>(transformedFriend.theta),
+                transformedMatrix(2), tolerance);
+  }
+}
+
+TEST_F(PoseTest, pWF2pRFTransformationComparison) {
+  for (int i = 0; i < 100; ++i) {
+    double x = dist(rng);
+    double y = dist(rng);
+    double theta = dist(rng);
+    double th = dist(rng);
+
+    // Use the friend function
+    imsl::Pose<double> pose(x, y, theta);
+    imsl::Pose<double> transformedFriend = pWF2pRF(pose, th);
+
+    // Use the matrix function
+    Eigen::Matrix<double, 4, 1> dpose;
+    dpose << x, y, Heading<double>(theta), 1.0;
+    Eigen::Matrix<double, 4, 1> transformedMatrix = pWF2pRF(dpose, th);
+
+    EXPECT_NEAR(transformedFriend.x, transformedMatrix(0), tolerance);
+    EXPECT_NEAR(transformedFriend.y, transformedMatrix(1), tolerance);
+    EXPECT_NEAR(static_cast<double>(transformedFriend.theta),
+                transformedMatrix(2), tolerance);
   }
 }
 

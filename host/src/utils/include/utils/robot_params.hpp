@@ -10,12 +10,14 @@
 #include "real_t.hpp"
 
 namespace robot_params {
-using std::numbers::pi;
 using namespace std::chrono;
+using namespace Eigen;
 
-inline constexpr std::chrono::milliseconds WHEEL_CTRL_PERIOD_MS = 20ms;
-inline constexpr std::chrono::milliseconds POSE_CTRL_PERIOD_MS = 33ms;
-inline constexpr std::chrono::milliseconds LIDAR_PERIOD_MS = 200ms;
+using std::numbers::pi;
+
+inline constexpr milliseconds WHEEL_CTRL_PERIOD_MS = 20ms;
+inline constexpr milliseconds POSE_CTRL_PERIOD_MS = 33ms;
+inline constexpr milliseconds LIDAR_PERIOD_MS = 200ms;
 
 inline constexpr uint8_t DOF = 4;
 inline constexpr uint8_t N_WHEEL = 4;
@@ -41,6 +43,7 @@ inline constexpr real_t MAX_VELOCITY_WHEEL_ANGULAR =
 inline constexpr real_t MAX_VELOCITY_WHEEL_LINEAR =
     MAX_VELOCITY_WHEEL_ANGULAR * WHEEL_RADIUS;
 
-using VelWheel = Eigen::Matrix<real_t, N_WHEEL, 1>;
-using VelRF = Eigen::Matrix<real_t, DOF, 1>;
+using VelWheel = Matrix<real_t, N_WHEEL, 1>;
+using VelRF = Matrix<real_t, DOF, 1>;
+using HomogenousTransformMatrix = Matrix<real_t, N_WHEEL, DOF>;
 } // namespace robot_params

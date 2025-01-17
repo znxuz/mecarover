@@ -2,9 +2,12 @@
 
 #include <application/real_t.h>
 
-#include <numbers>
+#include <Eigen/Dense>
 #include <cmath>
 #include <cstdio>
+#include <numbers>
+
+using namespace Eigen;
 
 namespace imsl {
 
