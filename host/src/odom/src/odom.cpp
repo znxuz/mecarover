@@ -10,15 +10,13 @@
 #include <utils/robot_params.hpp>
 #include <utils/transformations.hpp>
 
-using namespace std::chrono_literals;
+using namespace std::chrono;
 using namespace rclcpp;
 using namespace geometry_msgs::msg;
 using namespace transform;
+using namespace robot_params;
 
 using drive_state = control_msgs::msg::MecanumDriveControllerState;
-using robot_params::VelRF;
-using robot_params::VelWheel;
-
 using std::numbers::pi;
 
 namespace {
@@ -61,7 +59,7 @@ class Odom : public Node {
   TimerBase::SharedPtr timer_;
   Pose2D odom{};
   double epsilon{};
-  std::chrono::milliseconds timer_period_ = robot_params::POSE_CTRL_PERIOD_MS;
+  milliseconds timer_period_ = POSE_CTRL_PERIOD_MS;
   double dt_ = std::chrono::duration<double>(timer_period_).count();
 
   /*
