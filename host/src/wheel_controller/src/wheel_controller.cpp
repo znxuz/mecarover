@@ -1,7 +1,5 @@
-#include <rclcpp/rclcpp.hpp>
-
 #include <control_msgs/msg/mecanum_drive_controller_state.hpp>
-#include <sensor_msgs/msg/joint_state.h>
+#include <rclcpp/rclcpp.hpp>
 #include <utils/robot_params.hpp>
 
 using namespace rclcpp;
@@ -11,19 +9,19 @@ using namespace robot_params;
 using drive_state = control_msgs::msg::MecanumDriveControllerState;
 
 class WheelController : public Node {
-public:
+ public:
   WheelController() : Node("wheel_controller") {
     output_wheel_vel_publisher_ =
         this->create_publisher<drive_state>("topic", 10);
 
-    encoder_data_subscription_ = this->create_subscription<drive_state>(
-        "/mecarover/encoder_data", rclcpp::SensorDataQoS(),
+    delta_phi_subscription_ = this->create_subscription<drive_state>(
+        "/delta_phi", rclcpp::SensorDataQoS(),
         [this](drive_state::UniquePtr msg) {
           wheel_vel_rad_actual_ = msg_to_mtx(*msg) / dt_;
         });
 
     wheel_vel_subscription_ = this->create_subscription<drive_state>(
-        "/mecarover/wheel_vel", 10, [this](drive_state::UniquePtr msg) {
+        "/wheel_vel", 10, [this](drive_state::UniquePtr msg) {
           wheel_vel_rad_sp_ = msg_to_mtx(*msg);
         });
 
@@ -31,12 +29,12 @@ public:
         this->create_wall_timer(timer_period_, [this]() { wheel_control(); });
   }
 
-private:
+ private:
   const milliseconds timer_period_ = WHEEL_CTRL_PERIOD_MS;
   const double dt_ = duration<double>(timer_period_).count();
 
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Subscription<drive_state>::SharedPtr encoder_data_subscription_;
+  rclcpp::Subscription<drive_state>::SharedPtr delta_phi_subscription_;
   rclcpp::Subscription<drive_state>::SharedPtr wheel_vel_subscription_;
   rclcpp::Publisher<drive_state>::SharedPtr output_wheel_vel_publisher_;
   VelWheel wheel_vel_rad_actual_;
@@ -48,26 +46,25 @@ private:
   }
 
   VelWheel pid_control() const {
-    // static constexpr double K_P = 0.025, K_I = 0.015, K_D = 0, INTEGRAL_MAX = 10;
+    // TODO tune with param server
     static constexpr double K_P = 0, K_I = 0, K_D = 0, INTEGRAL_MAX = 10;
     static auto integral = VelWheel{}, prev_err = VelWheel{};
 
     const auto err = wheel_vel_rad_sp_ - wheel_vel_rad_actual_;
-    // ULOG_WARNING("[wheel_ctrl]: wheel vel err: [%0.2f, %.02f, %.02f, %.02f]",
-    //              err(0), err(1), err(2), err(3));
 
     integral += err * dt_;
     integral = integral.unaryExpr([&](double val) {
       return std::clamp(val, INTEGRAL_MAX, -INTEGRAL_MAX);
     });
     if (std::any_of(std::begin(integral), std::end(integral),
-                    [](double val) { return val >= 0.8 * INTEGRAL_MAX; }))
+                    [](double val) { return val >= 0.8 * INTEGRAL_MAX; })) {
       RCLCPP_WARN(this->get_logger(),
                   "[wheel_ctrl]: PID integral: [%0.2f, %.02f, %.02f, %.02f]",
                   integral(0), integral(1), integral(2), integral(3));
+    }
 
     const auto derivative =
-        (err - std::exchange(prev_err, err)) / dt_; // unused
+        (err - std::exchange(prev_err, err)) / dt_;  // unused
 
     return wheel_vel_rad_sp_ + K_P * err + K_I * integral + K_D * derivative;
   }
@@ -76,11 +73,11 @@ private:
     auto output_vel = pid_control();
 
     drive_state msg{};
-    msg.set__front_right_wheel_velocity(output_vel(0))
-        .set__front_left_wheel_velocity(output_vel(1))
-        .set__back_left_wheel_velocity(output_vel(2))
-        .set__back_right_wheel_velocity(output_vel(3));
-    output_wheel_vel_publisher_->publish(std::move(msg));
+    output_wheel_vel_publisher_->publish(
+        std::move(msg.set__front_right_wheel_velocity(output_vel(0))
+                      .set__front_left_wheel_velocity(output_vel(1))
+                      .set__back_left_wheel_velocity(output_vel(2))
+                      .set__back_right_wheel_velocity(output_vel(3))));
   }
 };
 

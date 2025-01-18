@@ -8,10 +8,10 @@
 
 namespace transform {
 
+using namespace robot_params;
+
 template <typename T>
 concept FltType = std::is_same_v<T, float> || std::is_same_v<T, double>;
-
-using namespace robot_params;
 
 inline const auto JACOBI_MTX = []() -> HomogenousTransformMatrix {
   using namespace robot_params;

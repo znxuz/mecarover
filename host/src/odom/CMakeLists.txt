@@ -18,7 +18,6 @@ find_package(utils REQUIRED)
 
 add_executable(odom src/odom.cpp)
 
-# target_link_libraries(odom utils)
 ament_target_dependencies(odom rclcpp std_msgs control_msgs geometry_msgs tf2 tf2_ros utils)
 
 install(TARGETS

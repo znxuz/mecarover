@@ -20,6 +20,7 @@ using drive_state = control_msgs::msg::MecanumDriveControllerState;
 using std::numbers::pi;
 
 namespace {
+
 double max_theta(double theta) {
   while (theta > pi) theta -= (2 * pi);
   while (theta < -pi) theta += (2 * pi);
@@ -38,32 +39,37 @@ class Odom : public Node {
  public:
   Odom() : Node{"odom"} {
     epsilon_publisher_ =
-        this->create_publisher<std_msgs::msg::Float64>("topic", 10);
+        this->create_publisher<std_msgs::msg::Float64>("/epsilon", 10);
+    odom_publisher_ =
+        this->create_publisher<Pose2D>("/odom", 10);
 
-    encoder_data_subscription_ = this->create_subscription<drive_state>(
-        "/mecarover/encoder_data", rclcpp::SensorDataQoS(),
+    delta_phi_subscription_ = this->create_subscription<drive_state>(
+        "/delta_phi", rclcpp::SensorDataQoS(),
         [this](drive_state::UniquePtr msg) { this->odometry(std::move(msg)); });
 
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
     timer_ = this->create_wall_timer(timer_period_, [this]() {
-      this->broadcast_odom_tf();
+      this->publish_odom();
       this->publish_epsilon();
     });
   }
 
  private:
-  Subscription<drive_state>::SharedPtr encoder_data_subscription_;
+  Subscription<drive_state>::SharedPtr delta_phi_subscription_;
   Publisher<std_msgs::msg::Float64>::SharedPtr epsilon_publisher_;
+  Publisher<Pose2D>::SharedPtr odom_publisher_;
+  // TODO try make stack allocated
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   TimerBase::SharedPtr timer_;
+
   Pose2D odom{};
   double epsilon{};
   milliseconds timer_period_ = POSE_CTRL_PERIOD_MS;
   double dt_ = std::chrono::duration<double>(timer_period_).count();
 
   /*
-   * odometry: encoder delta gets fed directly into the inverted jacobian
+   * odom: encoder delta gets fed directly into the inverted jacobian
    * matrix without dividing the dt for the reason being:
    * enc delta in rad / dt = vel -> forward_transform(vel) = vel_rf * dt =
    * dpose
@@ -87,7 +93,7 @@ class Odom : public Node {
         rotate_to_wframe(dpose_rf_mtx, odom.theta + dpose_rf_mtx(2) / 2));
   }
 
-  void broadcast_odom_tf() const {
+  void publish_odom() const {
     geometry_msgs::msg::TransformStamped t;
 
     t.header.stamp = this->get_clock()->now();
@@ -105,6 +111,7 @@ class Odom : public Node {
     t.transform.rotation.z = q.z();
     t.transform.rotation.w = q.w();
 
+    odom_publisher_->publish(odom);
     tf_broadcaster_->sendTransform(t);
   }
 
