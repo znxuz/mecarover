@@ -102,16 +102,22 @@ class vPose {
     return {lhs.vx - rhs.vx, lhs.vy - rhs.vy, lhs.omega - rhs.omega};
   }
 
+  friend constexpr vPose<FltType> rotate_z(const vPose<FltType>& v,
+                                           FltType th) {
+    return {v.vx * cos(th) - v.vy * sin(th), v.vx * sin(th) + v.vy * cos(th),
+            v.omega};
+  }
+
   /* transformation of velocities from robot frame into world frame  */
-  friend constexpr vPose<FltType> vRF2vWF(vPose<FltType> vRF, FltType theta) {
-    return {vRF.vx * cos(theta) - vRF.vy * sin(theta),
-            vRF.vx * sin(theta) + vRF.vy * cos(theta), vRF.omega};
+  friend constexpr vPose<FltType> vRF2vWF(const vPose<FltType>& vRF,
+                                          FltType th) {
+    return rotate_z(vRF, th);
   }
 
   /* transformation of velocities from world frame into robot frame  */
-  friend constexpr vPose<FltType> vWF2vRF(vPose<FltType> vWF, FltType theta) {
-    return {vWF.vx * cos(theta) + vWF.vy * sin(theta),
-            -vWF.vx * sin(theta) + vWF.vy * cos(theta), vWF.omega};
+  friend constexpr vPose<FltType> vWF2vRF(const vPose<FltType>& vWF,
+                                          FltType th) {
+    return rotate_z(vWF, -th);
   }
 };
 
@@ -165,18 +171,21 @@ class Pose {
     return {lhs.x / divisor, lhs.y / divisor, lhs.theta / divisor};
   }
 
+  friend constexpr Pose<FltType> rotate_z(const Pose<FltType>& p, FltType th) {
+    return {p.x * cos(th) - p.y * sin(th), p.x * sin(th) + p.y * cos(th),
+            p.theta};
+  }
+
   /* transformation of small movements from robot frame into world frame  */
   friend constexpr Pose<FltType> pRF2pWF(const Pose<FltType>& dpose,
                                          FltType th) {
-    return {dpose.x * cos(th) - dpose.y * sin(th),
-            dpose.x * sin(th) + dpose.y * cos(th), dpose.theta};
+    return rotate_z(dpose, th);
   }
 
   /* transformation of small movements from world frame into robot frame  */
   friend constexpr Pose<FltType> pWF2pRF(const Pose<FltType>& dpose,
                                          FltType th) {
-    return {dpose.x * cos(th) + dpose.y * sin(th),
-            -dpose.x * sin(th) + dpose.y * cos(th), dpose.theta};
+    return rotate_z(dpose, -th);
   }
 };
 

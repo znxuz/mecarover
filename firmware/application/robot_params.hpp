@@ -8,6 +8,7 @@
 #include "real_t.h"
 
 namespace robot_params {
+
 using std::numbers::pi;
 
 inline constexpr real_t WHEEL_CTRL_PERIOD_S = 0.02;
@@ -39,6 +40,7 @@ inline constexpr real_t MAX_VELOCITY_WHEEL_ANGULAR =
 inline constexpr real_t MAX_VELOCITY_WHEEL_LINEAR =
     MAX_VELOCITY_WHEEL_ANGULAR * WHEEL_RADIUS;
 
-using VelWheel = Eigen::Matrix<real_t, N_WHEEL, 1>;
-using VelRF = Eigen::Matrix<real_t, DOF, 1>;
+using VelWheel = Eigen::Vector<real_t, N_WHEEL>;
+using VelRF = Eigen::Vector<real_t, DOF>;
+
 }  // namespace robot_params

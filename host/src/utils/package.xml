@@ -10,6 +10,8 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
+  <depend>geometry_msgs</depend>
+
   <build_depend>eigen</build_depend>
   <build_export_depend>eigen</build_export_depend>
 

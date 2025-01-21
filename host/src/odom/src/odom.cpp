@@ -9,6 +9,7 @@
 #include <std_msgs/msg/string.hpp>
 #include <utils/robot_params.hpp>
 #include <utils/transformations.hpp>
+#include <utils/utils.hpp>
 
 using namespace std::chrono;
 using namespace rclcpp;
@@ -17,31 +18,13 @@ using namespace transform;
 using namespace robot_params;
 
 using drive_state = control_msgs::msg::MecanumDriveControllerState;
-using std::numbers::pi;
-
-namespace {
-
-double max_theta(double theta) {
-  while (theta > pi) theta -= (2 * pi);
-  while (theta < -pi) theta += (2 * pi);
-  return theta;
-}
-
-Pose2D& operator+=(Pose2D& lhs, const Pose2D& rhs) {
-  lhs.x += rhs.x;
-  lhs.y += rhs.y;
-  lhs.theta += rhs.theta;
-  return lhs;
-}
-};  // namespace
 
 class Odom : public Node {
  public:
   Odom() : Node{"odom"} {
     epsilon_publisher_ =
         this->create_publisher<std_msgs::msg::Float64>("/epsilon", 10);
-    odom_publisher_ =
-        this->create_publisher<Pose2D>("/odom", 10);
+    odom_publisher_ = this->create_publisher<Pose2D>("/odom", 10);
 
     delta_phi_subscription_ = this->create_subscription<drive_state>(
         "/delta_phi", rclcpp::SensorDataQoS(),
@@ -86,11 +69,12 @@ class Odom : public Node {
     auto dpose_rf_mtx = forward_transform(
         {msg->front_right_wheel_velocity, msg->front_left_wheel_velocity,
          msg->back_left_wheel_velocity, msg->back_right_wheel_velocity});
-    dpose_rf_mtx(2) = max_theta(dpose_rf_mtx(2));
+    dpose_rf_mtx(2) = utils::normalize_theta(dpose_rf_mtx(2));
     this->epsilon = dpose_rf_mtx(3);
 
-    odom += mtx_to_pose2d(
-        rotate_to_wframe(dpose_rf_mtx, odom.theta + dpose_rf_mtx(2) / 2));
+    // TODO
+    // odom += mtx_to_pose2d(
+    //     rotate_to_wframe(dpose_rf_mtx, odom.theta + dpose_rf_mtx(2) / 2));
   }
 
   void publish_odom() const {
