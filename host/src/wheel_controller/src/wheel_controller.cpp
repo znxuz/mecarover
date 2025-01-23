@@ -1,28 +1,35 @@
 #include <control_msgs/msg/mecanum_drive_controller_state.hpp>
+#include <geometry_msgs/msg/twist.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <utils/robot_params.hpp>
+#include <utils/transformations.hpp>
+#include <utils/utils.hpp>
 
+using namespace utils;
 using namespace rclcpp;
 using namespace std::chrono;
 using namespace robot_params;
+using namespace transform;
 
-using drive_state = control_msgs::msg::MecanumDriveControllerState;
+using geometry_msgs::msg::Twist;
+
+using DriveState = control_msgs::msg::MecanumDriveControllerState;
 
 class WheelController : public Node {
  public:
   WheelController() : Node("wheel_controller") {
     output_wheel_vel_publisher_ =
-        this->create_publisher<drive_state>("topic", 10);
+        this->create_publisher<DriveState>("wheel_vel", 10);
 
-    delta_phi_subscription_ = this->create_subscription<drive_state>(
+    delta_phi_subscription_ = this->create_subscription<DriveState>(
         "/delta_phi", rclcpp::SensorDataQoS(),
-        [this](drive_state::UniquePtr msg) {
-          wheel_vel_rad_actual_ = msg_to_mtx(*msg) / dt_;
+        [this](DriveState::UniquePtr msg) {
+          wheel_vel_rad_actual_ = msg2vec(*msg) / dt_;
         });
 
-    wheel_vel_subscription_ = this->create_subscription<drive_state>(
-        "/wheel_vel", 10, [this](drive_state::UniquePtr msg) {
-          wheel_vel_rad_sp_ = msg_to_mtx(*msg);
+    robot_vel_subscription_ = this->create_subscription<Twist>(
+        "/robot_vel", 10, [this](Twist::UniquePtr msg) {
+          wheel_vel_rad_sp_ = backward_transform(msg2vec<Twist>(*msg));
         });
 
     timer_ =
@@ -34,16 +41,11 @@ class WheelController : public Node {
   const double dt_ = duration<double>(timer_period_).count();
 
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Subscription<drive_state>::SharedPtr delta_phi_subscription_;
-  rclcpp::Subscription<drive_state>::SharedPtr wheel_vel_subscription_;
-  rclcpp::Publisher<drive_state>::SharedPtr output_wheel_vel_publisher_;
+  rclcpp::Subscription<Twist>::SharedPtr robot_vel_subscription_;
+  rclcpp::Subscription<DriveState>::SharedPtr delta_phi_subscription_;
+  rclcpp::Publisher<DriveState>::SharedPtr output_wheel_vel_publisher_;
   VelWheel wheel_vel_rad_actual_;
   VelWheel wheel_vel_rad_sp_;
-
-  VelWheel msg_to_mtx(const drive_state &msg) const {
-    return {msg.front_right_wheel_velocity, msg.front_left_wheel_velocity,
-            msg.back_left_wheel_velocity, msg.back_right_wheel_velocity};
-  }
 
   VelWheel pid_control() const {
     // TODO tune with param server
@@ -72,12 +74,7 @@ class WheelController : public Node {
   void wheel_control() const {
     auto output_vel = pid_control();
 
-    drive_state msg{};
-    output_wheel_vel_publisher_->publish(
-        std::move(msg.set__front_right_wheel_velocity(output_vel(0))
-                      .set__front_left_wheel_velocity(output_vel(1))
-                      .set__back_left_wheel_velocity(output_vel(2))
-                      .set__back_right_wheel_velocity(output_vel(3))));
+    output_wheel_vel_publisher_->publish(vec2msg<DriveState>(output_vel));
   }
 };
 

@@ -11,13 +11,16 @@
 #include <utils/transformations.hpp>
 #include <utils/utils.hpp>
 
+using namespace utils;
 using namespace std::chrono;
 using namespace rclcpp;
 using namespace geometry_msgs::msg;
 using namespace transform;
 using namespace robot_params;
 
-using drive_state = control_msgs::msg::MecanumDriveControllerState;
+using std_msgs::msg::Float64;
+
+using DriveState = control_msgs::msg::MecanumDriveControllerState;
 
 class Odom : public Node {
  public:
@@ -26,28 +29,28 @@ class Odom : public Node {
         this->create_publisher<std_msgs::msg::Float64>("/epsilon", 10);
     odom_publisher_ = this->create_publisher<Pose2D>("/odom", 10);
 
-    delta_phi_subscription_ = this->create_subscription<drive_state>(
+    delta_phi_subscription_ = this->create_subscription<DriveState>(
         "/delta_phi", rclcpp::SensorDataQoS(),
-        [this](drive_state::UniquePtr msg) { this->odometry(std::move(msg)); });
+        [this](DriveState::UniquePtr msg) { this->odometry(*msg); });
 
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
     timer_ = this->create_wall_timer(timer_period_, [this]() {
-      this->publish_odom();
-      this->publish_epsilon();
+      publish_odom();
+      epsilon_publisher_->publish(Float64{}.set__data(epsilon_));
     });
   }
 
  private:
-  Subscription<drive_state>::SharedPtr delta_phi_subscription_;
+  Subscription<DriveState>::SharedPtr delta_phi_subscription_;
   Publisher<std_msgs::msg::Float64>::SharedPtr epsilon_publisher_;
   Publisher<Pose2D>::SharedPtr odom_publisher_;
   // TODO try make stack allocated
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   TimerBase::SharedPtr timer_;
 
-  Pose2D odom{};
-  double epsilon{};
+  Vector4<double> odom_{};
+  double epsilon_{};
   milliseconds timer_period_ = POSE_CTRL_PERIOD_MS;
   double dt_ = std::chrono::duration<double>(timer_period_).count();
 
@@ -58,23 +61,12 @@ class Odom : public Node {
    * dpose
    * => dt gets canceled out on both sides
    */
-  void odometry(drive_state::UniquePtr msg) {
-    auto mtx_to_pose2d = [](const VelWheel& dpose_mtx) -> Pose2D {
-      Pose2D dpose{};
-      dpose.set__x(dpose_mtx(0)).set__y(dpose_mtx(1)).set__theta(dpose_mtx(2));
+  void odometry(const DriveState& msg) {
+    auto pose_delta = forward_transform(utils::msg2vec(msg));
+    pose_delta(2) = normalize_theta(pose_delta(2));
+    epsilon_ = pose_delta(3);
 
-      return dpose;
-    };
-
-    auto dpose_rf_mtx = forward_transform(
-        {msg->front_right_wheel_velocity, msg->front_left_wheel_velocity,
-         msg->back_left_wheel_velocity, msg->back_right_wheel_velocity});
-    dpose_rf_mtx(2) = utils::normalize_theta(dpose_rf_mtx(2));
-    this->epsilon = dpose_rf_mtx(3);
-
-    // TODO
-    // odom += mtx_to_pose2d(
-    //     rotate_to_wframe(dpose_rf_mtx, odom.theta + dpose_rf_mtx(2) / 2));
+    odom_ += rotate_to_wframe(pose_delta, odom_(2) + pose_delta(2) / 2);
   }
 
   void publish_odom() const {
@@ -84,25 +76,19 @@ class Odom : public Node {
     t.header.frame_id = "odom";
     t.child_frame_id = "base_link";
 
-    t.transform.translation.x = odom.x;
-    t.transform.translation.y = odom.y;
+    t.transform.translation.x = odom_(0);
+    t.transform.translation.y = odom_(1);
     t.transform.translation.z = 0.0;
 
     tf2::Quaternion q;
-    q.setRPY(0, 0, odom.theta);
+    q.setRPY(0, 0, odom_(2));
     t.transform.rotation.x = q.x();
     t.transform.rotation.y = q.y();
     t.transform.rotation.z = q.z();
     t.transform.rotation.w = q.w();
 
-    odom_publisher_->publish(odom);
+    odom_publisher_->publish(vec2msg<Pose2D>(odom_));
     tf_broadcaster_->sendTransform(t);
-  }
-
-  void publish_epsilon() const {
-    auto epsilon_msg = std_msgs::msg::Float64{};
-    epsilon_msg.data = this->epsilon;
-    epsilon_publisher_->publish(std::move(epsilon_msg));
   }
 };
 

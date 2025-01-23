@@ -42,8 +42,9 @@ inline constexpr double MAX_VELOCITY_WHEEL_ANGULAR =
 inline constexpr double MAX_VELOCITY_WHEEL_LINEAR =
     MAX_VELOCITY_WHEEL_ANGULAR * WHEEL_RADIUS;
 
-using VelWheel = Eigen::Vector<double, N_WHEEL>;
-using VelRF = Eigen::Vector<double, DOF>;
-using TransformationMatrix = Eigen::Matrix<double, N_WHEEL, DOF>;
+using VelWheel = Eigen::Vector4<double>;
+using VelRF = Eigen::Vector4<double>;
+using PoseWithEpsilon = Eigen::Vector4<double>;
+using TransformationMatrix = Eigen::Matrix4<double>;
 
 }  // namespace robot_params

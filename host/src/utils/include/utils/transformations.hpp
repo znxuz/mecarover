@@ -32,20 +32,20 @@ inline VelRF forward_transform(const VelWheel &u) { return INV_JACOBI_MTX * u; }
 
 inline VelWheel backward_transform(const VelRF &v) { return JACOBI_MTX * v; }
 
-inline VelRF rotate_to_wframe(const VelRF &dpose, double th) {
+inline Vector4<double> rotate_to_wframe(const Vector4<double> &v, double th) {
   return TransformationMatrix{{std::cos(th), -std::sin(th), 0.0, 0.0},
                               {std::sin(th), std::cos(th), 0.0, 0.0},
                               {0.0, 0.0, 1.0, 0.0},
                               {0.0, 0.0, 0.0, 1.0}} *
-         dpose;
+         v;
 }
 
-inline VelRF rotate_to_rframe(const VelRF &dpose, double th) {
+inline Vector4<double> rotate_to_rframe(const Vector4<double> &v, double th) {
   return TransformationMatrix{{std::cos(th), std::sin(th), 0.0, 0.0},
                               {-std::sin(th), std::cos(th), 0.0, 0.0},
                               {0.0, 0.0, 1.0, 0.0},
                               {0.0, 0.0, 0.0, 1.0}} *
-         dpose;
+         v;
 }
 
 };  // namespace transform

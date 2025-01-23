@@ -10,6 +10,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../incl.cmake)
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(control_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 add_library(${PROJECT_NAME} INTERFACE)
