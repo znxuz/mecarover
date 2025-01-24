@@ -25,9 +25,7 @@ using geometry_msgs::msg::Twist;
 using geometry_msgs::msg::Vector3;
 using std_msgs::msg::Float64;
 
-using DriveState = control_msgs::msg::MecanumDriveControllerState;
-
-namespace {};  // namespace
+using WheelState = control_msgs::msg::MecanumDriveControllerState;
 
 class PoseController : public rclcpp::Node {
  public:

@@ -20,18 +20,17 @@ using namespace robot_params;
 
 using std_msgs::msg::Float64;
 
-using DriveState = control_msgs::msg::MecanumDriveControllerState;
+using WheelState = control_msgs::msg::MecanumDriveControllerState;
 
 class Odom : public Node {
  public:
   Odom() : Node{"odom"} {
-    epsilon_publisher_ =
-        this->create_publisher<std_msgs::msg::Float64>("/epsilon", 10);
+    epsilon_publisher_ = this->create_publisher<Float64>("/epsilon", 10);
     odom_publisher_ = this->create_publisher<Pose2D>("/odom", 10);
 
-    delta_phi_subscription_ = this->create_subscription<DriveState>(
+    delta_phi_subscription_ = this->create_subscription<WheelState>(
         "/delta_phi", rclcpp::SensorDataQoS(),
-        [this](DriveState::UniquePtr msg) { this->odometry(*msg); });
+        [this](WheelState::UniquePtr msg) { this->odometry(*msg); });
 
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
@@ -42,8 +41,8 @@ class Odom : public Node {
   }
 
  private:
-  Subscription<DriveState>::SharedPtr delta_phi_subscription_;
-  Publisher<std_msgs::msg::Float64>::SharedPtr epsilon_publisher_;
+  Subscription<WheelState>::SharedPtr delta_phi_subscription_;
+  Publisher<Float64>::SharedPtr epsilon_publisher_;
   Publisher<Pose2D>::SharedPtr odom_publisher_;
   // TODO try make stack allocated
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
@@ -61,7 +60,7 @@ class Odom : public Node {
    * dpose
    * => dt gets canceled out on both sides
    */
-  void odometry(const DriveState& msg) {
+  void odometry(const WheelState& msg) {
     auto pose_delta = forward_transform(utils::msg2vec(msg));
     pose_delta(2) = normalize_theta(pose_delta(2));
     epsilon_ = pose_delta(3);

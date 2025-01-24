@@ -15,11 +15,11 @@ using geometry_msgs::msg::Vector3;
 using std::is_same_v;
 using std::numbers::pi;
 
-using DriveState = control_msgs::msg::MecanumDriveControllerState;
+using WheelState = control_msgs::msg::MecanumDriveControllerState;
 
 template <typename T>
 concept MsgType = std::is_same_v<T, Twist> || std::is_same_v<T, Pose2D> ||
-                  std::is_same_v<T, DriveState>;
+                  std::is_same_v<T, WheelState>;
 
 template <MsgType T>
 inline Vector4<double> msg2vec(const T& msg) {
@@ -27,7 +27,7 @@ inline Vector4<double> msg2vec(const T& msg) {
     return Vector4<double>{msg.linear.x, msg.linear.y, msg.angular.z, 0};
   if constexpr (std::is_same_v<T, Pose2D>)
     return Vector4<double>{msg.x, msg.y, msg.theta, 0};
-  if constexpr (std::is_same_v<T, DriveState>)
+  if constexpr (std::is_same_v<T, WheelState>)
     return Vector4<double>{
         msg.front_right_wheel_velocity, msg.front_left_wheel_velocity,
         msg.back_left_wheel_velocity, msg.back_right_wheel_velocity};
@@ -41,8 +41,8 @@ inline T vec2msg(const Vector4<double>& v) {
         .set__angular(Vector3{}.set__z(v(2)));
   if constexpr (std::is_same_v<T, Pose2D>)
     return Pose2D{}.set__x(v(0)).set__y(v(1)).set__theta(v(2));
-  if constexpr (std::is_same_v<T, DriveState>)
-    return DriveState{}
+  if constexpr (std::is_same_v<T, WheelState>)
+    return WheelState{}
         .set__front_right_wheel_velocity(v(0))
         .set__front_left_wheel_velocity(v(1))
         .set__back_left_wheel_velocity(v(2))

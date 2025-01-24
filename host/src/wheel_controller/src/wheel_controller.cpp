@@ -13,17 +13,17 @@ using namespace transform;
 
 using geometry_msgs::msg::Twist;
 
-using DriveState = control_msgs::msg::MecanumDriveControllerState;
+using WheelState = control_msgs::msg::MecanumDriveControllerState;
 
 class WheelController : public Node {
  public:
   WheelController() : Node("wheel_controller") {
     output_wheel_vel_publisher_ =
-        this->create_publisher<DriveState>("wheel_vel", 10);
+        this->create_publisher<WheelState>("wheel_vel", 10);
 
-    delta_phi_subscription_ = this->create_subscription<DriveState>(
+    delta_phi_subscription_ = this->create_subscription<WheelState>(
         "/delta_phi", rclcpp::SensorDataQoS(),
-        [this](DriveState::UniquePtr msg) {
+        [this](WheelState::UniquePtr msg) {
           wheel_vel_rad_actual_ = msg2vec(*msg) / dt_;
         });
 
@@ -42,8 +42,8 @@ class WheelController : public Node {
 
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Subscription<Twist>::SharedPtr robot_vel_subscription_;
-  rclcpp::Subscription<DriveState>::SharedPtr delta_phi_subscription_;
-  rclcpp::Publisher<DriveState>::SharedPtr output_wheel_vel_publisher_;
+  rclcpp::Subscription<WheelState>::SharedPtr delta_phi_subscription_;
+  rclcpp::Publisher<WheelState>::SharedPtr output_wheel_vel_publisher_;
   VelWheel wheel_vel_rad_actual_;
   VelWheel wheel_vel_rad_sp_;
 
@@ -74,7 +74,7 @@ class WheelController : public Node {
   void wheel_control() const {
     auto output_vel = pid_control();
 
-    output_wheel_vel_publisher_->publish(vec2msg<DriveState>(output_vel));
+    output_wheel_vel_publisher_->publish(vec2msg<WheelState>(output_vel));
   }
 };
 
