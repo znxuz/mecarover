@@ -63,7 +63,7 @@ class Odom : public Node {
   void odometry(const WheelState& msg) {
     auto pose_delta = forward_transform(utils::msg2vec(msg));
     pose_delta(2) = normalize_theta(pose_delta(2));
-    epsilon_ = pose_delta(3);
+    epsilon_ += pose_delta(3);
 
     odom_ += rotate_to_wframe(pose_delta, odom_(2) + pose_delta(2) / 2);
   }

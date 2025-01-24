@@ -33,6 +33,8 @@ class PoseController : public rclcpp::Node {
     cmd_vel_subscription_ = this->create_subscription<Twist>(
         "/cmd_vel", 10, [this](Twist::UniquePtr msg) {
           vel_rf_target_ = msg2vec<Twist>(*msg);
+          vel_rf_target_(0) *= 1000;
+          vel_rf_target_(1) *= 1000;
         });
     odom_subscription_ = this->create_subscription<Pose2D>(
         "/odom", 10, [this](Pose2D::UniquePtr msg) { odom_ = msg2vec(*msg); });
@@ -59,7 +61,7 @@ class PoseController : public rclcpp::Node {
   VelRF vel_rf_prev_{};
   VelRF vel_rf_target_{};
   PoseWithEpsilon odom_{};
-  PoseWithEpsilon setpoint_pose_{};
+  PoseWithEpsilon pose_sp_{};
   double epsilon_{};
   const double K_e = -0.2;
 
@@ -67,7 +69,7 @@ class PoseController : public rclcpp::Node {
     auto vel_rf_cur_ = velocity_smoothen();
     vel_rf_prev_ = vel_rf_cur_;
 
-    setpoint_pose_ += rotate_to_wframe(vel_rf_cur_, setpoint_pose_(2)) * dt_;
+    pose_sp_ += rotate_to_wframe(vel_rf_cur_, pose_sp_(2)) * dt_;
 
     Vector4<double> delta_vel_wf = pid_control() / dt_;
     Vector4<double> vel_rf_corrected =
