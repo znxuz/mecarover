@@ -81,7 +81,7 @@ class PoseController : public rclcpp::Node {
 
   Vector4<double> pid_control() const {
     // TODO
-    return {};
+    return Vector4<double>{0, 0, 0, 0};
   }
 
   Vector4<double> velocity_smoothen() const {
