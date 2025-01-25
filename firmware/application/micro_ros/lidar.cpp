@@ -59,6 +59,7 @@ static size_t target_idx;
  */
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart, uint16_t write_idx) {
   target_idx = write_idx;
+  ULOG_DEBUG("target idx in cb: %u", target_idx);
 }
 
 static void init_dma(void) {

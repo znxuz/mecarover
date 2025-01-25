@@ -31,10 +31,10 @@ void hal_init() {
                        motor_direction[i]);
   }
 
-  hal_wheel_vel_set_pwm({0.0, 0.0, 0.0, 0.0});
+  hal_wheel_set_pwm({0.0, 0.0, 0.0, 0.0});
 }
 
-std::array<real_t, N_WHEEL> hal_encoder_delta_rad() {
+std::array<real_t, N_WHEEL> hal_wheel_delta_phi() {
   auto encoder_delta = std::array<real_t, N_WHEEL>{};
 
   for (int i = 0; i < N_WHEEL; ++i) {
@@ -47,14 +47,7 @@ std::array<real_t, N_WHEEL> hal_encoder_delta_rad() {
   return encoder_delta;
 }
 
-std::array<uint32_t, N_WHEEL> hal_encoder_val() {
-  auto ret = std::array<uint32_t, N_WHEEL>{};
-  for (size_t i = 0; i < N_WHEEL; ++i) ret[i] = encoders[i].get_val();
-
-  return ret;
-}
-
-void hal_wheel_vel_set_pwm(const std::array<real_t, N_WHEEL>& duty_cycle) {
+void hal_wheel_set_pwm(const std::array<real_t, N_WHEEL>& duty_cycle) {
   for (size_t i = 0; i < N_WHEEL; ++i) pwm_motors[i].set_pwm(duty_cycle[i]);
 }
 

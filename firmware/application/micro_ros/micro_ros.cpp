@@ -1,6 +1,5 @@
 #include "micro_ros.hpp"
 
-#include <usart.h>
 #include <lwip.h>
 #include <rcl/allocator.h>
 #include <rcl/time.h>
@@ -10,13 +9,12 @@
 #include <rcutils/allocator.h>
 #include <rmw_microros/rmw_microros.h>
 #include <ulog.h>
+#include <usart.h>
 
-#include "pose_ctrl.hpp"
 #include "lidar.hpp"
-#include "odometry.hpp"
+#include "main_exec.hpp"
 #include "rcl_guard.hpp"
 #include "udp_transport.h"
-#include "wheel_ctrl.hpp"
 
 extern "C" {
 bool cubemx_transport_open(struct uxrCustomTransport* transport);
@@ -64,7 +62,7 @@ static void init() {
   allocator.zero_allocate = microros_zero_allocate;
   init_options = rcl_get_zero_initialized_init_options();
   rcl_guard(rcl_init_options_init(&init_options, allocator));
-  rcl_guard(rcl_init_options_set_domain_id(&init_options, ROS_DOMAIN_ID));
+  // rcl_guard(rcl_init_options_set_domain_id(&init_options, ROS_DOMAIN_ID));
 
   /* probing the agent until success */
   while (rmw_uros_ping_agent(50, 1) != RCL_RET_OK) {
@@ -73,7 +71,7 @@ static void init() {
   }
   ULOG_INFO("agent responded. continuing initialization...");
   rcl_guard(rclc_support_init_with_options(&support, 0, NULL, &init_options,
-                                               &allocator));
+                                           &allocator));
   rcl_guard(rclc_node_init_default(&node, "micro_ros_node", "", &support));
 
   ULOG_INFO("init finished; free heap: %d, free stack: %lu",
@@ -87,16 +85,12 @@ static void init() {
 void micro_ros(void* arg) {
   init();
 
-  auto* odometry_exe = odometry_init(&node, &support, &allocator);
-  auto* wheel_ctrl_exe = wheel_ctrl_init(&node, &support, &allocator);
-  auto* pose_ctrl_exe = pose_ctrl_init(&node, &support, &allocator);
+  auto* main_exe = main_exec_init(&node, &support, &allocator);
   auto* lidar_exe = lidar_init(&node, &support, &allocator);
 
   ULOG_INFO("micro-ROS: starting executors");
   for (;;) {
-    rclc_executor_spin_some(wheel_ctrl_exe, RCL_MS_TO_NS(1));
-    rclc_executor_spin_some(odometry_exe, RCL_MS_TO_NS(1));
-    rclc_executor_spin_some(pose_ctrl_exe, RCL_MS_TO_NS(1));
+    rclc_executor_spin_some(main_exe, RCL_MS_TO_NS(1));
     rclc_executor_spin_some(lidar_exe, RCL_MS_TO_NS(1));
   }
 }

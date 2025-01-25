@@ -8,13 +8,13 @@
 #include <cmath>
 #include <cstring>
 
-#include "drive_state_type.hpp"
+#include "wheel_state_type.hpp"
 
-using DriveState = control_msgs__msg__MecanumDriveControllerState;
+using WheelState = control_msgs__msg__MecanumDriveControllerState;
 
-template <DriveStateType E>
-struct DriveStateWrapper {
-  DriveStateWrapper() {
+template <WheelStateType E>
+struct WheelStateWrapper {
+  WheelStateWrapper() {
     this->state.header.frame_id.data =
         const_cast<char*>(to_string(E).value().data());
     this->state.header.frame_id.size = to_string(E).value().size();
@@ -23,15 +23,15 @@ struct DriveStateWrapper {
     this->state.header.stamp.sec = RCL_NS_TO_S(nano_sec);
   }
 
-  DriveStateWrapper(const std::array<real_t, robot_params::N_WHEEL>& data)
-      : DriveStateWrapper() {
+  WheelStateWrapper(const std::array<real_t, robot_params::N_WHEEL>& data)
+      : WheelStateWrapper() {
     this->state.front_right_wheel_velocity = data[0];
     this->state.front_left_wheel_velocity = data[1];
     this->state.back_left_wheel_velocity = data[2];
     this->state.back_right_wheel_velocity = data[3];
   }
 
-  DriveStateWrapper(const robot_params::VelRF& data) : DriveStateWrapper() {
+  WheelStateWrapper(const robot_params::VelRF& data) : WheelStateWrapper() {
     this->state.front_right_wheel_velocity = data(0);
     this->state.front_left_wheel_velocity = data(1);
     this->state.back_left_wheel_velocity = data(2);
@@ -43,5 +43,5 @@ struct DriveStateWrapper {
                                        MecanumDriveControllerState);
   }
 
-  DriveState state{};
+  WheelState state{};
 };
