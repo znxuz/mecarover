@@ -20,8 +20,6 @@ using namespace robot_params;
 
 using std_msgs::msg::Float64;
 
-using WheelState = control_msgs::msg::MecanumDriveControllerState;
-
 class Odom : public Node {
  public:
   Odom() : Node{"odom"} {
