@@ -13,7 +13,6 @@
 #include <utils/transformations.hpp>
 #include <utils/utils.hpp>
 
-using namespace rclcpp;
 using namespace std::chrono;
 using namespace robot_params;
 using namespace tf2_ros;
@@ -32,9 +31,10 @@ class PoseController : public rclcpp::Node {
   PoseController() : rclcpp::Node{"pose_controller"} {
     cmd_vel_subscription_ = this->create_subscription<Twist>(
         "/cmd_vel", 10, [this](Twist::UniquePtr msg) {
+          auto M_TO_MILLI = 1000;
           vel_rf_target_ = msg2vec<Twist>(*msg);
-          vel_rf_target_(0) *= 1000;
-          vel_rf_target_(1) *= 1000;
+          vel_rf_target_(0) *= M_TO_MILLI;
+          vel_rf_target_(1) *= M_TO_MILLI;
         });
     odom_subscription_ = this->create_subscription<Pose2D>(
         "/odom", 10, [this](Pose2D::UniquePtr msg) { odom_ = msg2vec(*msg); });
@@ -46,6 +46,21 @@ class PoseController : public rclcpp::Node {
 
     timer_ =
         this->create_wall_timer(timer_period_, [this]() { pose_control(); });
+
+    this->declare_parameters<double>("", {
+                                             {"P", 0},
+                                             {"I", 0},
+                                             {"D", 0},
+                                         });
+    param_cbhandle_ = this->add_post_set_parameters_callback(
+        [this](const std::vector<rclcpp::Parameter> &parameters) {
+          std::for_each(begin(parameters), end(parameters),
+                        [this](const rclcpp::Parameter &param) {
+                          RCLCPP_INFO_STREAM(this->get_logger(),
+                                             param.get_name()
+                                                 << ": " << param.as_double());
+                        });
+        });
   }
 
  private:
@@ -57,6 +72,7 @@ class PoseController : public rclcpp::Node {
   rclcpp::Subscription<Pose2D>::SharedPtr odom_subscription_;
   rclcpp::Subscription<Float64>::SharedPtr epsilon_subscription_;
   rclcpp::Publisher<Twist>::SharedPtr robot_vel_publisher_;
+  PostSetParametersCallbackHandle::SharedPtr param_cbhandle_;
 
   VelRF vel_rf_prev_{};
   VelRF vel_rf_target_{};
@@ -101,7 +117,7 @@ class PoseController : public rclcpp::Node {
   }
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<PoseController>());
   rclcpp::shutdown();

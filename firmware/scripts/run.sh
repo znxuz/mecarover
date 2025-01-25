@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-export ROS_DOMAIN_ID=42
+# export ROS_DOMAIN_ID=42
 
 drive_x()
 {

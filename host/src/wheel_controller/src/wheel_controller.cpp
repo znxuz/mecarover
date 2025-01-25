@@ -34,6 +34,21 @@ class WheelController : public Node {
 
     timer_ =
         this->create_wall_timer(timer_period_, [this]() { wheel_control(); });
+
+    this->declare_parameters<double>("", {
+                                             {"P", 0},
+                                             {"I", 0},
+                                             {"D", 0},
+                                         });
+    param_cbhandle_ = this->add_post_set_parameters_callback(
+        [this](const std::vector<rclcpp::Parameter> &parameters) {
+          std::for_each(begin(parameters), end(parameters),
+                        [this](const rclcpp::Parameter &param) {
+                          RCLCPP_INFO_STREAM(this->get_logger(),
+                                             param.get_name()
+                                                 << ": " << param.as_double());
+                        });
+        });
   }
 
  private:
@@ -44,15 +59,16 @@ class WheelController : public Node {
   rclcpp::Subscription<Twist>::SharedPtr robot_vel_subscription_;
   rclcpp::Subscription<WheelState>::SharedPtr delta_phi_subscription_;
   rclcpp::Publisher<WheelState>::SharedPtr output_wheel_vel_publisher_;
+  PostSetParametersCallbackHandle::SharedPtr param_cbhandle_;
   VelWheel wheel_vel_rad_actual_;
   VelWheel wheel_vel_rad_sp_;
 
   VelWheel pid_control() const {
     // TODO tune with param server
     static constexpr double K_P = 0, K_I = 0, K_D = 0, INTEGRAL_MAX = 10;
-    static auto integral = VelWheel{}, prev_err = VelWheel{};
+    static VelWheel integral = VelWheel::Zero(), prev_err = VelWheel::Zero();
 
-    const auto err = wheel_vel_rad_sp_ - wheel_vel_rad_actual_;
+    const VelWheel err = wheel_vel_rad_sp_ - wheel_vel_rad_actual_;
 
     integral += err * dt_;
     integral = integral.unaryExpr([&](double val) {
@@ -65,7 +81,7 @@ class WheelController : public Node {
                   integral(0), integral(1), integral(2), integral(3));
     }
 
-    const auto derivative =
+    const VelWheel derivative =
         (err - std::exchange(prev_err, err)) / dt_;  // unused
 
     return wheel_vel_rad_sp_ + K_P * err + K_I * integral + K_D * derivative;
