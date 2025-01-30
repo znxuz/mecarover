@@ -15,8 +15,7 @@ EIGEN_DIR := third_party/eigen
 ULOG_DIR := third_party/ulog/src
 
 # ip on the host machine for the agent
-ETH_IF := wlp3s0
-MICRO_ROS_AGENT_IP := 192.168.188.200
+MICRO_ROS_AGENT_IP := 192.168.1.101
 MICRO_ROS_AGENT_PORT := 8888
 ROS_DOMAIN_ID := 42
 USE_UDP_TRANSPORT := -DUSE_UDP_TRANSPORT
