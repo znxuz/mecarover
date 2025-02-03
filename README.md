@@ -19,7 +19,7 @@ build from source
 
 ```sh
 docker pull microros/micro_ros_static_library_builder:jazzy
-docker run -it --rm -v $(pwd):/project --env MICROROS_LIBRARY_FOLDER=micro_ros_stm32cubemx_utils/microros_static_library microros/micro_ros_static_library_builder:jazzy
+docker run -it --rm -v $(pwd):/project --env MICROROS_LIBRARY_FOLDER=third_party/micro_ros_stm32cubemx_utils/microros_static_library microros/micro_ros_static_library_builder:jazzy
 ```
 
 Or just the use the convenient script `./scripts/micro_ros_static_lib_gen.sh`
@@ -38,7 +38,7 @@ Configure the host Ethernet interface with the IP address specified in the
 ethernet interface
 
 ```sh
-sudo ip a add 192.168.188.200/24 dev <eth interface>
+sudo ip a add 192.168.1.101/24 dev <eth interface>
 sudo ip link set <eth interface> up
 ```
 
