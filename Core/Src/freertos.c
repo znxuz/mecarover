@@ -62,7 +62,6 @@ const osThreadAttr_t defaultTask_attributes = {
 
 void none(void *argument);
 
-extern void MX_LWIP_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* Hook prototypes */
@@ -131,8 +130,6 @@ void MX_FREERTOS_Init(void) {
 /* USER CODE END Header_none */
 void none(void *argument)
 {
-  /* init code for LWIP */
-  MX_LWIP_Init();
   /* USER CODE BEGIN none */
   vTaskDelete(NULL);
   /* USER CODE END none */
