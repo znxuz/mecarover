@@ -1,6 +1,8 @@
 #include <FreeRTOS.h>
 #include <cmsis_os2.h>
 #include <rtc.h>
+#include <unistd.h>
+#include <errno.h>
 #include <stm32f7xx_hal_def.h>
 #include <stm32f7xx_hal_uart.h>
 #include <task.h>
@@ -9,12 +11,10 @@
 #include <usart.h>
 
 #include <application/hal/hal.hpp>
-#include <application/micro_ros/micro_ros.hpp>
 #include <application/robot_params.hpp>
 
 extern "C" {
 
-#ifdef USE_UDP_TRANSPORT
 // redirect stdout stdout/stderr to uart
 int _write(int file, char* ptr, int len) {
   HAL_StatusTypeDef hstatus;
@@ -30,7 +30,6 @@ int _write(int file, char* ptr, int len) {
   errno = EBADF;
   return -1;
 }
-#endif
 
 volatile unsigned long ulHighFrequencyTimerTicks;
 
@@ -62,7 +61,8 @@ void application_start(void) {
   ULOG_INIT();
   ULOG_SUBSCRIBE(my_console_logger, ULOG_DEBUG_LEVEL);
 
-  xTaskCreate(micro_ros, "micro_ros", 3000, NULL, osPriorityNormal, NULL);
+  while (true) {
+  }
 
   osKernelStart();
   Error_Handler();  // because osKernelStart should never return

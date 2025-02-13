@@ -8,21 +8,13 @@ ST_DIR_CORE := Core
 ST_DIR_DRIVERS := Drivers
 ST_DIR_MW := Middlewares/Third_Party
 ST_DIR_LWIP := LWIP
-MICRO_ROS_DIR := third_party/micro_ros_stm32cubemx_utils
-MICRO_ROS_LIB_DIR := $(MICRO_ROS_DIR)/microros_static_library/libmicroros
-MICRO_ROS_LIB := -L$(MICRO_ROS_LIB_DIR) -lmicroros
 EIGEN_DIR := third_party/eigen
 ULOG_DIR := third_party/ulog/src
 
-# ip on the host machine for the agent
-MICRO_ROS_AGENT_IP := 192.168.1.101
-MICRO_ROS_AGENT_PORT := 8888
-ROS_DOMAIN_ID := 42
-USE_UDP_TRANSPORT := -DUSE_UDP_TRANSPORT
-
 # DEBUG := -DDEBUG -g3
-OPT := -Os
 ULOG_ENABLED := -DULOG_ENABLED
+
+OPT := -Os
 
 BIN := $(BUILD_DIR)/$(NAME).bin
 EXECUTABLE := $(BUILD_DIR)/$(NAME).elf
@@ -57,7 +49,6 @@ INCL_PATHS := \
 			  -I$(ST_DIR_LWIP)/App \
 			  -I$(ST_DIR_LWIP)/Target \
 			  -I$(EIGEN_DIR) \
-			  -I$(MICRO_ROS_LIB_DIR)/microros_include \
 			  -I$(ULOG_DIR)
 
 FLAGS = \
@@ -82,9 +73,6 @@ FLAGS = \
 		-MT"$@" \
 		$(INCL_PATHS) \
 		$(ULOG_ENABLED) \
-		-DMICRO_ROS_AGENT_IP=\"$(MICRO_ROS_AGENT_IP)\" \
-		-DMICRO_ROS_AGENT_PORT=\"$(MICRO_ROS_AGENT_PORT)\" \
-		-DROS_DOMAIN_ID=$(ROS_DOMAIN_ID) \
 		$(USE_UDP_TRANSPORT)
 
 CFLAGS = \
@@ -99,7 +87,6 @@ CPPFLAGS = \
 
 LDFLAGS = \
 		  $(DEBUG) \
-		  $(MICRO_ROS_LIB) \
 		  -mcpu=cortex-m7 \
 		  -mfpu=fpv5-d16 \
 		  -mfloat-abi=hard \
@@ -126,8 +113,7 @@ STARTUP_FLAGS = \
 				-mfloat-abi=hard \
 				-mthumb \
 				-c \
-				-x \
-				assembler-with-cpp \
+				-x assembler-with-cpp \
 				-MMD \
 				-MP \
 				-MF"$(@:%.o=%.d)" \
@@ -139,18 +125,11 @@ SRCS_PATHS := \
 			  $(ST_DIR_DRIVERS) \
 			  $(ST_DIR_MW) \
 			  $(ST_DIR_LWIP) \
-			  $(MICRO_ROS_DIR) \
 			  $(ULOG_DIR)
-C_SRCS_EXCLS :=  \
-				 $(MICRO_ROS_DIR)/extra_sources/microros_transports/it_transport.c \
-				 $(MICRO_ROS_DIR)/extra_sources/microros_transports/udp_transport.c \
-				 $(MICRO_ROS_DIR)/extra_sources/microros_transports/usb_cdc_transport.c \
-				 $(MICRO_ROS_DIR)/sample_main.c \
-				 $(MICRO_ROS_DIR)/sample_main_embeddedrtps.c \
-				 $(MICRO_ROS_DIR)/sample_main_udp.c
+C_SRCS_EXCLS := $(shell find application/micro_ros -type f -name '*.c')
 C_SRCS := $(filter-out $(C_SRCS_EXCLS), \
 		  $(shell find $(SRCS_PATHS) -type f -name "*.c"))
-CPP_SRCS_EXCLS :=
+CPP_SRCS_EXCLS := $(shell find application/micro_ros -type f -name '*.cpp')
 CPP_SRCS := $(filter-out $(CPP_SRCS_EXCLS), \
 			$(shell find $(SRCS_PATHS) -type f -name "*.cpp"))
 S_SRC := startup_stm32f767xx.s
@@ -197,13 +176,9 @@ clean:
 	$(RM) $(MAP_FILES)
 	$(RM) $(OBJDUMP_LIST)
 
-# target required by micro_ros_stm32cubemx_utils
-print_cflags:
-	@echo $(CFLAGS)
-
-build/compile_commands.json: clean
-	$(DIR_GUARD)
-	@bear --output $@ -- $(MAKE) -j
+clangdb: clean
+	@mkdir -p build
+	@bear --output $(BUILD_DIR)/compile_commands.json -- $(MAKE) -j
 
 # misc
 
@@ -225,9 +200,6 @@ flash: all
 		echo "st-flash failed, retrying..."; \
 		sleep 1; \
 		done
-
-agent_ip:
-	@echo $(MICRO_ROS_AGENT_IP)
 
 reflash:
 	$(MAKE) clean
