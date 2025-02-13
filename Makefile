@@ -4,10 +4,9 @@ APP_DIR := $(NAME)
 BUILD_DIR := build
 DIR_GUARD = @mkdir -p "$(@D)"
 
-ST_DIR_CORE := Core
-ST_DIR_DRIVERS := Drivers
-ST_DIR_MW := Middlewares/Third_Party
-ST_DIR_LWIP := LWIP
+ST_CORE_DIR := Core
+ST_DRIVERS_DIR := Drivers
+ST_MW_DIR := Middlewares/Third_Party
 EIGEN_DIR := third_party/eigen
 ULOG_DIR := third_party/ulog/src
 
@@ -24,30 +23,13 @@ SIZE_OUTPUT := $(BUILD_DIR)/default.size.stdout
 
 INCL_PATHS := \
 			  -I$(CURDIR) \
-			  -I$(ST_DIR_CORE)/Inc \
-			  -I$(ST_DIR_DRIVERS)/STM32F7xx_HAL_Driver/Inc \
-			  -I$(ST_DIR_DRIVERS)/CMSIS/Device/ST/STM32F7xx/Include \
-			  -I$(ST_DIR_DRIVERS)/CMSIS/Include \
-			  -I$(ST_DIR_DRIVERS)/BSP/Components/lan8742 \
-			  -I$(ST_DIR_MW)/FreeRTOS/Source/include \
-			  -I$(ST_DIR_MW)/FreeRTOS/Source/CMSIS_RTOS_V2 \
-			  -I$(ST_DIR_MW)/FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1 \
-			  -I$(ST_DIR_MW)/LwIP/src/include \
-			  -I$(ST_DIR_MW)/LwIP/system \
-			  -I$(ST_DIR_MW)/LwIP/src/include/netif/ppp \
-			  -I$(ST_DIR_MW)/LwIP/src/include/lwip \
-			  -I$(ST_DIR_MW)/LwIP/src/include/lwip/apps \
-			  -I$(ST_DIR_MW)/LwIP/src/include/lwip/priv \
-			  -I$(ST_DIR_MW)/LwIP/src/include/lwip/prot \
-			  -I$(ST_DIR_MW)/LwIP/src/include/netif \
-			  -I$(ST_DIR_MW)/LwIP/src/include/compat/posix \
-			  -I$(ST_DIR_MW)/LwIP/src/include/compat/posix/arpa \
-			  -I$(ST_DIR_MW)/LwIP/src/include/compat/posix/net \
-			  -I$(ST_DIR_MW)/LwIP/src/include/compat/posix/sys \
-			  -I$(ST_DIR_MW)/LwIP/src/include/compat/stdc \
-			  -I$(ST_DIR_MW)/LwIP/system/arch \
-			  -I$(ST_DIR_LWIP)/App \
-			  -I$(ST_DIR_LWIP)/Target \
+			  -I$(ST_CORE_DIR)/Inc \
+			  -I$(ST_DRIVERS_DIR)/STM32F7xx_HAL_Driver/Inc \
+			  -I$(ST_DRIVERS_DIR)/CMSIS/Device/ST/STM32F7xx/Include \
+			  -I$(ST_DRIVERS_DIR)/CMSIS/Include \
+			  -I$(ST_MW_DIR)/FreeRTOS/Source/include \
+			  -I$(ST_MW_DIR)/FreeRTOS/Source/CMSIS_RTOS_V2 \
+			  -I$(ST_MW_DIR)/FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1 \
 			  -I$(EIGEN_DIR) \
 			  -I$(ULOG_DIR)
 
@@ -121,10 +103,9 @@ STARTUP_FLAGS = \
 
 SRCS_PATHS := \
 			  $(APP_DIR) \
-			  $(ST_DIR_CORE) \
-			  $(ST_DIR_DRIVERS) \
-			  $(ST_DIR_MW) \
-			  $(ST_DIR_LWIP) \
+			  $(ST_CORE_DIR) \
+			  $(ST_DRIVERS_DIR) \
+			  $(ST_MW_DIR) \
 			  $(ULOG_DIR)
 C_SRCS_EXCLS := $(shell find application/micro_ros -type f -name '*.c')
 C_SRCS := $(filter-out $(C_SRCS_EXCLS), \
@@ -190,10 +171,6 @@ print_cpp_srcs:
 
 print_objs:
 	@echo $(OBJS)
-
-backup: $(BIN)
-	@cp $(BIN) $(BUILD_DIR)/$(shell git log -1 --pretty='%h').bin
-	@rm -f $(BUILD_DIR)/$(shell git log -2 --pretty='%h' | tail -n1).bin
 
 flash: all
 	@while ! st-flash --reset write $(EXECUTABLE:.elf=.bin) 0x8000000; do \
