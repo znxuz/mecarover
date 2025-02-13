@@ -15,6 +15,8 @@
 
 extern "C" {
 
+static uint8_t uart_rx_buf[10];
+
 // redirect stdout stdout/stderr to uart
 int _write(int file, char* ptr, int len) {
   HAL_StatusTypeDef hstatus;
@@ -57,11 +59,24 @@ void my_console_logger(ulog_level_t severity, char* msg) {
          ulog_level_name(severity), msg);
 }
 
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart->Instance == huart3.Instance) {
+    // TODO use the buf
+    HAL_UART_Transmit_IT(&huart3, uart_rx_buf, sizeof(uart_rx_buf));
+    HAL_UART_Receive_IT(&huart3, uart_rx_buf, sizeof(uart_rx_buf));
+  }
+}
+
 void application_start(void) {
   ULOG_INIT();
   ULOG_SUBSCRIBE(my_console_logger, ULOG_DEBUG_LEVEL);
 
+  HAL_UART_Receive_IT(&huart3, uart_rx_buf, sizeof(uart_rx_buf));
+
+  ULOG_INFO("app start");
   while (true) {
+    HAL_Delay(1000);
   }
 
   osKernelStart();
