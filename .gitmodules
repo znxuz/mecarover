@@ -1,9 +1,9 @@
 [submodule "micro_ros_stm32cubemx_utils"]
-	path = third_party/micro_ros_stm32cubemx_utils
+	path = firmware/third_party/micro_ros_stm32cubemx_utils
 	url = https://github.com/micro-ROS/micro_ros_stm32cubemx_utils.git
 [submodule "eigen"]
-	path = third_party/eigen
+	path = firmware/third_party/eigen
 	url = https://gitlab.com/libeigen/eigen.git
 [submodule "ulog"]
-	path = third_party/ulog
+	path = firmware/third_party/ulog
 	url = https://github.com/rdpoor/ulog
