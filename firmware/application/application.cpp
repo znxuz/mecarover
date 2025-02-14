@@ -1,21 +1,30 @@
+#include "application.hpp"
+
 #include <FreeRTOS.h>
 #include <cmsis_os2.h>
-#include <rtc.h>
-#include <unistd.h>
+#include <crc.h>
 #include <errno.h>
+#include <rtc.h>
 #include <stm32f7xx_hal_def.h>
 #include <stm32f7xx_hal_uart.h>
 #include <task.h>
 #include <tim.h>
 #include <ulog.h>
+#include <unistd.h>
 #include <usart.h>
 
 #include <application/hal/hal.hpp>
 #include <application/robot_params.hpp>
+#include <application/vel2d_frame.hpp>
+#include <optional>
 
 extern "C" {
 
-static uint8_t uart_rx_buf[10];
+volatile unsigned long ulHighFrequencyTimerTicks;
+
+static std::optional<Vel2dFrame> frame;
+static uint8_t uart_rx_buf[VEL2D_FRAME_LEN];
+static size_t crc_err;
 
 // redirect stdout stdout/stderr to uart
 int _write(int file, char* ptr, int len) {
@@ -32,8 +41,6 @@ int _write(int file, char* ptr, int len) {
   errno = EBADF;
   return -1;
 }
-
-volatile unsigned long ulHighFrequencyTimerTicks;
 
 void configureTimerForRunTimeStats(void) {
   ulHighFrequencyTimerTicks = 0;
@@ -59,13 +66,41 @@ void my_console_logger(ulog_level_t severity, char* msg) {
          ulog_level_name(severity), msg);
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
+static TaskHandle_t task1_handle;
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart) {
   if (huart->Instance == huart3.Instance) {
-    // TODO use the buf
-    HAL_UART_Transmit_IT(&huart3, uart_rx_buf, sizeof(uart_rx_buf));
+    frame = *reinterpret_cast<const Vel2dFrame*>(uart_rx_buf);
+
+    configASSERT(task1_handle != NULL);
+    BaseType_t xHigherPriorityTaskWoken;
+    vTaskNotifyGiveFromISR(task1_handle, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+
     HAL_UART_Receive_IT(&huart3, uart_rx_buf, sizeof(uart_rx_buf));
   }
+}
+
+void task1(void*) {
+  task1_handle = xTaskGetCurrentTaskHandle();
+  while (true) {
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+    taskENTER_CRITICAL();
+    auto v = *frame;
+    taskEXIT_CRITICAL();
+
+    uint8_t* data = reinterpret_cast<uint8_t*>(&v.vel);
+    if (!v.compare(HAL_CRC_Calculate(&hcrc, reinterpret_cast<uint32_t*>(data),
+                                     sizeof(v.vel)))) {
+      ULOG_ERROR("crc mismatch!");
+      ++crc_err;
+      continue;
+    }
+
+    printf("%f %f %f\n", v.vel.x, v.vel.y, v.vel.z);
+  }
+}
 }
 
 void application_start(void) {
@@ -75,11 +110,9 @@ void application_start(void) {
   HAL_UART_Receive_IT(&huart3, uart_rx_buf, sizeof(uart_rx_buf));
 
   ULOG_INFO("app start");
-  while (true) {
-    HAL_Delay(1000);
-  }
+
+  xTaskCreate(task1, "task1", 128 * 4, NULL, osPriorityNormal, &task1_handle);
 
   osKernelStart();
   Error_Handler();  // because osKernelStart should never return
-}
 }

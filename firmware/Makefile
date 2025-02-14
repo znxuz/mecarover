@@ -7,10 +7,11 @@ DIR_GUARD = @mkdir -p "$(@D)"
 ST_CORE_DIR := Core
 ST_DRIVERS_DIR := Drivers
 ST_MW_DIR := Middlewares/Third_Party
-EIGEN_DIR := third_party/eigen
-ULOG_DIR := third_party/ulog/src
 
-# DEBUG := -DDEBUG -g3
+EIGEN_DIR := third_party/eigen
+ULOG_DIR := third_party/ulog
+
+DEBUG := -DDEBUG -g3
 ULOG_ENABLED := -DULOG_ENABLED
 
 OPT := -Os
@@ -31,7 +32,7 @@ INCL_PATHS := \
 			  -I$(ST_MW_DIR)/FreeRTOS/Source/CMSIS_RTOS_V2 \
 			  -I$(ST_MW_DIR)/FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1 \
 			  -I$(EIGEN_DIR) \
-			  -I$(ULOG_DIR)
+			  -I$(ULOG_DIR)/src
 
 FLAGS = \
 		-mcpu=cortex-m7 \
@@ -54,8 +55,7 @@ FLAGS = \
 		-MF"$(@:%.o=%.d)" \
 		-MT"$@" \
 		$(INCL_PATHS) \
-		$(ULOG_ENABLED) \
-		$(USE_UDP_TRANSPORT)
+		$(ULOG_ENABLED)
 
 CFLAGS = \
 		 $(FLAGS) \
@@ -106,7 +106,7 @@ SRCS_PATHS := \
 			  $(ST_CORE_DIR) \
 			  $(ST_DRIVERS_DIR) \
 			  $(ST_MW_DIR) \
-			  $(ULOG_DIR)
+			  $(ULOG_DIR)/src
 C_SRCS_EXCLS := $(shell find application/micro_ros -type f -name '*.c')
 C_SRCS := $(filter-out $(C_SRCS_EXCLS), \
 		  $(shell find $(SRCS_PATHS) -type f -name "*.c"))

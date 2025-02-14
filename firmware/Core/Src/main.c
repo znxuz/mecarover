@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "crc.h"
 #include "rtc.h"
 #include "tim.h"
 #include "usart.h"
@@ -103,6 +104,7 @@ int main(void)
   MX_TIM11_Init();
   MX_TIM13_Init();
   MX_RTC_Init();
+  MX_CRC_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */

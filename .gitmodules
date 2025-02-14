@@ -7,3 +7,6 @@
 [submodule "ulog"]
 	path = firmware/third_party/ulog
 	url = https://github.com/rdpoor/ulog
+[submodule "host/vel2d_bridge/third_party/CRCpp"]
+	path = host/vel2d_bridge/third_party/CRCpp
+	url = https://github.com/d-bahr/CRCpp
