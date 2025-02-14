@@ -20,9 +20,9 @@ class Vel2dBridge : public rclcpp::Node {
           auto frame =
               Vel2dFrame{{twist->linear.x, twist->linear.y, twist->angular.z}};
 
+          uart.send(frame.data());
           RCLCPP_INFO(this->get_logger(), "sending [%f, %f, %f], crc: %u",
                       frame.vel.x, frame.vel.y, frame.vel.z, frame.crc);
-          uart.send(frame.data());
         });
   }
 
