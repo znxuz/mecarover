@@ -14,9 +14,7 @@ struct Vel2dFrame {
 
   Vel2dFrame(Vel2d vel);
 
-  const uint8_t* data() const {
-    return reinterpret_cast<const uint8_t*>(this);
-  }
+  const uint8_t* data() const { return reinterpret_cast<const uint8_t*>(this); }
 
   bool compare(uint32_t rhs) { return crc == rhs; }
 

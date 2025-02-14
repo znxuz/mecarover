@@ -84,5 +84,4 @@ class SerialPort {
       throw std::system_error(errno, std::generic_category(),
                               "Failed to set port attributes");
   }
-
 };

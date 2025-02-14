@@ -3,11 +3,14 @@
 #include <geometry_msgs/msg/twist.hpp>
 #include <rclcpp/node.hpp>
 #include <rclcpp/rclcpp.hpp>
-
-#include "serial_port.hpp"
+#include <string_view>
 #include <vel2d_frame.hpp>
 
+#include "serial_port.hpp"
+
 using geometry_msgs::msg::Twist;
+
+constexpr std::string_view DEFAULT_PORT = "/dev/ttyACM0";
 
 class Vel2dBridge : public rclcpp::Node {
  public:
@@ -25,7 +28,7 @@ class Vel2dBridge : public rclcpp::Node {
 
  private:
   rclcpp::Subscription<Twist>::SharedPtr twist_sub_;
-  SerialPort<VEL2D_FRAME_LEN> uart = SerialPort<VEL2D_FRAME_LEN>("/dev/ttyACM0");
+  SerialPort<VEL2D_FRAME_LEN> uart = SerialPort<VEL2D_FRAME_LEN>(DEFAULT_PORT);
 };
 
 int main(int argc, char** argv) {
