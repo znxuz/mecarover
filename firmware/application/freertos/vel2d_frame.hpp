@@ -21,5 +21,7 @@ struct Vel2dFrame {
 } __attribute__((packed));
 
 inline constexpr std::size_t VEL2D_FRAME_LEN = sizeof(Vel2dFrame);
+
+static_assert(sizeof(Vel2d) == 3 * sizeof(double));
 static_assert(VEL2D_FRAME_LEN == sizeof(Vel2d) + sizeof(uint32_t),
-              "Vel2dFrame size mismatch!");
+              "Vel2dFrame size incorrect!");
