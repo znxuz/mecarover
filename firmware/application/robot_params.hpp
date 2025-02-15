@@ -8,9 +8,12 @@
 namespace robot_params {
 using std::numbers::pi;
 
-inline constexpr double WHEEL_CTRL_PERIOD_S = 0.02;
-inline constexpr double POSE_CTRL_PERIOD_S = 0.03;
-inline constexpr double LIDAR_PERIOD_S = 0.2;
+// inline constexpr double WHEEL_CTRL_PERIOD_S = 0.02;
+// inline constexpr double POSE_CTRL_PERIOD_S = 0.03;
+// inline constexpr uint16_t S_TO_MS = 1000;
+
+inline constexpr double WHEEL_CTRL_PERIOD_S = 1.0;
+inline constexpr double POSE_CTRL_PERIOD_S = 1.0;
 inline constexpr uint16_t S_TO_MS = 1000;
 
 inline constexpr uint8_t DOF = 4;
