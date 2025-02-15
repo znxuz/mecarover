@@ -7,6 +7,8 @@
 #include <ulog.h>
 #include <usart.h>
 
+#include <application/pose_types.hpp>
+
 #include "shared.hpp"
 #include "vel2d_frame.hpp"
 
@@ -31,6 +33,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart) {
 static void task_impl(void*) {
   constexpr TickType_t NO_BLOCK = 0;
 
+  // check for sending Vel2d directly as vPose for pose control task
+  configASSERT(sizeof(Vel2d) == sizeof(imsl::vPose));
+
   while (true) {
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
@@ -46,7 +51,7 @@ static void task_impl(void*) {
       continue;
     }
 
-    ULOG_INFO("recv vel [%f %f %f]", frame.vel.x, frame.vel.y, frame.vel.z);
+    ULOG_INFO("[recv vel] [%f %f %f]", frame.vel.x, frame.vel.y, frame.vel.z);
     xQueueSend(freertos::vel_sp_queue, &frame.vel, NO_BLOCK);
   }
 }
