@@ -16,16 +16,12 @@ void task_vel_recv_init();
 void task_get_enc_delta_init();
 
 void init() {
-  ULOG_INFO("freertos init");
-
   hal_init();
   queues_init();
   task_get_enc_delta_init();
   task_vel_recv_init();
   task_pose_control_init();
   task_odom_init();
-
-  ULOG_INFO("freertos init finished");
 }
 
 }  // namespace freertos

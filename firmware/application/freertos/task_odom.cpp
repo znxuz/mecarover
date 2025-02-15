@@ -37,8 +37,7 @@ static void task_impl(void*) {
                     (static_cast<double>(odom.theta) * 2 + dpose_rf.theta) / 2);
     // TODO do epsilon
 
-    ULOG_INFO("odom: [%.2f, %.2f, %.2f]", odom.x, odom.y, odom.theta);
-    xQueueOverwrite(freertos::odom_queue, &odom);  // TODO is overwrite better?
+    xQueueSend(freertos::odom_queue, &odom, 0);
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
   }
 }

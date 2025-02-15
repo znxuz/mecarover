@@ -54,10 +54,10 @@ void my_console_logger(ulog_level_t severity, char* msg) {
 void application_start(void) {
   ULOG_INIT();
   ULOG_SUBSCRIBE(my_console_logger, ULOG_DEBUG_LEVEL);
-  ULOG_INFO("app start");
 
   freertos::init();
 
+  ULOG_INFO("kernel start");
   osKernelStart();
   Error_Handler();  // because osKernelStart should never return
 }

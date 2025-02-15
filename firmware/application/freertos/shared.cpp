@@ -1,6 +1,7 @@
 #include "shared.hpp"
 
 #include <algorithm>
+#include <application/pose_types.hpp>
 #include <array>
 #include <functional>
 #include <utility>
@@ -17,6 +18,7 @@ QueueHandle_t odom_queue;
 QueueHandle_t wheel_vel_queue;
 
 using freertos::FourWheelData;
+using imsl::Pose;
 
 static std::array<std::pair<QueueHandle_t*, std::function<QueueHandle_t(void)>>,
                   5>
@@ -28,9 +30,8 @@ static std::array<std::pair<QueueHandle_t*, std::function<QueueHandle_t(void)>>,
         std::make_pair(
             &enc_delta_wheel_ctrl_queue,
             []() { return xQueueCreate(10, sizeof(FourWheelData)); }),
-        std::make_pair(
-            &odom_queue,
-            []() { return xQueueCreate(10, sizeof(FourWheelData)); }),
+        std::make_pair(&odom_queue,
+                       []() { return xQueueCreate(10, sizeof(Pose)); }),
         std::make_pair(
             &wheel_vel_queue,
             []() { return xQueueCreate(10, sizeof(FourWheelData)); }),
