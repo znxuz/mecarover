@@ -4,9 +4,9 @@
 #include <ulog.h>
 
 #include <application/hal/hal.hpp>
-#include <application/transformations.hpp>
 #include <application/pose_types.hpp>
 #include <application/robot_params.hpp>
+#include <application/transformations.hpp>
 
 #include "four_wheel_data.hpp"
 #include "shared.hpp"
@@ -15,13 +15,13 @@ using namespace imsl;
 using namespace robot_params;
 
 static TaskHandle_t task_handle;
-static Pose pose_wf;
+static Pose odom;
 
 extern "C" {
 
 static void task_impl(void*) {
-  TickType_t xLastWakeTime = xTaskGetTickCount();
   const TickType_t xFrequency = pdMS_TO_TICKS(POSE_CTRL_PERIOD_MS.count());
+  TickType_t xLastWakeTime = xTaskGetTickCount();
 
   freertos::FourWheelData enc_delta;
   while (true) {
@@ -33,13 +33,12 @@ static void task_impl(void*) {
     const auto dpose_rf =
         Pose{dpose_rf_mtx(0), dpose_rf_mtx(1), dpose_rf_mtx(2)};
 
-    pose_wf +=
-        pRF2pWF(dpose_rf,
-                (static_cast<double>(pose_wf.theta) * 2 + dpose_rf.theta) / 2);
+    odom += pRF2pWF(dpose_rf,
+                    (static_cast<double>(odom.theta) * 2 + dpose_rf.theta) / 2);
     // TODO do epsilon
 
-    ULOG_INFO("pose wf: [%.2f, %.2f, %.2f]", pose_wf.x, pose_wf.y,
-              pose_wf.theta);
+    ULOG_INFO("odom: [%.2f, %.2f, %.2f]", odom.x, odom.y, odom.theta);
+    xQueueOverwrite(freertos::odom_queue, &odom);  // TODO is overwrite better?
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
   }
 }
@@ -47,7 +46,7 @@ static void task_impl(void*) {
 
 namespace freertos {
 
-void task_odometry_init() {
+void task_odom_init() {
   configASSERT(xTaskCreate(task_impl, "task_odometry", 128 * 4, NULL,
                            osPriorityNormal, &task_handle) == pdPASS);
 }
