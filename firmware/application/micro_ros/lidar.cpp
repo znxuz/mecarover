@@ -1,6 +1,5 @@
 #include "lidar.hpp"
 
-#include <application/real_t.h>
 #include <rcl/subscription.h>
 #include <rcl/time.h>
 #include <rcl/timer.h>
@@ -83,7 +82,7 @@ static void init_ros_msg(void) {
   scan_msg.header.frame_id.size = scan_msg.header.frame_id.capacity =
       sizeof(header_string);
 
-  static constexpr real_t LIDAR_RANGE_RAD =
+  static constexpr double LIDAR_RANGE_RAD =
       (2 * std::numbers::pi) / LIDAR_RANGE;
   scan_msg.angle_min = 0;
   scan_msg.angle_max = LIDAR_RANGE_RAD * (LIDAR_RANGE - 1);  // 359 deg in rad
@@ -178,7 +177,7 @@ static void timer_cb(rcl_timer_t*, int64_t) {
 
   // post process for the data timer callback to be more lightweight
   for (size_t i = 0; i < LIDAR_RANGE; ++i)
-    distances_m[i] = static_cast<real_t>(distances_mm[i]) / 1000;
+    distances_m[i] = static_cast<double>(distances_mm[i]) / 1000;
 
   scan_msg.ranges.data = distances_m;
   scan_msg.intensities.data = qualities;

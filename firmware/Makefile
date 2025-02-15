@@ -181,3 +181,7 @@ flash: all
 reflash:
 	$(MAKE) clean
 	$(MAKE) flash
+
+rebuild:
+	$(MAKE) clean
+	$(MAKE) all

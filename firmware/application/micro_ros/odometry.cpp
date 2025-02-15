@@ -25,12 +25,12 @@ static auto exe = rclc_executor_get_zero_initialized_executor();
 
 static rcl_subscription_t sub_enc_data;
 static auto enc_data_msg = DriveStateWrapper<DriveStateType::ENC_DELTA_RAD>{};
-static Pose<real_t> pose_wf;
+static Pose pose_wf;
 
 static auto timer = rcl_get_zero_initialized_timer();
 static rcl_publisher_t pub_odometry;
 
-real_t epsilon;
+double epsilon;
 
 static void odometry_cb(const void* arg) {
   const auto* enc_delta_rad = reinterpret_cast<const DriveState*>(arg);
@@ -45,7 +45,7 @@ static void odometry_cb(const void* arg) {
                                  enc_delta_rad->front_left_wheel_velocity,
                                  enc_delta_rad->back_left_wheel_velocity,
                                  enc_delta_rad->back_right_wheel_velocity));
-  Pose<real_t> dpose_rf{dpose_rf_mtx(0), dpose_rf_mtx(1), dpose_rf_mtx(2)};
+  Pose dpose_rf{dpose_rf_mtx(0), dpose_rf_mtx(1), dpose_rf_mtx(2)};
 
   taskENTER_CRITICAL();
   epsilon += dpose_rf_mtx(3);
@@ -54,7 +54,7 @@ static void odometry_cb(const void* arg) {
   // aggregate into the pose sum and use the theta average for more precise
   // angle calculation
   pose_wf += pRF2pWF(
-      dpose_rf, (static_cast<real_t>(pose_wf.theta) * 2 + dpose_rf.theta) / 2);
+      dpose_rf, (static_cast<double>(pose_wf.theta) * 2 + dpose_rf.theta) / 2);
 }
 
 static void odom_pub_cb(rcl_timer_t*, int64_t) {

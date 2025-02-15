@@ -13,7 +13,7 @@ static Vel2d vel_sp;
 
 extern "C" {
 
-void task_impl(void*) {
+static void task_impl(void*) {
   while (true) {
     xQueueReceive(vel_sp_queue, &vel_sp, portMAX_DELAY);
     ULOG_INFO("vel from queue [%f %f %f]", vel_sp.x, vel_sp.y,

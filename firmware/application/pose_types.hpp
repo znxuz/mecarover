@@ -1,160 +1,144 @@
 #pragma once
 
-#include <application/real_t.h>
-
-#include <numbers>
 #include <cmath>
 #include <cstdio>
+#include <numbers>
 
 namespace imsl {
 
 using std::numbers::pi;
 
-template <typename T>
-concept FltType = std::is_same_v<T, float> || std::is_same_v<T, double>;
-
 /* Heading of a mobile robot in the range of -pi ... +pi */
-template <typename FltType>
 class Heading {
  private:
-  FltType theta{};
+  double theta{};
 
-  static constexpr FltType maxPI(FltType theta) {
-    while (theta > static_cast<FltType>(pi))
-      theta -= static_cast<FltType>(2 * pi);
-    while (theta < static_cast<FltType>(-pi))
-      theta += static_cast<FltType>(2 * pi);
+  static constexpr double maxPI(double theta) {
+    while (theta > pi) theta -= 2 * pi;
+    while (theta < -pi) theta += 2 * pi;
     return theta;
   }
 
  public:
-  Heading() = default;
+  constexpr Heading() = default;
 
-  Heading(FltType theta) { this->theta = maxPI(theta); }
+  constexpr Heading(double theta) { this->theta = maxPI(theta); }
 
-  Heading& operator=(const FltType val) {
+  constexpr Heading& operator=(const double val) {
     this->theta = maxPI(val);
     return *this;
   }
 
-  Heading& operator+=(const FltType& rhs) {
+  constexpr Heading& operator+=(const double& rhs) {
     theta = maxPI(this->theta + rhs);
     return *this;
   }
 
-  Heading& operator-=(const FltType divisor) {
+  constexpr Heading& operator-=(const double divisor) {
     this->theta = maxPI(this->theta - divisor);
     return *this;
   }
 
-  Heading operator+(FltType rhs) const { return this->theta + rhs; }
+  constexpr Heading operator+(double rhs) const { return this->theta + rhs; }
 
-  Heading operator-(FltType rhs) const { return this->theta - rhs; }
+  constexpr Heading operator-(double rhs) const { return this->theta - rhs; }
 
-  Heading operator*(FltType factor) const { return this->theta * factor; }
+  constexpr Heading operator*(double factor) const {
+    return this->theta * factor;
+  }
 
-  operator FltType() const { return this->theta; }
+  constexpr operator double() const { return this->theta; }
 };
 
-template <typename FltType>
 class Pose;
 
-template <typename FltType>
 class vPose {
  public:
-  FltType vx{};
-  FltType vy{};
-  FltType omega{};
+  double vx{};
+  double vy{};
+  double omega{};
 
-  vPose() = default;
+  constexpr vPose() = default;
 
-  vPose(FltType vx, FltType vy, FltType omega) : vx{vx}, vy{vy}, omega{omega} {}
+  constexpr vPose(double vx, double vy, double omega)
+      : vx{vx}, vy{vy}, omega{omega} {}
 
-  explicit vPose(const Pose<FltType>& pose)
-      : vx{pose.x}, vy{pose.y}, omega{pose.theta} {}
+  explicit vPose(const Pose& pose);
 
-  bool operator==(const vPose<FltType>& rhs) const {
+  constexpr bool operator==(const vPose& rhs) const {
     return this->vx == rhs.vx && this->vy == rhs.vy && this->omega == rhs.omega;
   }
 
-  vPose& operator+=(const vPose<FltType>& rhs) {
+  constexpr vPose& operator+=(const vPose& rhs) {
     this->vx += rhs.vx;
     this->vy += rhs.vy;
     this->omega += rhs.omega;
     return *this;
   }
 
-  friend constexpr vPose<FltType> operator*(const vPose<FltType>& lhs,
-                                            const FltType factor) {
+  friend constexpr vPose operator*(const vPose& lhs, const double factor) {
     return {lhs.vx * factor, lhs.vy * factor, lhs.omega * factor};
   }
 
-  friend constexpr vPose<FltType> operator+(const vPose<FltType>& lhs,
-                                            const vPose<FltType>& rhs) {
+  friend constexpr vPose operator+(const vPose& lhs, const vPose& rhs) {
     return {lhs.vx + rhs.vx, lhs.vy + rhs.vy, lhs.omega + rhs.omega};
   }
 
-  friend constexpr vPose<FltType> operator-(const vPose<FltType>& lhs,
-                                            const vPose<FltType>& rhs) {
+  friend constexpr vPose operator-(const vPose& lhs, const vPose& rhs) {
     return {lhs.vx - rhs.vx, lhs.vy - rhs.vy, lhs.omega - rhs.omega};
   }
 
   /* transformation of velocities from robot frame into world frame  */
-  friend constexpr vPose<FltType> vRF2vWF(vPose<FltType> vRF, FltType theta) {
+  friend constexpr vPose vRF2vWF(vPose vRF, double theta) {
     return {vRF.vx * cos(theta) - vRF.vy * sin(theta),
             vRF.vx * sin(theta) + vRF.vy * cos(theta), vRF.omega};
   }
 
   /* transformation of velocities from world frame into robot frame  */
-  friend constexpr vPose<FltType> vWF2vRF(vPose<FltType> vWF, FltType theta) {
+  friend constexpr vPose vWF2vRF(vPose vWF, double theta) {
     return {vWF.vx * cos(theta) + vWF.vy * sin(theta),
             -vWF.vx * sin(theta) + vWF.vy * cos(theta), vWF.omega};
   }
 };
 
-template <typename FltType>
 class Pose {
  public:
-  FltType x{};
-  FltType y{};
-  Heading<FltType> theta{};
+  double x{};
+  double y{};
+  Heading theta{};
 
-  Pose() = default;
+  constexpr Pose() = default;
 
-  Pose(FltType x, FltType y, Heading<FltType> theta)
+  constexpr Pose(double x, double y, Heading theta)
       : x{x}, y{y}, theta{theta} {}
 
-  explicit Pose(const vPose<real_t>& v_pose)
+  explicit Pose(const vPose& v_pose)
       : x{v_pose.vx}, y{v_pose.vy}, theta{v_pose.omega} {}
 
-  bool operator==(const Pose<FltType>& rhs) const {
+  constexpr bool operator==(const Pose& rhs) const {
     return this->x == rhs.x && this->y == rhs.y && this->theta == rhs.theta;
   }
 
-  Pose& operator+=(const Pose<FltType>& rhs) {
+  constexpr Pose& operator+=(const Pose& rhs) {
     this->x += rhs.x;
     this->y += rhs.y;
     this->theta += rhs.theta;
     return *this;
   }
 
-  friend constexpr Pose<FltType> operator+(const Pose<FltType>& lhs,
-                                           const Pose<FltType>& rhs) {
+  friend constexpr Pose operator+(const Pose& lhs, const Pose& rhs) {
     return {lhs.x + rhs.x, lhs.y + rhs.y, lhs.theta + rhs.theta};
   }
 
-  friend constexpr Pose<FltType> operator-(const Pose<FltType>& lhs,
-                                           const Pose<FltType>& rhs) {
+  friend constexpr Pose operator-(const Pose& lhs, const Pose& rhs) {
     return {lhs.x - rhs.x, lhs.y - rhs.y, lhs.theta - rhs.theta};
   }
 
-  friend constexpr Pose<FltType> operator*(const Pose<FltType>& lhs,
-                                           const FltType factor) {
+  friend constexpr Pose operator*(const Pose& lhs, const double factor) {
     return {lhs.x * factor, lhs.y * factor, lhs.theta * factor};
   }
 
-  friend constexpr Pose<FltType> operator/(const Pose<FltType>& lhs,
-                                           const FltType divisor) {
+  friend constexpr Pose operator/(const Pose& lhs, const double divisor) {
     if (divisor == 0.0) {
       std::perror("division by zero!");
       return {};
@@ -163,18 +147,19 @@ class Pose {
   }
 
   /* transformation of small movements from robot frame into world frame  */
-  friend constexpr Pose<FltType> pRF2pWF(const Pose<FltType>& dpose,
-                                         FltType th) {
+  friend constexpr Pose pRF2pWF(const Pose& dpose, double th) {
     return {dpose.x * cos(th) - dpose.y * sin(th),
             dpose.x * sin(th) + dpose.y * cos(th), dpose.theta};
   }
 
   /* transformation of small movements from world frame into robot frame  */
-  friend constexpr Pose<FltType> pWF2pRF(const Pose<FltType>& dpose,
-                                         FltType th) {
+  friend constexpr Pose pWF2pRF(const Pose& dpose, double th) {
     return {dpose.x * cos(th) + dpose.y * sin(th),
             -dpose.x * sin(th) + dpose.y * cos(th), dpose.theta};
   }
 };
+
+inline vPose::vPose(const Pose& pose)
+    : vx{pose.x}, vy{pose.y}, omega{pose.theta} {}
 
 }  // namespace imsl

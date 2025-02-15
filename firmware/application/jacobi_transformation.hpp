@@ -4,9 +4,9 @@
 #include <application/robot_params.hpp>
 
 using BackwardKinematic =
-    Eigen::Matrix<real_t, robot_params::N_WHEEL, robot_params::DOF>;
+    Eigen::Matrix<double, robot_params::N_WHEEL, robot_params::DOF>;
 using ForwardKinematic =
-    Eigen::Matrix<real_t, robot_params::DOF, robot_params::N_WHEEL>;
+    Eigen::Matrix<double, robot_params::DOF, robot_params::N_WHEEL>;
 
 // avoid the runtime overhead for scalar multiplication by multiplying each
 // elem separately, because I haven't found a way to *constexpr intialize* the

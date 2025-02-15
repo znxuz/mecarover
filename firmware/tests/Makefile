@@ -50,5 +50,5 @@ clean:
 	$(RM) $(test_obj)
 	$(RM) $(BUILD_DIR)/$(MAIN_TEST)
 
-clang_db:
+clangdb:
 	bear -- $(MAKE)

@@ -1,6 +1,5 @@
 #include "pose_ctrl.hpp"
 
-#include <application/real_t.h>
 #include <geometry_msgs/msg/pose2_d.h>
 #include <geometry_msgs/msg/twist.h>
 #include <rcl/allocator.h>
@@ -40,10 +39,10 @@ static geometry_msgs__msg__Pose2D msg_odom_pose{};
 static auto timer = rcl_get_zero_initialized_timer();
 static rcl_publisher_t pub_wheel_vel;
 
-static auto vel_rf_target = vPose<real_t>{};
-static auto pose_actual = Pose<real_t>{};
+static auto vel_rf_target = vPose{};
+static auto pose_actual = Pose{};
 
-extern real_t epsilon;
+extern double epsilon;
 
 static void cmd_vel_cb(const void* arg) {
   if (!arg) return;
@@ -61,8 +60,8 @@ static void pose_cb(const void* arg) {
   pose_actual = {msg->x, msg->y, msg->theta};
 }
 
-static constexpr vPose<real_t> velocity_smoothen(
-    const vPose<real_t>& vel_target, const vPose<real_t>& vel_cur) {
+static constexpr vPose velocity_smoothen(
+    const vPose& vel_target, const vPose& vel_cur) {
   constexpr auto MAX_DIFF_LINEAR = MAX_VELOCITY_WHEEL_LINEAR * 0.03;
   constexpr auto MAX_DIFF_ANGULAR = MAX_DIFF_LINEAR / L_W_HALF;
 
@@ -75,16 +74,16 @@ static constexpr vPose<real_t> velocity_smoothen(
   return vel_cur + vel_diff;
 }
 
-static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
-                              const Pose<real_t>& pose_cur, real_t dt) {
-  static constexpr real_t MAX_INTEGRAL_LINEAR = 200;
-  static constexpr real_t MAX_INTEGRAL_ANGULAR = M_PI;
-  static constexpr real_t MAX_POSE_DEVIATION_LINEAR = 300;
-  static constexpr real_t MAX_POSE_DEVIATION_ANGULAR = pi;
-  static constexpr real_t K_P = 0.07;
-  static constexpr real_t K_I = 0.001;
-  static constexpr real_t K_D = 0.00001;
-  static auto integral = Pose<real_t>{}, prev_err = Pose<real_t>{};
+static Pose pose_ctrl(const Pose& pose_sp,
+                              const Pose& pose_cur, double dt) {
+  static constexpr double MAX_INTEGRAL_LINEAR = 200;
+  static constexpr double MAX_INTEGRAL_ANGULAR = M_PI;
+  static constexpr double MAX_POSE_DEVIATION_LINEAR = 300;
+  static constexpr double MAX_POSE_DEVIATION_ANGULAR = pi;
+  static constexpr double K_P = 0.07;
+  static constexpr double K_I = 0.001;
+  static constexpr double K_D = 0.00001;
+  static auto integral = Pose{}, prev_err = Pose{};
 
   const auto err = pose_sp - pose_cur;
   using std::abs;
@@ -93,14 +92,14 @@ static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
       abs(err.theta) > MAX_POSE_DEVIATION_ANGULAR) [[unlikely]]
     ULOG_WARNING("[pose_ctrl]: sanity check: pose deviation too large");
   ULOG_DEBUG("[pose_ctrl]: delta: [x: %.2f, y: %.2f, theta: %.2f]", err.x,
-             err.y, static_cast<real_t>(err.theta));
+             err.y, static_cast<double>(err.theta));
 
   integral += err * dt;
   integral.x =
       std::clamp(integral.x, -MAX_INTEGRAL_LINEAR, MAX_INTEGRAL_LINEAR);
   integral.y =
       std::clamp(integral.y, -MAX_INTEGRAL_LINEAR, MAX_INTEGRAL_LINEAR);
-  integral.theta = std::clamp(static_cast<real_t>(integral.theta),
+  integral.theta = std::clamp(static_cast<double>(integral.theta),
                               -MAX_INTEGRAL_ANGULAR, MAX_INTEGRAL_ANGULAR);
 
   const auto derivative = err - std::exchange(prev_err, err);
@@ -109,21 +108,21 @@ static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
 }
 
 static void pose_ctrl_cb(rcl_timer_t*, int64_t last_call_time) {
-  static auto vel_prev = vPose<real_t>{};
-  static auto pose_sp = Pose<real_t>{};
-  const auto dt = RCL_NS_TO_S(static_cast<real_t>(last_call_time));
+  static auto vel_prev = vPose{};
+  static auto pose_sp = Pose{};
+  const auto dt = RCL_NS_TO_S(static_cast<double>(last_call_time));
 
   const auto vel_rf_sp = velocity_smoothen(vel_rf_target, vel_prev);
   vel_prev = vel_rf_sp;
 
-  pose_sp += Pose<real_t>(vRF2vWF(vel_rf_sp, pose_sp.theta) * dt);
+  pose_sp += Pose(vRF2vWF(vel_rf_sp, pose_sp.theta) * dt);
 
-  constexpr real_t K_eps = -0.2;
+  constexpr double K_eps = -0.2;
   taskENTER_CRITICAL();
   const auto eps = epsilon;
   taskEXIT_CRITICAL();
 
-  const auto d_vel_wf = vPose<real_t>(pose_ctrl(pose_sp, pose_actual, dt) / dt);
+  const auto d_vel_wf = vPose(pose_ctrl(pose_sp, pose_actual, dt) / dt);
   const auto vel_rf_corrected =
       vel_rf_sp + vWF2vRF(d_vel_wf, pose_actual.theta);
   const auto msg_vel_wheel_sp =

@@ -65,7 +65,7 @@ void task_vel_recv_init(QueueHandle_t vel_sp_queue_out) {
   HAL_UART_Receive_IT(&huart3, uart_rx_buf, sizeof(uart_rx_buf));
 
   configASSERT(xTaskCreate(task_impl, "task_recv_vel", 128 * 4, NULL,
-                           osPriorityNormal, &task_handle) == pdPASS);
+                           osPriorityNormal1, &task_handle) == pdPASS);
 }
 
 }  // namespace freertos

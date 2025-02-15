@@ -22,15 +22,17 @@ static QueueHandle_t enc_delta_queue;
 static QueueHandle_t odom_queue;
 static QueueHandle_t wheel_vel_queue;
 
-std::array<std::pair<QueueHandle_t*, std::function<QueueHandle_t(void)>>, 4> qs{
-    std::make_pair(&vel_sp_queue,
-                   []() { return xQueueCreate(10, sizeof(Vel2d)); }),
-    std::make_pair(&enc_delta_queue,
-                   []() { return xQueueCreate(10, sizeof(FourWheelData)); }),
-    std::make_pair(&odom_queue,
-                   []() { return xQueueCreate(10, sizeof(FourWheelData)); }),
-    std::make_pair(&wheel_vel_queue,
-                   []() { return xQueueCreate(10, sizeof(FourWheelData)); })};
+static std::array<std::pair<QueueHandle_t*, std::function<QueueHandle_t(void)>>,
+                  4>
+    qs{std::make_pair(&vel_sp_queue,
+                      []() { return xQueueCreate(10, sizeof(Vel2d)); }),
+       std::make_pair(&enc_delta_queue,
+                      []() { return xQueueCreate(10, sizeof(FourWheelData)); }),
+       std::make_pair(&odom_queue,
+                      []() { return xQueueCreate(10, sizeof(FourWheelData)); }),
+       std::make_pair(&wheel_vel_queue, []() {
+         return xQueueCreate(10, sizeof(FourWheelData));
+       })};
 
 static void queues_init() {
   std::for_each(begin(qs), end(qs), [](auto& pair) {

@@ -20,12 +20,12 @@ using namespace robot_params;
 
 static constexpr uint8_t N_EXEC_HANDLES = 2;
 
-static std::array<real_t, N_WHEEL> vel_to_duty_cycle(const VelWheel& vel) {
-  static constexpr real_t PERCENT = 100.0;
-  auto ret = std::array<real_t, N_WHEEL>{};
+static std::array<double, N_WHEEL> vel_to_duty_cycle(const VelWheel& vel) {
+  static constexpr double PERCENT = 100.0;
+  auto ret = std::array<double, N_WHEEL>{};
 
   std::transform(vel.data(), vel.data() + vel.size(), begin(ret),
-                 [](real_t val) {
+                 [](double val) {
                    return std::clamp(val / MAX_VELOCITY_WHEEL_ANGULAR * PERCENT,
                                      -PERCENT, PERCENT);
                  });
@@ -57,8 +57,8 @@ static void vel_sp_cb(const void* arg) {
   wheel_vel_sp(3) = msg->back_right_wheel_velocity;
 }
 
-static VelWheel pid_ctrl(const real_t dt) {
-  static constexpr real_t K_P = 0.025, K_I = 0.015, K_D = 0, MAX_INTEGRAL = 10;
+static VelWheel pid_ctrl(const double dt) {
+  static constexpr double K_P = 0.025, K_I = 0.015, K_D = 0, MAX_INTEGRAL = 10;
   static auto integral = VelWheel{}, prev_err = VelWheel{};
 
   const auto err = wheel_vel_sp - wheel_vel_actual;
@@ -67,9 +67,9 @@ static VelWheel pid_ctrl(const real_t dt) {
 
   integral += err * dt;
   integral = integral.unaryExpr(
-      [&](real_t val) { return std::clamp(val, MAX_INTEGRAL, -MAX_INTEGRAL); });
+      [&](double val) { return std::clamp(val, MAX_INTEGRAL, -MAX_INTEGRAL); });
   if (std::any_of(std::begin(integral), std::end(integral),
-                  [](real_t val) { return val >= 0.8 * MAX_INTEGRAL; }))
+                  [](double val) { return val >= 0.8 * MAX_INTEGRAL; }))
     ULOG_WARNING("[wheel_ctrl]: PID integral: [%0.2f, %.02f, %.02f, %.02f]",
                  integral(0), integral(1), integral(2), integral(3));
 
@@ -79,7 +79,7 @@ static VelWheel pid_ctrl(const real_t dt) {
 }
 
 static void wheel_ctrl_cb(rcl_timer_t* timer, int64_t last_call_time) {
-  const auto dt = RCL_NS_TO_S(static_cast<real_t>(last_call_time));
+  const auto dt = RCL_NS_TO_S(static_cast<double>(last_call_time));
   const auto enc_delta_rad = hal_encoder_delta_rad();
 
   DriveStateWrapper<DriveStateType::ENC_DELTA_RAD> enc_data{enc_delta_rad};
@@ -87,7 +87,7 @@ static void wheel_ctrl_cb(rcl_timer_t* timer, int64_t last_call_time) {
 
   std::transform(begin(enc_delta_rad), end(enc_delta_rad),
                  std::begin(wheel_vel_actual),
-                 [dt](real_t enc_delta) { return enc_delta / dt; });
+                 [dt](double enc_delta) { return enc_delta / dt; });
 
   hal_wheel_vel_set_pwm(vel_to_duty_cycle(pid_ctrl(dt)));
 }
