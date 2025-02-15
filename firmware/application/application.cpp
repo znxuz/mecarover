@@ -17,7 +17,12 @@ volatile unsigned long ulHighFrequencyTimerTicks;
 
 int _write(int file, char* ptr, int len) {
   if (file == STDOUT_FILENO || file == STDERR_FILENO) {
-    if (HAL_UART_Transmit(&huart3, (uint8_t*)ptr, len, HAL_MAX_DELAY) == HAL_OK)
+    taskENTER_CRITICAL();
+    HAL_StatusTypeDef status =
+        HAL_UART_Transmit(&huart3, (uint8_t*)ptr, len, HAL_MAX_DELAY);
+    taskEXIT_CRITICAL();
+
+    if (status == HAL_OK)
       return len;
     else
       return EIO;
