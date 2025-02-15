@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <usart.h>
 
-#include <application/freertos/setup.hpp>
+#include <application/freertos/init.hpp>
 
 extern "C" {
 
@@ -56,7 +56,7 @@ void application_start(void) {
   ULOG_SUBSCRIBE(my_console_logger, ULOG_DEBUG_LEVEL);
   ULOG_INFO("app start");
 
-  freertos::setup();
+  freertos::init();
 
   osKernelStart();
   Error_Handler();  // because osKernelStart should never return

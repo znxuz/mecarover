@@ -1,8 +1,7 @@
-#include "task_recv_vel.hpp"
-
 #include <FreeRTOS.h>
 #include <cmsis_os2.h>
 #include <crc.h>
+#include <queue.h>
 #include <stdio.h>
 #include <task.h>
 #include <ulog.h>
@@ -10,13 +9,13 @@
 
 #include <optional>
 
+#include "shared.hpp"
 #include "vel2d_frame.hpp"
 
-static std::optional<Vel2dFrame> frame;
 static uint8_t uart_rx_buf[VEL2D_FRAME_LEN];
+static std::optional<Vel2dFrame> frame;
 
 static TaskHandle_t task_handle;
-static QueueHandle_t vel_sp_queue;
 static size_t crc_err;
 
 extern "C" {
@@ -52,16 +51,14 @@ static void task_impl(void*) {
       continue;
     }
 
-    xQueueSend(vel_sp_queue, &v.vel, NO_BLOCK);
+    xQueueSend(freertos::vel_sp_queue, &v.vel, NO_BLOCK);
   }
 }
 }
 
 namespace freertos {
 
-void task_vel_recv_init(QueueHandle_t vel_sp_queue_out) {
-  vel_sp_queue = vel_sp_queue_out;
-
+void task_vel_recv_init() {
   HAL_UART_Receive_IT(&huart3, uart_rx_buf, sizeof(uart_rx_buf));
 
   configASSERT(xTaskCreate(task_impl, "task_recv_vel", 128 * 4, NULL,
