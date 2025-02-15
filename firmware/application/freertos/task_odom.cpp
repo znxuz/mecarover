@@ -20,7 +20,8 @@ static Pose odom;
 extern "C" {
 
 static void task_impl(void*) {
-  const TickType_t xFrequency = pdMS_TO_TICKS(POSE_CTRL_PERIOD_MS.count());
+  const TickType_t xFrequency =
+      pdMS_TO_TICKS(POSE_CTRL_PERIOD_S.count() * 1000);
   TickType_t xLastWakeTime = xTaskGetTickCount();
 
   freertos::FourWheelData enc_delta;
