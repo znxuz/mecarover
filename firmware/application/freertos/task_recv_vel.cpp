@@ -43,15 +43,22 @@ static void task_impl(void*) {
     auto frame = *reinterpret_cast<const Vel2dFrame*>(uart_rx_buf);
     taskEXIT_CRITICAL();
 
-    auto* vel = reinterpret_cast<uint8_t*>(&frame.vel);
     if (!frame.compare(HAL_CRC_Calculate(
-            &hcrc, reinterpret_cast<uint32_t*>(vel), sizeof(frame.vel)))) {
+            &hcrc,
+            reinterpret_cast<uint32_t*>(reinterpret_cast<uint8_t*>(&frame.vel)),
+            sizeof(frame.vel)))) {
       ULOG_ERROR("crc mismatch!");
       ++crc_err;
       continue;
     }
 
+    frame.vel.x *= 1000;
+    frame.vel.y *= 1000;
+
     ULOG_INFO("[recv vel] [%f %f %f]", frame.vel.x, frame.vel.y, frame.vel.z);
+    if (crc_err)
+      ULOG_ERROR("[recv vel] crc error count: %u", crc_err);
+
     xQueueSend(freertos::vel_sp_queue, &frame.vel, NO_BLOCK);
   }
 }

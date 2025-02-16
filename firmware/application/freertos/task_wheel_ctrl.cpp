@@ -44,10 +44,10 @@ static VelWheel pid_ctrl(const VelWheel& vel_wheel_sp,
   integral += err * dt;
   integral = integral.unaryExpr(
       [&](double val) { return std::clamp(val, -MAX_INTEGRAL, MAX_INTEGRAL); });
-  if (std::any_of(std::begin(integral), std::end(integral),
-                  [](double val) { return val >= 0.8 * MAX_INTEGRAL; }))
-    ULOG_WARNING("[wheel_ctrl]: PID integral: [%0.2f, %.02f, %.02f, %.02f]",
-                 integral(0), integral(1), integral(2), integral(3));
+  // if (std::any_of(std::begin(integral), std::end(integral),
+  //                 [](double val) { return val >= 0.8 * MAX_INTEGRAL; }))
+  //   ULOG_WARNING("[wheel_ctrl]: PID integral: [%0.2f, %.02f, %.02f, %.02f]",
+  //                integral(0), integral(1), integral(2), integral(3));
 
   VelWheel derivative = (err - std::exchange(prev_err, err)) / dt;  // unused
 
@@ -56,9 +56,9 @@ static VelWheel pid_ctrl(const VelWheel& vel_wheel_sp,
 
 extern "C" {
 static void task_impl(void*) {
-  constexpr auto dt = robot_params::WHEEL_CTRL_PERIOD_S.count();
-  const TickType_t xFrequency = pdMS_TO_TICKS(dt * 1000);
   TickType_t xLastWakeTime = xTaskGetTickCount();
+  const TickType_t xFrequency = pdMS_TO_TICKS(WHEEL_CTRL_PERIOD_MS.count());
+  constexpr auto dt = WHEEL_CTRL_PERIOD_MS.count() / 1000.0;
 
   while (true) {
     xQueueReceive(vel_wheel_queue, &vel_wheel_buf, 0);
@@ -68,8 +68,11 @@ static void task_impl(void*) {
     VelWheel vel_wheel_pv = enc_delta_buf;
     vel_wheel_pv /= dt;
 
-    hal_wheel_vel_set_pwm(
-        vel_to_duty_cycle(pid_ctrl(vel_wheel_sp, vel_wheel_pv, dt)));
+    auto duty_cycle =
+        vel_to_duty_cycle(pid_ctrl(vel_wheel_sp, vel_wheel_pv, dt));
+    // ULOG_DEBUG("dc: [%.2f, %.2f, %.2f, %.2f]", duty_cycle[0], duty_cycle[1],
+    //            duty_cycle[2], duty_cycle[3]);
+    hal_wheel_vel_set_pwm(duty_cycle);
 
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
   }

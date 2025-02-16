@@ -14,8 +14,8 @@ using namespace Eigen;
 
 using std::numbers::pi;
 
-inline constexpr seconds WHEEL_CTRL_PERIOD_S = 1s;
-inline constexpr seconds POSE_CTRL_PERIOD_S = 1s;
+inline constexpr milliseconds WHEEL_CTRL_PERIOD_MS = 20ms;
+inline constexpr milliseconds POSE_CTRL_PERIOD_MS = 33ms;
 
 // inline constexpr milliseconds WHEEL_CTRL_PERIOD_MS = 20ms;
 // inline constexpr milliseconds POSE_CTRL_PERIOD_MS = 33ms;

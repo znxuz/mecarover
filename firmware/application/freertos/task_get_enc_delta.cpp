@@ -18,8 +18,7 @@ extern "C" {
 
 static void task_impl(void*) {
   TickType_t xLastWakeTime = xTaskGetTickCount();
-  const TickType_t xFrequency =
-      pdMS_TO_TICKS(WHEEL_CTRL_PERIOD_S.count() * 1000);
+  const TickType_t xFrequency = pdMS_TO_TICKS(WHEEL_CTRL_PERIOD_MS.count());
 
   while (true) {
     auto enc_delta = FourWheelData(hal_encoder_delta_rad());

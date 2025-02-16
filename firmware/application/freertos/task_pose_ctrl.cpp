@@ -65,25 +65,20 @@ static Pose pose_ctrl(const Pose& pose_sp, const Pose& pose_cur, double dt) {
 extern "C" {
 
 static void task_impl(void*) {
-  constexpr auto dt = POSE_CTRL_PERIOD_S.count();
-  const TickType_t xFrequency = pdMS_TO_TICKS(dt * 1000);
+  const TickType_t xFrequency = pdMS_TO_TICKS(POSE_CTRL_PERIOD_MS.count());
+  constexpr auto dt = POSE_CTRL_PERIOD_MS.count() / 1000.0;
   TickType_t xLastWakeTime = xTaskGetTickCount();
 
-  vPose vel_target;
+  vPose rvel_target;
   vPose rvel_prev;
   Pose pose_sp;
   Pose odom;
 
   while (true) {
-    xQueueReceive(freertos::vel_sp_queue, &vel_target, 0);
+    xQueueReceive(freertos::vel_sp_queue, &rvel_target, 0);
     xQueueReceive(freertos::odom_queue, &odom, 0);
 
-    // ULOG_DEBUG("[pose_ctrl] vel [%f %f %f]", vel_target.vx, vel_target.vy,
-    //            vel_target.omega);
-    // ULOG_DEBUG("[pose_ctrl] odom [%.2f, %.2f, %.2f]", odom.x, odom.y,
-    //            odom.theta);
-
-    auto rvel_sp = velocity_smoothen(vel_target, rvel_prev);
+    auto rvel_sp = velocity_smoothen(rvel_target, rvel_prev);
     rvel_prev = rvel_sp;
 
     pose_sp += Pose(vRF2vWF(rvel_sp, pose_sp.theta) * dt);
