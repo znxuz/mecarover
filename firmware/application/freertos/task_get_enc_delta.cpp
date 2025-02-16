@@ -34,7 +34,16 @@ static void task_impl(void*) {
 namespace freertos {
 
 void task_get_enc_delta_init() {
-  configASSERT(xTaskCreate(task_impl, "get_enc_delta", 128 * 4, NULL,
+  constexpr size_t STACK_SIZE = configMINIMAL_STACK_SIZE * 4;
+#ifdef FREERTOS_STATIC_INIT
+  static StackType_t taskStack[STACK_SIZE];
+  static StaticTask_t taskBuffer;
+  configASSERT((task_handle = xTaskCreateStatic(
+                    task_impl, "get_enc_delta", STACK_SIZE, NULL,
+                    osPriorityNormal, taskStack, &taskBuffer)) != NULL);
+#else
+  configASSERT(xTaskCreate(task_impl, "get_enc_delta", STACK_SIZE, NULL,
                            osPriorityNormal, &task_handle) == pdPASS);
+#endif
 }
 }  // namespace freertos

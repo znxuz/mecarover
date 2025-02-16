@@ -70,6 +70,7 @@ static void task_impl(void*) {
     VelWheel vel_wheel_pv = enc_delta_buf;
     vel_wheel_pv /= dt;
 
+    // TODO debug print but not in the same frequency
     auto duty_cycle =
         vel_to_duty_cycle(pid_ctrl(vel_wheel_sp, vel_wheel_pv, dt));
     ULOG_DEBUG("dc: [%.2f, %.2f, %.2f, %.2f]", duty_cycle[0], duty_cycle[1],
@@ -84,7 +85,16 @@ static void task_impl(void*) {
 namespace freertos {
 
 void task_wheel_ctrl_init() {
-  configASSERT(xTaskCreate(task_impl, "wheel_ctrl", 128 * 4, NULL,
+  constexpr size_t STACK_SIZE = configMINIMAL_STACK_SIZE * 4;
+#ifdef FREERTOS_STATIC_INIT
+  static StackType_t taskStack[STACK_SIZE];
+  static StaticTask_t taskBuffer;
+  configASSERT((task_handle = xTaskCreateStatic(
+                    task_impl, "wheel_ctrl", STACK_SIZE, NULL, osPriorityNormal,
+                    taskStack, &taskBuffer)) != NULL);
+#else
+  configASSERT(xTaskCreate(task_impl, "wheel_ctrl", STACK_SIZE, NULL,
                            osPriorityNormal, &task_handle) == pdPASS);
+#endif
 }
 }  // namespace freertos

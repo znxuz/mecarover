@@ -51,11 +51,10 @@ static void task_impl(void*) {
       continue;
     }
 
-    frame.vel.x *= 1000; // m to mm
-    frame.vel.y *= 1000; // m to mm
+    frame.vel.x *= 1000;  // m to mm
+    frame.vel.y *= 1000;  // m to mm
 
-    ULOG_INFO("[recv vel] [%f %f %f]", frame.vel.x, frame.vel.y,
-    frame.vel.z);
+    ULOG_INFO("[recv vel] [%f %f %f]", frame.vel.x, frame.vel.y, frame.vel.z);
 
     xQueueSend(freertos::vel_sp_queue, &frame.vel, NO_BLOCK);
   }
@@ -67,8 +66,17 @@ namespace freertos {
 void task_vel_recv_init() {
   HAL_UART_Receive_IT(&huart3, uart_rx_buf, sizeof(uart_rx_buf));
 
-  configASSERT(xTaskCreate(task_impl, "recv_vel", 128 * 4, NULL,
-                           osPriorityNormal1, &task_handle) == pdPASS);
+  constexpr size_t STACK_SIZE = configMINIMAL_STACK_SIZE * 4;
+#ifdef FREERTOS_STATIC_INIT
+  static StackType_t taskStack[STACK_SIZE];
+  static StaticTask_t taskBuffer;
+  configASSERT((task_handle = xTaskCreateStatic(
+                    task_impl, "recv_vel", STACK_SIZE, NULL, osPriorityNormal,
+                    taskStack, &taskBuffer)) != NULL);
+#else
+  configASSERT(xTaskCreate(task_impl, "recv_vel", STACK_SIZE, NULL,
+                           osPriorityNormal, &task_handle) == pdPASS);
+#endif
 }
 
 }  // namespace freertos

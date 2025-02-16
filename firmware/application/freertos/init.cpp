@@ -18,6 +18,12 @@ void task_wheel_ctrl_init();
 void task_runtime_stats_init();
 
 void init() {
+#ifdef FREERTOS_STATIC_INIT
+  ULOG_INFO("intializing freertos using static memory allocation");
+#else
+  ULOG_INFO("intializing freertos using dynamic memory allocation by default");
+#endif
+
   hal_init();
   queues_init();
   task_get_enc_delta_init();

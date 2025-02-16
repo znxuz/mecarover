@@ -105,7 +105,16 @@ static void task_impl(void*) {
 namespace freertos {
 
 void task_pose_ctrl_init() {
-  configASSERT(xTaskCreate(task_impl, "pose_control", 128 * 4, NULL,
+  constexpr size_t STACK_SIZE = configMINIMAL_STACK_SIZE * 4;
+#ifdef FREERTOS_STATIC_INIT
+  static StackType_t taskStack[STACK_SIZE];
+  static StaticTask_t taskBuffer;
+  configASSERT((task_handle = xTaskCreateStatic(
+                    task_impl, "pose_control", STACK_SIZE, NULL,
+                    osPriorityNormal, taskStack, &taskBuffer)) != NULL);
+#else
+  configASSERT(xTaskCreate(task_impl, "pose_control", STACK_SIZE, NULL,
                            osPriorityNormal, &task_handle) == pdPASS);
+#endif
 }
 }  // namespace freertos

@@ -20,9 +20,10 @@ QueueHandle_t enc_delta_wheel_ctrl_queue;
 QueueHandle_t odom_queue;
 QueueHandle_t vel_wheel_queue;
 
+#ifdef FREERTOS_STATIC_INIT
 static std::array<std::pair<QueueHandle_t*, std::function<QueueHandle_t(void)>>,
                   5>
-    static_queues{
+    queues{
         std::make_pair(&vel_sp_queue,
                        []() -> QueueHandle_t {
                          constexpr size_t QUEUE_SIZE = 10;
@@ -69,7 +70,7 @@ static std::array<std::pair<QueueHandle_t*, std::function<QueueHandle_t(void)>>,
                              reinterpret_cast<uint8_t*>(buf), &static_queue);
                        }),
     };
-
+#else
 static std::array<std::pair<QueueHandle_t*, std::function<QueueHandle_t(void)>>,
                   5>
     queues{
@@ -86,6 +87,7 @@ static std::array<std::pair<QueueHandle_t*, std::function<QueueHandle_t(void)>>,
             &vel_wheel_queue,
             []() { return xQueueCreate(10, sizeof(FourWheelData)); }),
     };
+#endif
 
 void queues_init() {
   std::for_each(begin(queues), end(queues), [](auto& pair) {

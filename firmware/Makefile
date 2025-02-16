@@ -13,6 +13,7 @@ ULOG_DIR := third_party/ulog
 
 DEBUG := -DDEBUG -g3
 ULOG_ENABLED := -DULOG_ENABLED
+FREERTOS_STATIC_INIT := -DFREERTOS_STATIC_INIT
 
 OPT := -Os
 
@@ -55,7 +56,8 @@ FLAGS = \
 		-MF"$(@:%.o=%.d)" \
 		-MT"$@" \
 		$(INCL_PATHS) \
-		$(ULOG_ENABLED)
+		$(ULOG_ENABLED) \
+		$(FREERTOS_STATIC_INIT)
 
 CFLAGS = \
 		 $(FLAGS) \

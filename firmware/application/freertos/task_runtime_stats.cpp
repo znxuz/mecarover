@@ -38,8 +38,16 @@ static void task_impl(void *) {
 
 namespace freertos {
 void task_runtime_stats_init() {
-  configASSERT(xTaskCreate(task_impl, "runtime_stats",
-                           configMINIMAL_STACK_SIZE * 4, NULL,
-                           osPriorityNormal1, &task_handle) == pdPASS);
+  constexpr size_t STACK_SIZE = configMINIMAL_STACK_SIZE * 4;
+#ifdef FREERTOS_STATIC_INIT
+  static StackType_t taskStack[STACK_SIZE];
+  static StaticTask_t taskBuffer;
+  configASSERT((task_handle = xTaskCreateStatic(
+                    task_impl, "runtime_stats", STACK_SIZE, NULL,
+                    osPriorityNormal, taskStack, &taskBuffer)) != NULL);
+#else
+  configASSERT(xTaskCreate(task_impl, "runtime_stats", STACK_SIZE, NULL,
+                           osPriorityNormal, &task_handle) == pdPASS);
+#endif
 }
 }  // namespace freertos
