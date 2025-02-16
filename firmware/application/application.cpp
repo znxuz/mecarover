@@ -19,7 +19,7 @@ int _write(int file, char* ptr, int len) {
   if (file == STDOUT_FILENO || file == STDERR_FILENO) {
     taskENTER_CRITICAL();
     HAL_StatusTypeDef status =
-        HAL_UART_Transmit(&huart3, (uint8_t*)ptr, len, HAL_MAX_DELAY);
+        HAL_UART_Transmit_IT(&huart3, (uint8_t*)ptr, len);
     taskEXIT_CRITICAL();
 
     if (status == HAL_OK)

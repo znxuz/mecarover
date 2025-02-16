@@ -107,10 +107,10 @@ SRCS_PATHS := \
 			  $(ST_DRIVERS_DIR) \
 			  $(ST_MW_DIR) \
 			  $(ULOG_DIR)/src
-C_SRCS_EXCLS := $(shell find application/micro_ros -type f -name '*.c')
+C_SRCS_EXCLS :=
 C_SRCS := $(filter-out $(C_SRCS_EXCLS), \
 		  $(shell find $(SRCS_PATHS) -type f -name "*.c"))
-CPP_SRCS_EXCLS := $(shell find application/micro_ros -type f -name '*.cpp')
+CPP_SRCS_EXCLS :=
 CPP_SRCS := $(filter-out $(CPP_SRCS_EXCLS), \
 			$(shell find $(SRCS_PATHS) -type f -name "*.cpp"))
 S_SRC := startup_stm32f767xx.s

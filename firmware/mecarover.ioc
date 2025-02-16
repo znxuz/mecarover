@@ -2,6 +2,9 @@
 CAD.formats=
 CAD.pinconfig=
 CAD.provider=
+CORTEX_M7.CPU_DCache=Enabled
+CORTEX_M7.CPU_ICache=Enabled
+CORTEX_M7.IPParameters=CPU_ICache,CPU_DCache
 CRC.IPParameters=InputDataFormat,InputDataInversionMode,OutputDataInversionMode
 CRC.InputDataFormat=CRC_INPUTDATA_FORMAT_BYTES
 CRC.InputDataInversionMode=CRC_INPUTDATA_INVERSION_NONE

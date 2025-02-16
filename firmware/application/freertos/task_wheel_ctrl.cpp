@@ -72,8 +72,8 @@ static void task_impl(void*) {
 
     auto duty_cycle =
         vel_to_duty_cycle(pid_ctrl(vel_wheel_sp, vel_wheel_pv, dt));
-    // ULOG_DEBUG("dc: [%.2f, %.2f, %.2f, %.2f]", duty_cycle[0], duty_cycle[1],
-    //            duty_cycle[2], duty_cycle[3]);
+    ULOG_DEBUG("dc: [%.2f, %.2f, %.2f, %.2f]", duty_cycle[0], duty_cycle[1],
+               duty_cycle[2], duty_cycle[3]);
     hal_wheel_vel_set_pwm(duty_cycle);
 
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
