@@ -34,6 +34,8 @@ static std::array<double, N_WHEEL> vel_to_duty_cycle(const VelWheel& vel) {
 
 static VelWheel pid_ctrl(const VelWheel& vel_wheel_sp,
                          const VelWheel& vel_wheel_pv, const double dt) {
+  return vel_wheel_sp;
+
   static constexpr double K_P = 0.025, K_I = 0.015, K_D = 0, MAX_INTEGRAL = 10;
   static VelWheel integral = VelWheel::Zero(), prev_err = VelWheel::Zero();
 

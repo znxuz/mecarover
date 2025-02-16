@@ -31,6 +31,7 @@ static constexpr vPose velocity_smoothen(const vPose& vel_target,
 }
 
 static Pose pose_ctrl(const Pose& pose_sp, const Pose& pose_cur, double dt) {
+  return {};
   static constexpr double MAX_INTEGRAL_LINEAR = 200;
   static constexpr double MAX_INTEGRAL_ANGULAR = M_PI;
   static constexpr double MAX_POSE_DEVIATION_LINEAR = 300;
