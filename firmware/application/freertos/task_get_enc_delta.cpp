@@ -13,7 +13,6 @@ static TaskHandle_t task_handle;
 using namespace robot_params;
 
 using freertos::FourWheelData;
-using freertos::FourWheelDataType;
 
 extern "C" {
 
@@ -23,8 +22,8 @@ static void task_impl(void*) {
       pdMS_TO_TICKS(WHEEL_CTRL_PERIOD_S.count() * 1000);
 
   while (true) {
-    auto enc_delta = FourWheelData(hal_encoder_delta_rad(),
-                                   FourWheelDataType::ENC_DELTA_RAD);
+    auto enc_delta = FourWheelData(hal_encoder_delta_rad());
+
     xQueueSend(freertos::enc_delta_wheel_ctrl_queue, &enc_delta, 0);
     xQueueOverwrite(freertos::enc_delta_odom_queue, &enc_delta);
 
