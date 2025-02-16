@@ -15,7 +15,7 @@
 using namespace freertos;
 using namespace robot_params;
 
-TaskHandle_t task_handle;
+static TaskHandle_t task_handle;
 
 static FourWheelData vel_wheel_buf;
 static FourWheelData enc_delta_buf;
@@ -38,8 +38,8 @@ static VelWheel pid_ctrl(const VelWheel& vel_wheel_sp,
   static VelWheel integral = VelWheel::Zero(), prev_err = VelWheel::Zero();
 
   auto err = vel_wheel_sp - vel_wheel_pv;
-  ULOG_WARNING("[wheel_ctrl]: wheel vel err: [%0.2f, %.02f, %.02f, %.02f]",
-               err(0), err(1), err(2), err(3));
+  // ULOG_DEBUG("[wheel_ctrl]: wheel vel err: [%0.2f, %.02f, %.02f, %.02f]",
+  //              err(0), err(1), err(2), err(3));
 
   integral += err * dt;
   integral = integral.unaryExpr(
@@ -55,7 +55,7 @@ static VelWheel pid_ctrl(const VelWheel& vel_wheel_sp,
 }
 
 extern "C" {
-void task_impl(void*) {
+static void task_impl(void*) {
   constexpr auto dt = robot_params::WHEEL_CTRL_PERIOD_S.count();
   const TickType_t xFrequency = pdMS_TO_TICKS(dt * 1000);
   TickType_t xLastWakeTime = xTaskGetTickCount();
@@ -68,13 +68,8 @@ void task_impl(void*) {
     VelWheel vel_wheel_pv = enc_delta_buf;
     vel_wheel_pv /= dt;
 
-    auto vel_cv = pid_ctrl(vel_wheel_sp, vel_wheel_pv, dt);
-    ULOG_DEBUG("[wheel_ctrl] vel_cv: [%.02f, %.02f, %.02f, %.02f]", vel_cv(0),
-               vel_cv(1), vel_cv(2), vel_cv(3));
-    auto duty_cycle = vel_to_duty_cycle(vel_cv);
-    ULOG_DEBUG("[wheel_ctrl] duty: [%.02f, %.02f, %.02f, %.02f]", duty_cycle[0],
-               duty_cycle[1], duty_cycle[2], duty_cycle[3]);
-    hal_wheel_vel_set_pwm(duty_cycle);
+    hal_wheel_vel_set_pwm(
+        vel_to_duty_cycle(pid_ctrl(vel_wheel_sp, vel_wheel_pv, dt)));
 
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
   }
@@ -84,7 +79,7 @@ void task_impl(void*) {
 namespace freertos {
 
 void task_wheel_ctrl_init() {
-  configASSERT(xTaskCreate(task_impl, "task_pose_control", 128 * 4, NULL,
+  configASSERT(xTaskCreate(task_impl, "wheel_ctrl", 128 * 4, NULL,
                            osPriorityNormal, &task_handle) == pdPASS);
 }
 }  // namespace freertos

@@ -47,7 +47,7 @@ static void task_impl(void*) {
 namespace freertos {
 
 void task_odom_init() {
-  configASSERT(xTaskCreate(task_impl, "task_odometry", 128 * 4, NULL,
+  configASSERT(xTaskCreate(task_impl, "odometry", 128 * 4, NULL,
                            osPriorityNormal, &task_handle) == pdPASS);
 }
 

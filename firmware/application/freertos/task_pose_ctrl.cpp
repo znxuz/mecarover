@@ -46,8 +46,8 @@ static Pose pose_ctrl(const Pose& pose_sp, const Pose& pose_cur, double dt) {
       abs(err.y) > MAX_POSE_DEVIATION_LINEAR ||
       abs(err.theta) > MAX_POSE_DEVIATION_ANGULAR) [[unlikely]]
     ULOG_WARNING("[pose_ctrl] sanity check: pose deviation too large");
-  ULOG_DEBUG("[pose_ctrl] delta: [x: %.2f, y: %.2f, theta: %.2f]", err.x, err.y,
-             static_cast<double>(err.theta));
+  // ULOG_DEBUG("[pose_ctrl] delta: [x: %.2f, y: %.2f, theta: %.2f]", err.x, err.y,
+  //            static_cast<double>(err.theta));
 
   integral += err * dt;
   integral.x =
@@ -109,7 +109,7 @@ static void task_impl(void*) {
 namespace freertos {
 
 void task_pose_ctrl_init() {
-  configASSERT(xTaskCreate(task_impl, "task_pose_control", 128 * 4, NULL,
+  configASSERT(xTaskCreate(task_impl, "pose_control", 128 * 4, NULL,
                            osPriorityNormal, &task_handle) == pdPASS);
 }
 }  // namespace freertos

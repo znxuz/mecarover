@@ -35,7 +35,7 @@ static void task_impl(void*) {
 namespace freertos {
 
 void task_get_enc_delta_init() {
-  configASSERT(xTaskCreate(task_impl, "task_pose_control", 128 * 4, NULL,
+  configASSERT(xTaskCreate(task_impl, "get_enc_delta", 128 * 4, NULL,
                            osPriorityNormal, &task_handle) == pdPASS);
 }
 }  // namespace freertos
