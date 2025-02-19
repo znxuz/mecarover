@@ -13,7 +13,7 @@
 #include "vel2d_frame.hpp"
 
 static uint8_t uart_rx_buf[VEL2D_FRAME_LEN];
-static uint16_t rx_len;
+volatile static uint16_t rx_len;
 
 static TaskHandle_t task_handle;
 static size_t crc_err;

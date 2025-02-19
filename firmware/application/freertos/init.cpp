@@ -31,7 +31,7 @@ void init() {
   task_pose_ctrl_init();
   task_wheel_ctrl_init();
   task_odom_init();
-  // task_runtime_stats_init();
+  task_runtime_stats_init();
 }
 
 }  // namespace freertos
