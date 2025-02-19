@@ -70,7 +70,6 @@ static void task_impl(void*) {
     VelWheel vel_wheel_pv = enc_delta_buf;
     vel_wheel_pv /= dt;
 
-    // TODO debug print but not in the same frequency
     auto duty_cycle =
         vel_to_duty_cycle(pid_ctrl(vel_wheel_sp, vel_wheel_pv, dt));
     // ULOG_DEBUG("dc: [%.2f, %.2f, %.2f, %.2f]", duty_cycle[0], duty_cycle[1],
