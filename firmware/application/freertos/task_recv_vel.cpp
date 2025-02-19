@@ -13,25 +13,40 @@
 #include "vel2d_frame.hpp"
 
 static uint8_t uart_rx_buf[VEL2D_FRAME_LEN];
+static uint16_t rx_len;
 
 static TaskHandle_t task_handle;
 static size_t crc_err;
 
 extern "C" {
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart) {
-  if (huart->Instance == huart3.Instance) {
-    configASSERT(task_handle != NULL);
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart, uint16_t size) {
+  if (huart->Instance != huart3.Instance) return;
 
-    BaseType_t xHigherPriorityTaskWoken;
-    vTaskNotifyGiveFromISR(task_handle, &xHigherPriorityTaskWoken);
-    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+  rx_len = size;
 
-    HAL_UART_Receive_IT(&huart3, uart_rx_buf, sizeof(uart_rx_buf));
-  }
+  static BaseType_t xHigherPriorityTaskWoken;
+  configASSERT(task_handle != NULL);
+  vTaskNotifyGiveFromISR(task_handle, &xHigherPriorityTaskWoken);
+  portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+
+  HAL_UARTEx_ReceiveToIdle_IT(&huart3, uart_rx_buf, sizeof(uart_rx_buf));
 }
+
+// void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart) {
+//   if (huart->Instance == huart3.Instance) {
+//     configASSERT(task_handle != NULL);
+//
+//     BaseType_t xHigherPriorityTaskWoken;
+//     vTaskNotifyGiveFromISR(task_handle, &xHigherPriorityTaskWoken);
+//     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+//
+//     HAL_UART_Receive_IT(&huart3, uart_rx_buf, sizeof(uart_rx_buf));
+//   }
+// }
 
 static void task_impl(void*) {
   constexpr TickType_t NO_BLOCK = 0;
+  size_t len = 0;
 
   // check for sending Vel2d directly as vPose for pose control task
   configASSERT(sizeof(Vel2d) == sizeof(imsl::vPose));
@@ -40,9 +55,15 @@ static void task_impl(void*) {
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
     taskENTER_CRITICAL();
-    auto frame = *reinterpret_cast<const Vel2dFrame*>(uart_rx_buf);
+    len = rx_len;
     taskEXIT_CRITICAL();
 
+    if (len != VEL2D_FRAME_LEN) {
+      ULOG_ERROR("parsing velocity failed: insufficient bytes received");
+      continue;
+    }
+
+    auto frame = *reinterpret_cast<const Vel2dFrame*>(uart_rx_buf);
     auto* data = reinterpret_cast<uint8_t*>(&frame.vel);
     if (!frame.compare(HAL_CRC_Calculate(
             &hcrc, reinterpret_cast<uint32_t*>(data), sizeof(frame.vel)))) {
@@ -64,7 +85,7 @@ static void task_impl(void*) {
 namespace freertos {
 
 void task_vel_recv_init() {
-  HAL_UART_Receive_IT(&huart3, uart_rx_buf, sizeof(uart_rx_buf));
+  HAL_UARTEx_ReceiveToIdle_IT(&huart3, uart_rx_buf, sizeof(uart_rx_buf));
 
   constexpr size_t STACK_SIZE = configMINIMAL_STACK_SIZE * 4;
 #ifdef FREERTOS_STATIC_INIT

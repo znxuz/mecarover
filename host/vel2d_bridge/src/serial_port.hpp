@@ -15,7 +15,7 @@
 template <size_t FRAME_SIZE>
 class SerialPort {
  public:
-  SerialPort(std::string_view name, speed_t baud_rate = B1152000)
+  SerialPort(std::string_view name, speed_t baud_rate = B115200)
       : name_(name), baud_rate_(baud_rate) {
     open_fd();
     configure();

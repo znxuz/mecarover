@@ -31,7 +31,8 @@ class Vel2dBridge : public rclcpp::Node {
 
  private:
   rclcpp::Subscription<Twist>::SharedPtr twist_sub_;
-  SerialPort<VEL2D_FRAME_LEN> uart = SerialPort<VEL2D_FRAME_LEN>(DEFAULT_PORT);
+  SerialPort<VEL2D_FRAME_LEN> uart =
+      SerialPort<VEL2D_FRAME_LEN>(DEFAULT_PORT, B115200);
 };
 
 int main(int argc, char** argv) {
