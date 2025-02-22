@@ -58,6 +58,7 @@ static void vel_sp_cb(const void* arg) {
 }
 
 static VelWheel pid_ctrl(const real_t dt) {
+  return VelWheel::Zero();
   static constexpr real_t K_P = 0.025, K_I = 0.015, K_D = 0, MAX_INTEGRAL = 10;
   static auto integral = VelWheel{}, prev_err = VelWheel{};
 

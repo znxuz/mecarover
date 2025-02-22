@@ -77,6 +77,7 @@ static constexpr vPose<real_t> velocity_smoothen(
 
 static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
                               const Pose<real_t>& pose_cur, real_t dt) {
+  return {};
   static constexpr real_t MAX_INTEGRAL_LINEAR = 200;
   static constexpr real_t MAX_INTEGRAL_ANGULAR = M_PI;
   static constexpr real_t MAX_POSE_DEVIATION_LINEAR = 300;
