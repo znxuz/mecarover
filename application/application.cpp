@@ -12,6 +12,10 @@
 #include <application/micro_ros/micro_ros.hpp>
 #include <application/robot_params.hpp>
 
+namespace freertos {
+void task_runtime_stats_init();
+}
+
 extern "C" {
 
 #ifdef USE_UDP_TRANSPORT
@@ -63,6 +67,7 @@ void application_start(void) {
   ULOG_SUBSCRIBE(my_console_logger, ULOG_DEBUG_LEVEL);
 
   xTaskCreate(micro_ros, "micro_ros", 3000, NULL, osPriorityNormal, NULL);
+  freertos::task_runtime_stats_init();
 
   osKernelStart();
   Error_Handler();  // because osKernelStart should never return
