@@ -68,7 +68,7 @@
 #define configTICK_RATE_HZ                       ((TickType_t)1000)
 #define configMAX_PRIORITIES                     ( 56 )
 #define configMINIMAL_STACK_SIZE                 ((uint16_t)128)
-#define configTOTAL_HEAP_SIZE                    ((size_t)200000)
+#define configTOTAL_HEAP_SIZE                    ((size_t)25000)
 #define configMAX_TASK_NAME_LEN                  ( 16 )
 #define configGENERATE_RUN_TIME_STATS            1
 #define configUSE_TRACE_FACILITY                 1
@@ -147,7 +147,14 @@ See http://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html. */
 /* Normal assert() semantics without relying on the provision of an assert.h
 header file. */
 /* USER CODE BEGIN 1 */
-#define configASSERT( x ) if ((x) == 0) {taskDISABLE_INTERRUPTS(); for( ;; );}
+#define configASSERT(x)                                                     \
+    if ((x) == 0) {                                                           \
+      /* set LD1 */                                                           \
+      *(volatile uint32_t*)(0x40000000UL + 0x00020000UL + 0x0400UL + 0x18U) = \
+          0x0001U;                                                            \
+      taskDISABLE_INTERRUPTS();                                               \
+      for (;;);                                                               \
+    }
 /* USER CODE END 1 */
 
 /* Definitions that map the FreeRTOS port interrupt handlers to their CMSIS
@@ -168,12 +175,11 @@ standard names. */
 
 /* USER CODE BEGIN Defines */
 /* Section where parameter definitions can be added (for instance, to override default ones in FreeRTOS.h) */
-void task_switched_in_callback(const char* name);
-#define traceTASK_SWITCHED_IN() \
-  task_switched_in_callback(pxCurrentTCB->pcTaskName)
-void task_switched_out_callback(const char* name);
+void task_switched_in_isr(const char* name);
+#define traceTASK_SWITCHED_IN() task_switched_in_isr(pxCurrentTCB->pcTaskName)
+void task_switched_out_isr(const char* name);
 #define traceTASK_SWITCHED_OUT() \
-  task_switched_out_callback(pxCurrentTCB->pcTaskName)
+    task_switched_out_isr(pxCurrentTCB->pcTaskName)
 /* USER CODE END Defines */
 
 #endif /* FREERTOS_CONFIG_H */

@@ -7,6 +7,7 @@
 #include <rclc/types.h>
 #include <ulog.h>
 
+#include <application/freertos/task_runtime_stats.hpp>
 #include <application/hal/hal.hpp>
 #include <application/jacobi_transformation.hpp>
 #include <application/pose_types.hpp>
@@ -33,6 +34,7 @@ static rcl_publisher_t pub_odometry;
 real_t epsilon;
 
 static void odometry_cb(const void* arg) {
+  volatile timestamp t{"odom"};
   const auto* enc_delta_rad = reinterpret_cast<const DriveState*>(arg);
   /*
    * odometry: encoder delta gets fed directly into the inverted jacobian
@@ -74,9 +76,8 @@ rclc_executor_t* odometry_init(rcl_node_t* node, rclc_support_t* support,
   rcl_guard(rclc_executor_add_subscription(
       &exe, &sub_enc_data, &enc_data_msg.state, &odometry_cb, ON_NEW_DATA));
 
-  rcl_guard(rclc_timer_init_default2(&timer, support,
-                                     RCL_S_TO_NS(POSE_CTRL_PERIOD_S),
-                                     &odom_pub_cb, true));
+  rcl_guard(rclc_timer_init_default2(
+      &timer, support, RCL_S_TO_NS(POSE_CTRL_PERIOD_S), &odom_pub_cb, true));
   rcl_guard(rclc_executor_add_timer(&exe, &timer));
 
   rcl_guard(rclc_publisher_init_best_effort(

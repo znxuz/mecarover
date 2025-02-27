@@ -66,9 +66,10 @@ void application_start(void) {
   ULOG_INIT();
   ULOG_SUBSCRIBE(my_console_logger, ULOG_DEBUG_LEVEL);
 
-  xTaskCreate(micro_ros, "micro_ros", 3000, NULL, osPriorityNormal, NULL);
+  xTaskCreate(micro_ros, "uros", 3000, NULL, osPriorityNormal, NULL);
   freertos::task_runtime_stats_init();
 
+  puts("kernel start");
   osKernelStart();
   Error_Handler();  // because osKernelStart should never return
 }

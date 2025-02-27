@@ -42,7 +42,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-extern volatile unsigned long ulHighFrequencyTimerTicks;
 
 /* USER CODE END PV */
 
@@ -322,7 +321,8 @@ void TIM8_BRK_TIM12_IRQHandler(void)
 void TIM8_UP_TIM13_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM8_UP_TIM13_IRQn 0 */
-	  ulHighFrequencyTimerTicks++;
+  extern volatile unsigned long ulHighFrequencyTimerTicks;
+  ulHighFrequencyTimerTicks += 1;
 
   /* USER CODE END TIM8_UP_TIM13_IRQn 0 */
   HAL_TIM_IRQHandler(&htim8);

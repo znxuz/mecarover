@@ -150,7 +150,7 @@ C_SRCS_EXCLS :=  \
 				 $(MICRO_ROS_DIR)/sample_main_udp.c
 C_SRCS := $(filter-out $(C_SRCS_EXCLS), \
 		  $(shell find $(SRCS_PATHS) -type f -name "*.c"))
-CPP_SRCS_EXCLS :=
+CPP_SRCS_EXCLS := application/micro_ros/lidar.cpp
 CPP_SRCS := $(filter-out $(CPP_SRCS_EXCLS), \
 			$(shell find $(SRCS_PATHS) -type f -name "*.cpp"))
 S_SRC := startup_stm32f767xx.s

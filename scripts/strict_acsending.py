@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+def is_strictly_ascending_timestamps(file_path):
+    previous_timestamp = None
+
+    # Open the file and read line by line
+    with open(file_path, 'r') as file:
+        for line_num, line in enumerate(file, 1):
+            # Split the line to extract columns
+            parts = line.split()
+
+            # Ensure we have at least two columns per line
+            if len(parts) < 2:
+                print(f"Warning: Line {line_num} does not have at least two columns.")
+                continue
+
+            # Extract the timestamp as an integer
+            timestamp = int(parts[1])
+
+            # Check if the timestamp is strictly greater than the previous one
+            if previous_timestamp is not None and timestamp <= previous_timestamp:
+                return False
+
+            # Update the previous timestamp
+            previous_timestamp = timestamp
+
+    return True
+
+log_file_path = 'timestamps'
+if is_strictly_ascending_timestamps(log_file_path):
+    print("PASSED: timestamps strictly ascending.")
+else:
+    print("ERROR: timestamps not strictly ascending.")
