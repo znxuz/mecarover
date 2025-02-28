@@ -19,8 +19,8 @@ struct TaskRecord {
   bool is_begin;
 } __attribute__((packed));
 
-struct timestamp {
-  timestamp(const char* name) : name{name} {
+struct cycle_stamp {
+  cycle_stamp(const char* name) : name{name} {
     if (task_switch_profiling_enabled) {
       taskENTER_CRITICAL();
       records[record_idx] = {name, DWT->CYCCNT, true};
@@ -28,7 +28,7 @@ struct timestamp {
       taskEXIT_CRITICAL();
     }
   }
-  ~timestamp() {
+  ~cycle_stamp() {
     if (task_switch_profiling_enabled) {
       taskENTER_CRITICAL();
       records[record_idx] = {name, DWT->CYCCNT, false};

@@ -82,7 +82,7 @@ static void enable_dwt_cycle_count() {
   puts("Task\t\tt_stamp\tposition");
   for (size_t i = 0; i < record_idx; ++i) {
     const auto [name, cycle, is_begin] = records[i];
-    printf("%s\t\t%u\t%s\n", name, cycle, (is_begin ? "in" : "out"));
+    printf("%s\t\t%lu\t%s\n", name, cycle, (is_begin ? "in" : "out"));
   }
 }
 

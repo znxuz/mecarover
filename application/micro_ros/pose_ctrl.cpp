@@ -14,6 +14,7 @@
 #include <rclc/types.h>
 #include <ulog.h>
 
+#include <application/freertos/task_runtime_stats.hpp>
 #include <application/jacobi_transformation.hpp>
 #include <application/pose_types.hpp>
 #include <application/robot_params.hpp>
@@ -110,6 +111,7 @@ static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
 }
 
 static void pose_ctrl_cb(rcl_timer_t*, int64_t last_call_time) {
+  volatile cycle_stamp t{"p_ctrl"};
   static auto vel_prev = vPose<real_t>{};
   static auto pose_sp = Pose<real_t>{};
   const auto dt = RCL_NS_TO_S(static_cast<real_t>(last_call_time));
@@ -135,7 +137,7 @@ static void pose_ctrl_cb(rcl_timer_t*, int64_t last_call_time) {
 }
 
 rclc_executor_t* pose_ctrl_init(rcl_node_t* node, rclc_support_t* support,
-                                    const rcl_allocator_t* allocator) {
+                                const rcl_allocator_t* allocator) {
   rcl_guard(
       rclc_executor_init(&exe, &support->context, N_EXEC_HANDLES, allocator));
 
@@ -151,9 +153,8 @@ rclc_executor_t* pose_ctrl_init(rcl_node_t* node, rclc_support_t* support,
   rcl_guard(rclc_executor_add_subscription(&exe, &sub_odometry, &msg_odom_pose,
                                            &pose_cb, ALWAYS));
 
-  rcl_guard(rclc_timer_init_default2(&timer, support,
-                                     RCL_S_TO_NS(POSE_CTRL_PERIOD_S),
-                                     &pose_ctrl_cb, true));
+  rcl_guard(rclc_timer_init_default2(
+      &timer, support, RCL_S_TO_NS(POSE_CTRL_PERIOD_S), &pose_ctrl_cb, true));
   rcl_guard(rclc_executor_add_timer(&exe, &timer));
 
   rcl_guard(rclc_publisher_init_best_effort(
