@@ -17,8 +17,8 @@ def is_strictly_ascending_timestamps(file_path):
             # Extract the timestamp as an integer
             timestamp = int(parts[1])
 
-            # Check if the timestamp is strictly greater than the previous one
             if previous_timestamp is not None and timestamp <= previous_timestamp:
+                print(f"ERROR: Line {line_num} - timestamp {timestamp} is not strictly ascending.")
                 return False
 
             # Update the previous timestamp
