@@ -82,8 +82,8 @@ static void enable_dwt_cycle_count() {
   puts("Task\t\tt_stamp\tposition");
   for (size_t i = 0; i < record_idx; ++i) {
     const auto [name, cycle, is_begin] = records[i];
-    printf("%s\t\t%lu\t%s\n", name, cycle, (is_begin ? "in" : "out"));
-  }
+    printf("%s\t\t%lu\t%s\n", name, static_cast<unsigned long>(cycle),
+           (is_begin ? "in" : "out")); }
 }
 
 static void runtime_task_impl(void*) {
@@ -98,13 +98,14 @@ static void runtime_task_impl(void*) {
 static void button_task_impl(void*) {
   while (true) {
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
     taskENTER_CRITICAL();
     task_switch_profiling_enabled = true;
     record_idx = 0;
     ctx_switch_cnt = 0;
     taskEXIT_CRITICAL();
 
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    vTaskDelay(pdMS_TO_TICKS(1000)); // profile for 1s
 
     task_switch_profiling_enabled = false;
     xTaskNotifyGive(runtime_task_hdl);
@@ -116,14 +117,10 @@ namespace freertos {
 void task_runtime_stats_init() {
   enable_dwt_cycle_count();
 
-  for (auto& record : records) {
-    record.cycle = DWT->CYCCNT;
-  }
-
-  configASSERT(xTaskCreate(runtime_task_impl, "rt_stats",
-                           configMINIMAL_STACK_SIZE * 4, NULL, osPriorityNormal,
-                           &runtime_task_hdl) == pdPASS);
-  configASSERT(xTaskCreate(button_task_impl, "btn", configMINIMAL_STACK_SIZE,
-                           NULL, osPriorityNormal, &button_task_hdl));
+  configASSERT((xTaskCreate(button_task_impl, "btn", configMINIMAL_STACK_SIZE,
+                            NULL, osPriorityNormal, &button_task_hdl)));
+  configASSERT(
+      (xTaskCreate(runtime_task_impl, "rt_stats", configMINIMAL_STACK_SIZE * 4,
+                   NULL, osPriorityNormal, &runtime_task_hdl) == pdPASS));
 }
 }  // namespace freertos

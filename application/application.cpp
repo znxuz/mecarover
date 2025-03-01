@@ -8,6 +8,7 @@
 #include <ulog.h>
 #include <usart.h>
 
+#include <application/freertos/task_uart_streambuf.hpp>
 #include <application/hal/hal.hpp>
 #include <application/micro_ros/micro_ros.hpp>
 #include <application/robot_params.hpp>
@@ -17,24 +18,6 @@ void task_runtime_stats_init();
 }
 
 extern "C" {
-
-#ifdef USE_UDP_TRANSPORT
-// redirect stdout stdout/stderr to uart
-int _write(int file, char* ptr, int len) {
-  HAL_StatusTypeDef hstatus;
-
-  if (file == STDOUT_FILENO || file == STDERR_FILENO) {
-    hstatus = HAL_UART_Transmit(&huart3, (uint8_t*)ptr, len, HAL_MAX_DELAY);
-
-    if (hstatus == HAL_OK)
-      return len;
-    else
-      return EIO;
-  }
-  errno = EBADF;
-  return -1;
-}
-#endif
 
 volatile unsigned long ulHighFrequencyTimerTicks;
 
@@ -66,10 +49,10 @@ void application_start(void) {
   ULOG_INIT();
   ULOG_SUBSCRIBE(my_console_logger, ULOG_DEBUG_LEVEL);
 
-  xTaskCreate(micro_ros, "uros", 3000, NULL, osPriorityNormal, NULL);
+  freertos::task_uart_streambuf_init();
   freertos::task_runtime_stats_init();
+  xTaskCreate(micro_ros, "uros", 3000, NULL, osPriorityNormal, NULL);
 
-  puts("kernel start");
   osKernelStart();
   Error_Handler();  // because osKernelStart should never return
 }
