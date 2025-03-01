@@ -18,7 +18,7 @@ def is_strictly_ascending_timestamps(file_path):
             timestamp = int(parts[1])
 
             if previous_timestamp is not None and timestamp <= previous_timestamp:
-                print(f"ERROR: Line {line_num} - timestamp {timestamp} is not strictly ascending.")
+                print(f"\033[91mERROR\033[0m: Line {line_num} - timestamp {timestamp} is not strictly ascending.")
                 return False
 
             # Update the previous timestamp
@@ -28,6 +28,6 @@ def is_strictly_ascending_timestamps(file_path):
 
 log_file_path = 'timestamps'
 if is_strictly_ascending_timestamps(log_file_path):
-    print("PASSED: timestamps strictly ascending.")
+    print("\033[92mPASSED\033[0m: timestamps strictly ascending.")
 else:
-    print("ERROR: timestamps not strictly ascending.")
+    print("\033[91mERROR\033[0m: timestamps not strictly ascending.")
