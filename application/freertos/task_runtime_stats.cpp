@@ -1,11 +1,16 @@
 #include "task_runtime_stats.hpp"
 
+#include <FreeRTOS.h>
 #include <cmsis_os2.h>
 #include <main.h>
+#include <semphr.h>
+#include <stdarg.h>
 #include <stdio.h>
 
 static TaskHandle_t runtime_task_hdl;
 static TaskHandle_t button_task_hdl;
+
+SemaphoreHandle_t printf_semphr;
 
 std::array<TaskRecord, 28000> records{};
 volatile size_t record_idx = 0;
@@ -58,39 +63,57 @@ static void enable_dwt_cycle_count() {
   DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 }
 
-[[maybe_unused]] static void print_stats(void) {
-  static constexpr uint8_t configNUM_TASKS = 10;
-  static char stat_buf[40 * configMAX_TASK_NAME_LEN * configNUM_TASKS];
+int mtxprintf(const char* format, ...) {
+  xSemaphoreTake(printf_semphr, portMAX_DELAY);
+  va_list args;
+  va_start(args, format);
+  int result = vprintf(format, args);
+  va_end(args);
+  xSemaphoreGive(printf_semphr);
 
-  vTaskGetRunTimeStats(stat_buf);
-  puts("=============================================");
-  printf("free heap:\t\t%u\n", xPortGetFreeHeapSize());
-  printf("ctx switches:\t\t%u\n", ctx_switch_cnt);
-  printf("record idx:\t\t%u\n", record_idx);
-  puts("Task\t\tTime\t\t%%");
-  printf("%s", stat_buf);
-
-  puts("---------------------------------------------");
-
-  vTaskList(stat_buf);
-  puts("Task\t\tState\tPrio\tStack\tNum");
-  printf("%s", stat_buf);
-  puts("=============================================\n");
-}
-
-[[maybe_unused]] static void print_records(void) {
-  puts("Task\t\tt_stamp\tposition");
-  for (size_t i = 0; i < record_idx; ++i) {
-    const auto [name, cycle, is_begin] = records[i];
-    printf("%s\t\t%lu\t%s\n", name, static_cast<unsigned long>(cycle),
-           (is_begin ? "in" : "out")); }
+  return result;
 }
 
 static void runtime_task_impl(void*) {
+  auto print_records = []() {
+    puts("Task\t\tTime(ns)\tposition");
+    for (size_t i = 0; i < record_idx; ++i) {
+      const auto [name, cycle, is_begin] = records[i];
+      mtxprintf("%s\t\t%lu\t%s\n", name,
+                static_cast<unsigned long>(static_cast<double>(cycle) /
+                                           SystemCoreClock * 1000 * 1000),
+                (is_begin ? "in" : "out"));
+    }
+    puts("");
+  };
+  auto print_stats = []() {
+    static constexpr uint8_t configNUM_TASKS = 10;
+    static char stat_buf[40 * configMAX_TASK_NAME_LEN * configNUM_TASKS];
+
+    vTaskGetRunTimeStats(stat_buf);
+    puts("=============================================");
+    mtxprintf("free heap:\t\t%u\n", xPortGetFreeHeapSize());
+    mtxprintf("ctx switches:\t\t%u\n", ctx_switch_cnt);
+    mtxprintf("record idx:\t\t%u\n", record_idx);
+    puts("Task\t\tTime\t\t%%");
+    mtxprintf("%s", stat_buf);
+
+    puts("---------------------------------------------");
+
+    vTaskList(stat_buf);
+    puts("Task\t\tState\tPrio\tStack\tNum");
+    mtxprintf("%s", stat_buf);
+    puts("=============================================\n");
+  };
+  auto normalize = []() {
+    auto initial_value = records.front().cycle;
+    for (auto& record : records) record.cycle -= initial_value;
+  };
+
   while (true) {
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+    normalize();
     print_records();
-    puts("");
     print_stats();
   }
 }
@@ -105,7 +128,7 @@ static void button_task_impl(void*) {
     ctx_switch_cnt = 0;
     taskEXIT_CRITICAL();
 
-    vTaskDelay(pdMS_TO_TICKS(1000)); // profile for 1s
+    vTaskDelay(pdMS_TO_TICKS(1000));  // profile for 1s
 
     task_switch_profiling_enabled = false;
     xTaskNotifyGive(runtime_task_hdl);
@@ -117,6 +140,7 @@ namespace freertos {
 void task_runtime_stats_init() {
   enable_dwt_cycle_count();
 
+  configASSERT((printf_semphr = xSemaphoreCreateMutex()));
   configASSERT((xTaskCreate(button_task_impl, "btn", configMINIMAL_STACK_SIZE,
                             NULL, osPriorityNormal, &button_task_hdl)));
   configASSERT(
