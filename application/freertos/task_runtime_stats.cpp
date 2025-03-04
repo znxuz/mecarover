@@ -5,7 +5,7 @@
 #include <main.h>
 #include <semphr.h>
 #include <stdarg.h>
-#include <stdio.h>
+#include <printf.h>
 
 static TaskHandle_t runtime_task_hdl;
 static TaskHandle_t button_task_hdl;
@@ -76,7 +76,7 @@ int mtxprintf(const char* format, ...) {
 
 static void runtime_task_impl(void*) {
   auto print_records = []() {
-    puts("Task\t\tTime(ns)\tposition");
+    mtxprintf("Task\t\tTime(ns)\tposition\n");
     for (size_t i = 0; i < record_idx; ++i) {
       const auto [name, cycle, is_begin] = records[i];
       mtxprintf("%s\t\t%lu\t%s\n", name,
@@ -84,26 +84,26 @@ static void runtime_task_impl(void*) {
                                            SystemCoreClock * 1000 * 1000),
                 (is_begin ? "in" : "out"));
     }
-    puts("");
+    mtxprintf("\n");
   };
   auto print_stats = []() {
     static constexpr uint8_t configNUM_TASKS = 10;
     static char stat_buf[40 * configMAX_TASK_NAME_LEN * configNUM_TASKS];
 
     vTaskGetRunTimeStats(stat_buf);
-    puts("=============================================");
+    mtxprintf("=============================================\n");
     mtxprintf("free heap:\t\t%u\n", xPortGetFreeHeapSize());
     mtxprintf("ctx switches:\t\t%u\n", ctx_switch_cnt);
     mtxprintf("record idx:\t\t%u\n", record_idx);
-    puts("Task\t\tTime\t\t%%");
+    mtxprintf("Task\t\tTime\t\t%%\n");
     mtxprintf("%s", stat_buf);
 
-    puts("---------------------------------------------");
+    mtxprintf("---------------------------------------------\n");
 
     vTaskList(stat_buf);
-    puts("Task\t\tState\tPrio\tStack\tNum");
+    mtxprintf("Task\t\tState\tPrio\tStack\tNum\n");
     mtxprintf("%s", stat_buf);
-    puts("=============================================\n");
+    mtxprintf("=============================================\n");
   };
   auto normalize = []() {
     auto initial_value = records.front().cycle;

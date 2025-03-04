@@ -37,12 +37,7 @@ void uart_write(const char* ptr, size_t len) {
   }
 }
 
-#ifdef USE_UART_STREAMBUF
-int _write(int file, char* ptr, int len) {
-  uart_write(ptr, len);
-  return len;
-}
-#endif
+void _putchar(char c) { uart_write((const char*)&c, 1); }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
   if (huart->Instance != huart3.Instance) return;

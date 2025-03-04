@@ -13,6 +13,7 @@ MICRO_ROS_LIB_DIR := $(MICRO_ROS_DIR)/microros_static_library/libmicroros
 MICRO_ROS_LIB := -L$(MICRO_ROS_LIB_DIR) -lmicroros
 EIGEN_DIR := third_party/eigen
 ULOG_DIR := third_party/ulog/src
+PRINTF_DIR := third_party/printf
 
 # ip on the host machine for the agent
 MICRO_ROS_AGENT_IP := 192.168.1.101
@@ -20,10 +21,9 @@ MICRO_ROS_AGENT_PORT := 8888
 ROS_DOMAIN_ID := 42
 USE_UDP_TRANSPORT := -DUSE_UDP_TRANSPORT
 
-# DEBUG := -DDEBUG -g3
 OPT := -Os
+# DEBUG := -DDEBUG -g3
 # ULOG_ENABLED := -DULOG_ENABLED
-USE_UART_STREAMBUF := -DUSE_UART_STREAMBUF
 
 BIN := $(BUILD_DIR)/$(NAME).bin
 EXECUTABLE := $(BUILD_DIR)/$(NAME).elf
@@ -59,14 +59,15 @@ INCL_PATHS := \
 			  -I$(ST_DIR_LWIP)/Target \
 			  -I$(EIGEN_DIR) \
 			  -I$(MICRO_ROS_LIB_DIR)/microros_include \
-			  -I$(ULOG_DIR)
+			  -I$(ULOG_DIR) \
+			  -I$(PRINTF_DIR)
 
 DEFS = \
 	   -DMICRO_ROS_AGENT_IP=\"$(MICRO_ROS_AGENT_IP)\" \
 	   -DMICRO_ROS_AGENT_PORT=\"$(MICRO_ROS_AGENT_PORT)\" \
 	   -DROS_DOMAIN_ID=$(ROS_DOMAIN_ID) \
 	   $(USE_UDP_TRANSPORT) \
-	   $(USE_UART_STREAMBUF)
+	   $(ULOG_ENABLED) \
 
 
 FLAGS = \
@@ -89,9 +90,9 @@ FLAGS = \
 		-MP \
 		-MF"$(@:%.o=%.d)" \
 		-MT"$@" \
+		-fno-builtin-printf \
 		$(INCL_PATHS) \
-		$(ULOG_ENABLED) \
-		$(DEFS)
+		$(DEFS) \
 
 CFLAGS = \
 		 $(FLAGS) \
@@ -116,7 +117,6 @@ LDFLAGS = \
 		  -Wl,-Map=$(MAP_FILES) \
 		  -Wl,--gc-sections \
 		  -static \
-		  -u_printf_float \
 		  -Wl,--start-group \
 		  -lc \
 		  -lm \
@@ -146,7 +146,9 @@ SRCS_PATHS := \
 			  $(ST_DIR_MW) \
 			  $(ST_DIR_LWIP) \
 			  $(MICRO_ROS_DIR) \
-			  $(ULOG_DIR)
+			  $(ULOG_DIR) \
+			  $(PRINTF_DIR)
+
 C_SRCS_EXCLS :=  \
 				 $(MICRO_ROS_DIR)/extra_sources/microros_transports/it_transport.c \
 				 $(MICRO_ROS_DIR)/extra_sources/microros_transports/udp_transport.c \
@@ -156,7 +158,7 @@ C_SRCS_EXCLS :=  \
 				 $(MICRO_ROS_DIR)/sample_main_udp.c
 C_SRCS := $(filter-out $(C_SRCS_EXCLS), \
 		  $(shell find $(SRCS_PATHS) -type f -name "*.c"))
-CPP_SRCS_EXCLS := application/micro_ros/lidar.cpp
+CPP_SRCS_EXCLS := application/micro_ros/lidar.cpp $(PRINTF_DIR)/test/test_suite.cpp
 CPP_SRCS := $(filter-out $(CPP_SRCS_EXCLS), \
 			$(shell find $(SRCS_PATHS) -type f -name "*.cpp"))
 S_SRC := startup_stm32f767xx.s

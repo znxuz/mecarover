@@ -7,3 +7,6 @@
 [submodule "ulog"]
 	path = third_party/ulog
 	url = https://github.com/rdpoor/ulog
+[submodule "third_party/printf"]
+	path = third_party/printf
+	url = https://github.com/mpaland/printf.git

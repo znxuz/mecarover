@@ -46,6 +46,7 @@ void my_console_logger(ulog_level_t severity, char* msg) {
 }
 
 void application_start(void) {
+  // ulog not enabled via macro for profiling
   ULOG_INIT();
   ULOG_SUBSCRIBE(my_console_logger, ULOG_DEBUG_LEVEL);
 

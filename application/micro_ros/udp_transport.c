@@ -3,7 +3,6 @@
 #include <netdb.h>
 #include <socket.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <string.h>
 #include <uxr/client/transport.h>
 
