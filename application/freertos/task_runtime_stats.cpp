@@ -12,10 +12,6 @@ static TaskHandle_t button_task_hdl;
 
 SemaphoreHandle_t printf_semphr;
 
-std::array<TaskRecord, 28000> records{};
-volatile size_t record_idx = 0;
-
-volatile bool task_switch_profiling_enabled = 0;
 volatile size_t ctx_switch_cnt = 0;
 
 extern "C" {
