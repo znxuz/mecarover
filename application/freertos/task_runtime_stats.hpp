@@ -3,6 +3,7 @@
 #include <FreeRTOS.h>
 #include <stm32f767xx.h>
 #include <task.h>
+
 #include <array>
 
 struct TaskRecord;

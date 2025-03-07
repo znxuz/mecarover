@@ -50,6 +50,7 @@ void task_switched_in_isr(const char* name) {
 void task_switched_out_isr(const char* name) {
   if (!task_switch_profiling_enabled) return;
 
+  records[record_idx].is_begin = false;
   records[record_idx].name = name;
   records[record_idx].cycle = DWT->CYCCNT;
   record_idx += 1;
