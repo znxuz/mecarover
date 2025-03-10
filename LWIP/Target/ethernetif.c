@@ -53,6 +53,11 @@
 #define ETH_TX_BUFFER_MAX             ((ETH_TX_DESC_CNT) * 2U)
 
 /* USER CODE BEGIN 1 */
+/* address has to be aligned to 32 bytes */
+#define ALIGN_ADDR(addr) ((uint32_t *)((uint32_t)(addr) & ~0x1F))
+#define ALIGN_SIZE(addr, size) ((size) + ((uint32_t)(addr) & 0x1f))
+#define FLUSH_CACHE_BY_ADDR(addr, size) \
+  SCB_CleanDCache_by_Addr(ALIGN_ADDR(addr), ALIGN_SIZE(addr, size))
 /* USER CODE END 1 */
 
 /* Private variables ---------------------------------------------------------*/
@@ -402,6 +407,8 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 
     Txbuffer[i].buffer = q->payload;
     Txbuffer[i].len = q->len;
+
+    FLUSH_CACHE_BY_ADDR(Txbuffer[i].buffer, Txbuffer[i].len);
 
     if(i>0)
     {

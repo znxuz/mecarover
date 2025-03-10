@@ -1,0 +1,11 @@
+--- tmp.c	2025-03-10 15:29:52.416450899 +0100
++++ LWIP/Target/ethernetif.c	2025-03-10 15:28:31.279113785 +0100
+@@ -408,6 +408,8 @@
+     Txbuffer[i].buffer = q->payload;
+     Txbuffer[i].len = q->len;
+ 
++    FLUSH_CACHE_BY_ADDR(Txbuffer[i].buffer, Txbuffer[i].len);
++
+     if(i>0)
+     {
+       Txbuffer[i-1].next = &Txbuffer[i];
