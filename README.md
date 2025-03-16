@@ -28,3 +28,8 @@ velocity data frames with embedded CRC, which will then be sent over to the MCU
 through a USB-CDC port defaulted to `/dev/ttyACM0`
 
 # Firmware
+
+# License
+
+This project uses the CRC++ library (by Daniel Bahr), which is licensed under
+the included LICENSE file.
