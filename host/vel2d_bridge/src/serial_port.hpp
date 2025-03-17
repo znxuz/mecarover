@@ -15,9 +15,12 @@
 template <size_t FRAME_SIZE>
 class SerialPort {
  public:
-  SerialPort(std::string_view name, speed_t baud_rate = B115200)
+  SerialPort(std::string_view name, speed_t baud_rate)
       : name_(name), baud_rate_(baud_rate) {
-    open_fd();
+    fd_ = open(name_.data(), O_WRONLY | O_NOCTTY | O_SYNC);
+    if (fd_ < 0)
+      throw std::system_error(errno, std::generic_category(),
+                              "Failed to open port");
     configure();
   }
 
@@ -39,19 +42,20 @@ class SerialPort {
     return *this;
   }
 
-  bool send(const uint8_t *data) { return write(fd_, data, FRAME_SIZE); }
+  bool send(const uint8_t *data) {
+    auto written = write(fd_, data, FRAME_SIZE);
+    if (written < 0)
+      throw std::system_error(errno, std::generic_category(),
+                              "Failed to write data");
+
+    tcdrain(fd_);  // Wait until all data is transmitted
+    return written == FRAME_SIZE;
+  }
 
  private:
   std::string_view name_;
   speed_t baud_rate_;
   int fd_ = -1;
-
-  void open_fd() {
-    fd_ = open(name_.data(), O_RDWR);
-    if (fd_ < 0)
-      throw std::system_error(errno, std::generic_category(),
-                              "Failed to open port");
-  }
 
   void close_fd() {
     if (fd_ != -1) close(fd_);
@@ -79,7 +83,7 @@ class SerialPort {
     tty.c_oflag &= ~OPOST;  // prevent special interpretation of output bytes
     tty.c_oflag &= ~ONLCR;  // prevent conversion of newline to crlf feed
 
-    cfsetspeed(&tty, B115200);
+    cfsetspeed(&tty, baud_rate_);
     if (tcsetattr(fd_, TCSANOW, &tty))
       throw std::system_error(errno, std::generic_category(),
                               "Failed to set port attributes");

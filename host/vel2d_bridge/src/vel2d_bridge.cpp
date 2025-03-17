@@ -24,7 +24,7 @@ class Vel2dBridge : public rclcpp::Node {
             RCLCPP_ERROR(this->get_logger(), "write failed");
             return;
           }
-          RCLCPP_INFO(this->get_logger(), "sending [%f, %f, %f], crc: %u",
+          RCLCPP_INFO(this->get_logger(), "sent [%f, %f, %f], crc: %u",
                       frame.vel.x, frame.vel.y, frame.vel.z, frame.crc);
         });
   }
