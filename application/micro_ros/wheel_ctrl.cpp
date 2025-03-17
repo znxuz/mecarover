@@ -76,7 +76,7 @@ static VelWheel pid_ctrl(const real_t dt) {
 
   const auto derivative = (err - std::exchange(prev_err, err)) / dt;  // unused
 
-  return VelWheel::Zero();
+  return wheel_vel_sp;
   return wheel_vel_sp + K_P * err + K_I * integral + K_D * derivative;
 }
 
