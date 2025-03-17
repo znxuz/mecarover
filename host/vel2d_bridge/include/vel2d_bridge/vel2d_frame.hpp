@@ -5,7 +5,7 @@
 struct Vel2d {
   double x;
   double y;
-  double z;
+  double omega;
 };
 
 struct Vel2dFrame {
@@ -13,9 +13,7 @@ struct Vel2dFrame {
   uint32_t crc;
 
   Vel2dFrame(Vel2d vel);
-
   const uint8_t* data() const { return reinterpret_cast<const uint8_t*>(this); }
-
   bool compare(uint32_t rhs) { return crc == rhs; }
 
 } __attribute__((packed));

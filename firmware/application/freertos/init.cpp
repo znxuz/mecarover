@@ -13,7 +13,7 @@ namespace freertos {
 void task_odom_init();
 void task_pose_ctrl_init();
 void task_vel_recv_init();
-void task_hal_fetch();
+void task_hal_fetch_init();
 void task_wheel_ctrl_init();
 void task_runtime_stats_init();
 
@@ -26,7 +26,7 @@ void init() {
 
   hal_init();
   queues_init();
-  task_hal_fetch();
+  task_hal_fetch_init();
   task_vel_recv_init();
   task_pose_ctrl_init();
   task_wheel_ctrl_init();

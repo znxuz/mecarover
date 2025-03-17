@@ -32,18 +32,6 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart, uint16_t size) {
   HAL_UARTEx_ReceiveToIdle_IT(&huart3, uart_rx_buf, sizeof(uart_rx_buf));
 }
 
-// void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart) {
-//   if (huart->Instance == huart3.Instance) {
-//     configASSERT(task_handle != NULL);
-//
-//     BaseType_t xHigherPriorityTaskWoken;
-//     vTaskNotifyGiveFromISR(task_handle, &xHigherPriorityTaskWoken);
-//     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-//
-//     HAL_UART_Receive_IT(&huart3, uart_rx_buf, sizeof(uart_rx_buf));
-//   }
-// }
-
 static void task_impl(void*) {
   constexpr TickType_t NO_BLOCK = 0;
   size_t len = 0;
@@ -54,9 +42,7 @@ static void task_impl(void*) {
   while (true) {
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
-    taskENTER_CRITICAL();
-    len = rx_len;
-    taskEXIT_CRITICAL();
+    len = rx_len;  // atomic access shouldn't need to protected
 
     if (len != VEL2D_FRAME_LEN) {
       ULOG_ERROR("parsing velocity failed: insufficient bytes received");
@@ -64,9 +50,9 @@ static void task_impl(void*) {
     }
 
     auto frame = *reinterpret_cast<const Vel2dFrame*>(uart_rx_buf);
-    auto* data = reinterpret_cast<uint8_t*>(&frame.vel);
+    auto* vel_data = reinterpret_cast<uint8_t*>(&frame.vel);
     if (!frame.compare(HAL_CRC_Calculate(
-            &hcrc, reinterpret_cast<uint32_t*>(data), sizeof(frame.vel)))) {
+            &hcrc, reinterpret_cast<uint32_t*>(vel_data), sizeof(frame.vel)))) {
       ULOG_ERROR("crc mismatch!");
       ++crc_err;
       continue;
@@ -75,7 +61,8 @@ static void task_impl(void*) {
     frame.vel.x *= 1000;  // m to mm
     frame.vel.y *= 1000;  // m to mm
 
-    ULOG_INFO("[recv vel] [%f %f %f]", frame.vel.x, frame.vel.y, frame.vel.z);
+    ULOG_INFO("[recv vel] [%f %f %f]", frame.vel.x, frame.vel.y,
+              frame.vel.omega);
 
     xQueueSend(freertos::vel_sp_queue, &frame.vel, NO_BLOCK);
   }

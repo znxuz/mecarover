@@ -33,7 +33,7 @@ static void task_impl(void*) {
 
 namespace freertos {
 
-void task_hal_fetch() {
+void task_hal_fetch_init() {
   constexpr size_t STACK_SIZE = configMINIMAL_STACK_SIZE * 4;
 #ifdef FREERTOS_STATIC_INIT
   static StackType_t taskStack[STACK_SIZE];
