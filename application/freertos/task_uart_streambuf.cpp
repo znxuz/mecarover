@@ -18,6 +18,19 @@ static volatile size_t write_idx;
 
 static uint8_t read_iteration[BUF_SIZE];
 
+namespace {
+constexpr uintptr_t align_addr(uintptr_t addr) { return addr & ~0x1F; }
+
+constexpr size_t align_size(uintptr_t addr, size_t size) {
+  return size + (uint32_t)((addr) & 0x1F);
+}
+
+void flush_cache_by_addr(uintptr_t addr, size_t size) {
+  SCB_CleanDCache_by_Addr(reinterpret_cast<uint32_t*>(align_addr(addr)),
+                          align_size(addr, size));
+}
+}  // namespace
+
 extern "C" {
 void uart_write(const char* ptr, size_t len) {
   static uint8_t write_iteration;
@@ -48,6 +61,11 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
 }
 
 static void task_uart_streambuf(void*) {
+  auto flush_write_ring_buf = [](size_t read_idx, size_t size) {
+    flush_cache_by_addr(reinterpret_cast<uintptr_t>(ring_buf + read_idx), size);
+    HAL_UART_Transmit_DMA(&huart3, ring_buf + read_idx, size);
+  };
+
   size_t read_idx = 0;
   while (true) {
     xSemaphoreTake(task_semphr, portMAX_DELAY);
@@ -56,18 +74,18 @@ static void task_uart_streambuf(void*) {
     if (read_idx == end) continue;  // just for safety
     if (read_idx < end) {
       size_t size = end - read_idx;
-      HAL_UART_Transmit_DMA(&huart3, ring_buf + read_idx, size);
+      flush_write_ring_buf(read_idx, size);
       ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
       for (size_t i = read_idx; i < end; ++i) read_iteration[i] += 1;
       read_idx = end;
     } else {
       size_t size = BUF_SIZE - read_idx;
-      HAL_UART_Transmit_DMA(&huart3, ring_buf + read_idx, size);
+      flush_write_ring_buf(read_idx, size);
       ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
       for (size_t i = read_idx; i < BUF_SIZE; ++i) read_iteration[i] += 1;
       read_idx = 0;
       if (end) {
-        HAL_UART_Transmit_DMA(&huart3, ring_buf, end);
+        flush_write_ring_buf(0, end);
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         for (size_t i = read_idx; i < end; ++i) read_iteration[i] += 1;
         read_idx = end;
