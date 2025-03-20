@@ -18,24 +18,11 @@ static volatile size_t write_idx;
 
 static uint8_t read_iteration[BUF_SIZE];
 
-namespace {
-constexpr uintptr_t align_addr(uintptr_t addr) { return addr & ~0x1F; }
-
-constexpr size_t align_size(uintptr_t addr, size_t size) {
-  return size + (uint32_t)((addr) & 0x1F);
-}
-
-void flush_cache_by_addr(uintptr_t addr, size_t size) {
-  SCB_CleanDCache_by_Addr(reinterpret_cast<uint32_t*>(align_addr(addr)),
-                          align_size(addr, size));
-}
-}  // namespace
-
 extern "C" {
-void uart_write(const char* ptr, size_t len) {
+void rbuf_write(const char* ptr, size_t len) {
   static uint8_t write_iteration;
   for (size_t i = 0; i < len; ++i) {
-    if (!write_iteration)
+    if (!write_iteration)  // handle overflow
       while (write_iteration != read_iteration[write_idx]) vTaskDelay(1);
     else
       while (write_iteration > read_iteration[write_idx]) vTaskDelay(1);
@@ -50,7 +37,7 @@ void uart_write(const char* ptr, size_t len) {
   }
 }
 
-void _putchar(char c) { uart_write((const char*)&c, 1); }
+void _putchar(char c) { rbuf_write((const char*)&c, 1); }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
   if (huart->Instance != huart3.Instance) return;
@@ -59,10 +46,24 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
   vTaskNotifyGiveFromISR(task_hdl, &xHigherPriorityTaskWoken);
   portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
+}
 
-static void task_uart_streambuf(void*) {
+namespace {
+constexpr uintptr_t align_addr(uintptr_t addr) { return addr & ~0x1F; }
+
+constexpr size_t align_size(uintptr_t addr, size_t size) {
+  return size + ((addr) & 0x1F);
+}
+
+void flush_cache_by_addr_aligned(uintptr_t addr, size_t size) {
+  SCB_CleanDCache_by_Addr(reinterpret_cast<uint32_t*>(align_addr(addr)),
+                          align_size(addr, size));
+}
+
+void task_uart_streambuf(void*) {
   auto flush_write_ring_buf = [](size_t read_idx, size_t size) {
-    flush_cache_by_addr(reinterpret_cast<uintptr_t>(ring_buf + read_idx), size);
+    flush_cache_by_addr_aligned(
+        reinterpret_cast<uintptr_t>(ring_buf + read_idx), size);
     HAL_UART_Transmit_DMA(&huart3, ring_buf + read_idx, size);
   };
 
@@ -93,7 +94,7 @@ static void task_uart_streambuf(void*) {
     }
   }
 }
-}
+}  // namespace
 
 namespace freertos {
 void task_uart_streambuf_init() {

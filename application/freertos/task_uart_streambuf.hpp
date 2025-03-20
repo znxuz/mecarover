@@ -1,7 +1,7 @@
 #pragma once
 
 extern "C" {
-void uart_write(const char* ptr, int len);
+void rbuf_write(const char* ptr, int len);
 }
 
 namespace freertos {

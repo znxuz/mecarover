@@ -3,16 +3,14 @@
 #include <FreeRTOS.h>
 #include <cmsis_os2.h>
 #include <main.h>
+#include <printf.h>
 #include <semphr.h>
 #include <stdarg.h>
-#include <printf.h>
 
-static TaskHandle_t runtime_task_hdl;
 static TaskHandle_t button_task_hdl;
+static TaskHandle_t runtime_task_hdl;
 
-SemaphoreHandle_t printf_semphr;
-
-volatile size_t ctx_switch_cnt = 0;
+static volatile size_t ctx_switch_cnt = 0;
 
 extern "C" {
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
@@ -52,13 +50,10 @@ void task_switched_out_isr(const char* name) {
   record_idx += 1;
   ctx_switch_cnt += 1;
 }
-
-static void enable_dwt_cycle_count() {
-  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-  DWT->LAR = 0xC5ACCE55;  // software unlock
-  DWT->CYCCNT = 1;
-  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 }
+
+namespace {
+SemaphoreHandle_t printf_semphr;
 
 int mtxprintf(const char* format, ...) {
   xSemaphoreTake(printf_semphr, portMAX_DELAY);
@@ -71,7 +66,31 @@ int mtxprintf(const char* format, ...) {
   return result;
 }
 
-static void runtime_task_impl(void*) {
+void enable_dwt_cycle_count() {
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->LAR = 0xC5ACCE55;  // software unlock
+  DWT->CYCCNT = 1;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+}
+
+void button_task_impl(void*) {
+  while (true) {
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+    taskENTER_CRITICAL();
+    task_switch_profiling_enabled = true;
+    record_idx = 0;
+    ctx_switch_cnt = 0;
+    taskEXIT_CRITICAL();
+
+    vTaskDelay(pdMS_TO_TICKS(1000));  // profile for 1s
+
+    task_switch_profiling_enabled = false;
+    xTaskNotifyGive(runtime_task_hdl);
+  }
+}
+
+void runtime_task_impl(void*) {
   auto print_records = []() {
     mtxprintf("Task\t\tTime(ns)\tposition\n");
     for (size_t i = 0; i < record_idx; ++i) {
@@ -104,7 +123,7 @@ static void runtime_task_impl(void*) {
   };
   auto normalize = []() {
     auto initial_value = records.front().cycle;
-    for (auto& record : records) record.cycle -= initial_value;
+    for (size_t i = 0; i < record_idx; ++i) records[i].cycle -= initial_value;
   };
 
   while (true) {
@@ -114,24 +133,7 @@ static void runtime_task_impl(void*) {
     print_stats();
   }
 }
-
-static void button_task_impl(void*) {
-  while (true) {
-    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-
-    taskENTER_CRITICAL();
-    task_switch_profiling_enabled = true;
-    record_idx = 0;
-    ctx_switch_cnt = 0;
-    taskEXIT_CRITICAL();
-
-    vTaskDelay(pdMS_TO_TICKS(1000));  // profile for 1s
-
-    task_switch_profiling_enabled = false;
-    xTaskNotifyGive(runtime_task_hdl);
-  }
-}
-}
+}  // namespace
 
 namespace freertos {
 void task_runtime_stats_init() {

@@ -14,7 +14,6 @@ struct TaskRecord {
 
 inline std::array<TaskRecord, 28000> records{};
 volatile inline size_t record_idx = 0;
-
 volatile inline bool task_switch_profiling_enabled = 0;
 
 struct cycle_stamp {
