@@ -49,49 +49,46 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
 }
 
 namespace {
-constexpr uintptr_t align_addr(uintptr_t addr) { return addr & ~0x1F; }
 
-constexpr size_t align_size(uintptr_t addr, size_t size) {
-  return size + ((addr) & 0x1F);
-}
+void flush_cache_aligned(uintptr_t addr, size_t size) {
+  constexpr auto align_addr = [](uintptr_t addr) { return addr & ~0x1F; };
+  constexpr auto align_size = [](uintptr_t addr, size_t size) {
+    return size + ((addr) & 0x1F);
+  };
 
-void flush_cache_by_addr_aligned(uintptr_t addr, size_t size) {
   SCB_CleanDCache_by_Addr(reinterpret_cast<uint32_t*>(align_addr(addr)),
                           align_size(addr, size));
 }
 
-void task_uart_streambuf(void*) {
-  auto flush_write_ring_buf = [](size_t read_idx, size_t size) {
-    flush_cache_by_addr_aligned(
-        reinterpret_cast<uintptr_t>(ring_buf + read_idx), size);
-    HAL_UART_Transmit_DMA(&huart3, ring_buf + read_idx, size);
-  };
+void write_and_wait(size_t pos, size_t size) {
+  flush_cache_aligned(reinterpret_cast<uintptr_t>(ring_buf + pos), size);
+  HAL_UART_Transmit_DMA(&huart3, ring_buf + pos, size);
 
-  size_t read_idx = 0;
+  ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+}
+
+void update_read_iteration(size_t pos, size_t size) {
+  for (size_t i = 0; i < size; ++i) read_iteration[pos++] += 1;
+}
+
+void task_uart_streambuf(void*) {
+  size_t start = 0;
   while (true) {
     xSemaphoreTake(task_semphr, portMAX_DELAY);
 
     auto end = write_idx;
-    if (read_idx == end) continue;  // just for safety
-    if (read_idx < end) {
-      size_t size = end - read_idx;
-      flush_write_ring_buf(read_idx, size);
-      ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-      for (size_t i = read_idx; i < end; ++i) read_iteration[i] += 1;
-      read_idx = end;
-    } else {
-      size_t size = BUF_SIZE - read_idx;
-      flush_write_ring_buf(read_idx, size);
-      ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-      for (size_t i = read_idx; i < BUF_SIZE; ++i) read_iteration[i] += 1;
-      read_idx = 0;
-      if (end) {
-        flush_write_ring_buf(0, end);
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        for (size_t i = read_idx; i < end; ++i) read_iteration[i] += 1;
-        read_idx = end;
-      }
+    if (start == end) continue;  // just for safety
+
+    auto size = (start < end ? end : BUF_SIZE) - start;
+    write_and_wait(start, size);
+    update_read_iteration(start, size);
+
+    if (start > end && end) {
+      write_and_wait(0, end);
+      update_read_iteration(0, end);
     }
+
+    start = end;
   }
 }
 }  // namespace
