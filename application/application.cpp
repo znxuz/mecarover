@@ -8,7 +8,7 @@
 #include <ulog.h>
 #include <usart.h>
 
-#include <application/freertos/task_uart_streambuf.hpp>
+#include <application/freertos/task_uart_queue.hpp>
 #include <application/hal/hal.hpp>
 #include <application/micro_ros/micro_ros.hpp>
 #include <application/robot_params.hpp>
@@ -43,6 +43,14 @@ void my_console_logger(ulog_level_t severity, char* msg) {
 
   printf("%02d:%02d:%02d [%s]: %s\n", sTime.Hours, sTime.Minutes, sTime.Seconds,
          ulog_level_name(severity), msg);
+}
+
+// void _putchar(char c) { uq_write((const char*)&c, 1); }
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
+  if (huart->Instance != huart3.Instance) return;
+
+  transfer_cplt_callback();
 }
 
 void application_start(void) {

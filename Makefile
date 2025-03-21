@@ -100,7 +100,7 @@ CFLAGS = \
 
 CPPFLAGS = \
 		   $(FLAGS) \
-		   -std=gnu++20 \
+		   -std=gnu++23 \
 		   -fno-rtti \
 		   -fno-use-cxa-atexit
 

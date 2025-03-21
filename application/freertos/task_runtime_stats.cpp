@@ -7,6 +7,8 @@
 #include <semphr.h>
 #include <stdarg.h>
 
+#include "task_uart_queue.hpp"
+
 static TaskHandle_t button_task_hdl;
 static TaskHandle_t runtime_task_hdl;
 
@@ -53,17 +55,18 @@ void task_switched_out_isr(const char* name) {
 }
 
 namespace {
-SemaphoreHandle_t printf_semphr;
+int uq_printf(const char* format, ...) {
+  static char buffer[1000];
 
-int mtxprintf(const char* format, ...) {
-  xSemaphoreTake(printf_semphr, portMAX_DELAY);
   va_list args;
   va_start(args, format);
-  int result = vprintf(format, args);
+  size_t size = vsnprintf(buffer, sizeof(buffer), format, args);
   va_end(args);
-  xSemaphoreGive(printf_semphr);
 
-  return result;
+  configASSERT(size <= sizeof(buffer));
+  uq_write(buffer, size);
+
+  return size;
 }
 
 void enable_dwt_cycle_count() {
@@ -92,34 +95,34 @@ void button_task_impl(void*) {
 
 void runtime_task_impl(void*) {
   auto print_records = []() {
-    mtxprintf("Task\t\tTime(ns)\tposition\n");
+    uq_printf("Task\t\tTime(ns)\tposition\n");
     for (size_t i = 0; i < record_idx; ++i) {
       const auto [name, cycle, is_begin] = records[i];
-      mtxprintf("%s\t\t%lu\t%s\n", name,
-                static_cast<unsigned long>(static_cast<double>(cycle) /
-                                           SystemCoreClock * 1000 * 1000),
-                (is_begin ? "in" : "out"));
+      uq_printf("%s\t\t%lu\t%s\n", name,
+                    static_cast<unsigned long>(static_cast<double>(cycle) /
+                                               SystemCoreClock * 1000 * 1000),
+                    (is_begin ? "in" : "out"));
     }
-    mtxprintf("\n");
+    uq_printf("\n");
   };
   auto print_stats = []() {
     static constexpr uint8_t configNUM_TASKS = 10;
     static char stat_buf[40 * configMAX_TASK_NAME_LEN * configNUM_TASKS];
 
     vTaskGetRunTimeStats(stat_buf);
-    mtxprintf("=============================================\n");
-    mtxprintf("free heap:\t\t%u\n", xPortGetFreeHeapSize());
-    mtxprintf("ctx switches:\t\t%u\n", ctx_switch_cnt);
-    mtxprintf("record idx:\t\t%u\n", record_idx);
-    mtxprintf("Task\t\tTime\t\t%%\n");
-    mtxprintf("%s", stat_buf);
+    uq_printf("=============================================\n");
+    uq_printf("free heap:\t\t%u\n", xPortGetFreeHeapSize());
+    uq_printf("ctx switches:\t\t%u\n", ctx_switch_cnt);
+    uq_printf("record idx:\t\t%u\n", record_idx);
+    uq_printf("Task\t\tTime\t\t%%\n");
+    uq_printf("%s", stat_buf);
 
-    mtxprintf("---------------------------------------------\n");
+    uq_printf("---------------------------------------------\n");
 
     vTaskList(stat_buf);
-    mtxprintf("Task\t\tState\tPrio\tStack\tNum\n");
-    mtxprintf("%s", stat_buf);
-    mtxprintf("=============================================\n");
+    uq_printf("Task\t\tState\tPrio\tStack\tNum\n");
+    uq_printf("%s", stat_buf);
+    uq_printf("=============================================\n");
   };
   auto normalize = []() {
     auto initial_value = records.front().cycle;
@@ -139,7 +142,6 @@ namespace freertos {
 void task_runtime_stats_init() {
   enable_dwt_cycle_count();
 
-  configASSERT((printf_semphr = xSemaphoreCreateMutex()));
   configASSERT((xTaskCreate(button_task_impl, "btn", configMINIMAL_STACK_SIZE,
                             NULL, osPriorityNormal, &button_task_hdl)));
   configASSERT(
