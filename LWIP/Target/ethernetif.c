@@ -54,10 +54,10 @@
 
 /* USER CODE BEGIN 1 */
 /* address has to be aligned to 32 bytes */
-#define ALIGN_ADDR(addr) ((uint32_t *)((uint32_t)(addr) & ~0x1F))
-#define ALIGN_SIZE(addr, size) ((size) + ((uint32_t)(addr) & 0x1f))
+#define ALIGN_ADDR(addr) ((uintptr_t)(addr) & ~0x1F)
+#define ALIGN_SIZE(addr, size) ((size) + ((uintptr_t)(addr) & 0x1f))
 #define FLUSH_CACHE_BY_ADDR(addr, size) \
-  SCB_CleanDCache_by_Addr(ALIGN_ADDR(addr), ALIGN_SIZE(addr, size))
+  SCB_CleanDCache_by_Addr((uint32_t *)ALIGN_ADDR(addr), ALIGN_SIZE(addr, size))
 /* USER CODE END 1 */
 
 /* Private variables ---------------------------------------------------------*/

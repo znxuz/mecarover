@@ -1,6 +1,17 @@
---- tmp.c	2025-03-10 15:29:52.416450899 +0100
-+++ LWIP/Target/ethernetif.c	2025-03-10 15:28:31.279113785 +0100
-@@ -408,6 +408,8 @@
+--- LWIP/Target/ethernetif.c	2025-03-21 10:51:27.512207723 +0100
++++ LWIP/Target/ethernetif.c.fix	2025-03-21 10:50:30.055012011 +0100
+@@ -54,6 +54,10 @@
+ 
+ /* USER CODE BEGIN 1 */
+ /* address has to be aligned to 32 bytes */
++#define ALIGN_ADDR(addr) ((uintptr_t)(addr) & ~0x1F)
++#define ALIGN_SIZE(addr, size) ((size) + ((uintptr_t)(addr) & 0x1f))
++#define FLUSH_CACHE_BY_ADDR(addr, size) \
++  SCB_CleanDCache_by_Addr((uint32_t *)ALIGN_ADDR(addr), ALIGN_SIZE(addr, size))
+ /* USER CODE END 1 */
+ 
+ /* Private variables ---------------------------------------------------------*/
+@@ -404,6 +408,8 @@
      Txbuffer[i].buffer = q->payload;
      Txbuffer[i].len = q->len;
  
