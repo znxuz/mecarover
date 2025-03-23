@@ -14,7 +14,7 @@
 #include <rclc/types.h>
 #include <ulog.h>
 
-#include <application/freertos/task_runtime_stats.hpp>
+#include <application/freertos/task_records.hpp>
 #include <application/jacobi_transformation.hpp>
 #include <application/pose_types.hpp>
 #include <application/robot_params.hpp>

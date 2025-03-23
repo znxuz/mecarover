@@ -7,6 +7,7 @@
 #include <semphr.h>
 #include <stdarg.h>
 
+#include "task_records.hpp"
 #include "task_uart_queue.hpp"
 
 static TaskHandle_t button_task_hdl;
@@ -99,9 +100,9 @@ void runtime_task_impl(void*) {
     for (size_t i = 0; i < record_idx; ++i) {
       const auto [name, cycle, is_begin] = records[i];
       uq_printf("%s\t\t%lu\t%s\n", name,
-                    static_cast<unsigned long>(static_cast<double>(cycle) /
-                                               SystemCoreClock * 1000 * 1000),
-                    (is_begin ? "in" : "out"));
+                static_cast<unsigned long>(static_cast<double>(cycle) /
+                                           SystemCoreClock * 1000 * 1000),
+                (is_begin ? "in" : "out"));
     }
     uq_printf("\n");
   };
@@ -131,9 +132,14 @@ void runtime_task_impl(void*) {
 
   while (true) {
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+    auto cycle = DWT->CYCCNT;
     normalize();
     print_records();
     print_stats();
+    uq_printf(
+        "output took %u us\n",
+        static_cast<unsigned long>(static_cast<double>(DWT->CYCCNT - cycle) /
+                                   SystemCoreClock * 1000 * 1000));
   }
 }
 }  // namespace

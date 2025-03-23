@@ -9,7 +9,7 @@
 #include <ulog.h>
 
 #include <algorithm>
-#include <application/freertos/task_runtime_stats.hpp>
+#include <application/freertos/task_records.hpp>
 #include <application/hal/hal.hpp>
 #include <application/robot_params.hpp>
 #include <utility>
