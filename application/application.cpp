@@ -55,7 +55,7 @@ void application_start(void) {
   ULOG_INIT();
   ULOG_SUBSCRIBE(my_console_logger, ULOG_DEBUG_LEVEL);
 
-  auto uq_consume = [](const uint8_t* buf, size_t size) {
+  auto uq_consume = [](const uint8_t* buf, size_t size) static {
     auto flush_cache_aligned = [](uintptr_t addr, size_t size) static {
       constexpr auto align_addr = [](uintptr_t addr) { return addr & ~0x1F; };
       constexpr auto align_size = [](uintptr_t addr, size_t size) {

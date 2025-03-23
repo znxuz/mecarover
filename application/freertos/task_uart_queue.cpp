@@ -68,11 +68,17 @@ namespace freertos {
 void task_uart_queue_init(consume_function f) {
   consume = f;
 
-  // TODO statically allocate
-  configASSERT((write_semphr = xSemaphoreCreateMutex()));
-  configASSERT((task_semphr = xSemaphoreCreateBinary()));
-  configASSERT((xTaskCreate(task_uart_consume, "uart_consume",
-                            configMINIMAL_STACK_SIZE * 4, NULL,
-                            osPriorityAboveNormal, &task_hdl) == pdPASS));
+  static StaticSemaphore_t write_semphr_buffer, task_semphr_buffer;
+  configASSERT(
+      (write_semphr = xSemaphoreCreateMutexStatic(&write_semphr_buffer)));
+  configASSERT(
+      (task_semphr = xSemaphoreCreateBinaryStatic(&task_semphr_buffer)));
+
+  constexpr size_t STACK_SIZE = configMINIMAL_STACK_SIZE * 4;
+  static StackType_t task_stack[STACK_SIZE];
+  static StaticTask_t task_buffer;
+  configASSERT((task_hdl = xTaskCreateStatic(
+                    task_uart_consume, "uart_consume", STACK_SIZE, NULL,
+                    osPriorityAboveNormal, task_stack, &task_buffer)) != NULL)
 }
 }  // namespace freertos
