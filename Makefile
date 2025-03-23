@@ -14,6 +14,7 @@ MICRO_ROS_LIB := -L$(MICRO_ROS_LIB_DIR) -lmicroros
 EIGEN_DIR := third_party/eigen
 ULOG_DIR := third_party/ulog/src
 PRINTF_DIR := third_party/printf
+CCB_DIR := third_party/freertos-threadsafe-sink
 
 # ip on the host machine for the agent
 MICRO_ROS_AGENT_IP := 192.168.1.101
@@ -60,7 +61,8 @@ INCL_PATHS := \
 			  -I$(EIGEN_DIR) \
 			  -I$(MICRO_ROS_LIB_DIR)/microros_include \
 			  -I$(ULOG_DIR) \
-			  -I$(PRINTF_DIR)
+			  -I$(PRINTF_DIR) \
+			  -I$(CCB_DIR)
 
 DEFS = \
 	   -DMICRO_ROS_AGENT_IP=\"$(MICRO_ROS_AGENT_IP)\" \
@@ -147,7 +149,8 @@ SRCS_PATHS := \
 			  $(ST_DIR_LWIP) \
 			  $(MICRO_ROS_DIR) \
 			  $(ULOG_DIR) \
-			  $(PRINTF_DIR)
+			  $(PRINTF_DIR) \
+			  $(CCB_DIR)
 
 C_SRCS_EXCLS :=  \
 				 $(MICRO_ROS_DIR)/extra_sources/microros_transports/it_transport.c \
@@ -156,9 +159,10 @@ C_SRCS_EXCLS :=  \
 				 $(MICRO_ROS_DIR)/sample_main.c \
 				 $(MICRO_ROS_DIR)/sample_main_embeddedrtps.c \
 				 $(MICRO_ROS_DIR)/sample_main_udp.c
+CPP_SRCS_EXCLS := \
+				  application/micro_ros/lidar.cpp $(PRINTF_DIR)/test/test_suite.cpp
 C_SRCS := $(filter-out $(C_SRCS_EXCLS), \
 		  $(shell find $(SRCS_PATHS) -type f -name "*.c"))
-CPP_SRCS_EXCLS := application/micro_ros/lidar.cpp $(PRINTF_DIR)/test/test_suite.cpp
 CPP_SRCS := $(filter-out $(CPP_SRCS_EXCLS), \
 			$(shell find $(SRCS_PATHS) -type f -name "*.cpp"))
 S_SRC := startup_stm32f767xx.s

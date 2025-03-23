@@ -7,8 +7,9 @@
 #include <semphr.h>
 #include <stdarg.h>
 
+#include <threadsafe_sink.hpp>
+
 #include "task_records.hpp"
-#include "task_uart_queue.hpp"
 
 static TaskHandle_t button_task_hdl;
 static TaskHandle_t runtime_task_hdl;
@@ -65,7 +66,7 @@ int uq_printf(const char* format, ...) {
   va_end(args);
 
   configASSERT(size <= sizeof(buffer));
-  uq_write(buffer, size);
+  freertos::csink_write(buffer, size);
 
   return size;
 }

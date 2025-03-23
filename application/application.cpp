@@ -9,10 +9,10 @@
 #include <usart.h>
 
 #include <application/freertos/task_runtime_stats.hpp>
-#include <application/freertos/task_uart_queue.hpp>
 #include <application/hal/hal.hpp>
 #include <application/micro_ros/micro_ros.hpp>
 #include <application/robot_params.hpp>
+#include <threadsafe_sink.hpp>
 
 extern "C" {
 
@@ -47,7 +47,7 @@ void my_console_logger(ulog_level_t severity, char* msg) {
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
   if (huart->Instance != huart3.Instance) return;
 
-  uq_consume_complete();
+  freertos::csink_consume_complete<freertos::CALLSITE::ISR>();
 }
 
 void application_start(void) {
@@ -70,7 +70,7 @@ void application_start(void) {
     HAL_UART_Transmit_DMA(&huart3, buf, size);
   };
 
-  freertos::task_uart_queue_init(uq_consume);
+  freertos::csink_init(uq_consume, osPriorityAboveNormal);
   freertos::task_runtime_stats_init();
   xTaskCreate(micro_ros, "uros", 3000, NULL, osPriorityNormal, NULL);
 
