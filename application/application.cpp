@@ -42,12 +42,10 @@ void my_console_logger(ulog_level_t severity, char* msg) {
          ulog_level_name(severity), msg);
 }
 
-// void _putchar(char c) { uq_write((const char*)&c, 1); }
-
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
   if (huart->Instance != huart3.Instance) return;
 
-  freertos::csink_consume_complete<freertos::CALLSITE::ISR>();
+  freertos::tsink_consume_complete<freertos::CALLSITE::ISR>();
 }
 
 void application_start(void) {
@@ -55,7 +53,7 @@ void application_start(void) {
   ULOG_INIT();
   ULOG_SUBSCRIBE(my_console_logger, ULOG_DEBUG_LEVEL);
 
-  auto uq_consume = [](const uint8_t* buf, size_t size) static {
+  auto tsink_consume = [](const uint8_t* buf, size_t size) static {
     auto flush_cache_aligned = [](uintptr_t addr, size_t size) static {
       constexpr auto align_addr = [](uintptr_t addr) { return addr & ~0x1F; };
       constexpr auto align_size = [](uintptr_t addr, size_t size) {
@@ -70,7 +68,7 @@ void application_start(void) {
     HAL_UART_Transmit_DMA(&huart3, buf, size);
   };
 
-  freertos::csink_init(uq_consume, osPriorityAboveNormal);
+  freertos::tsink_init(tsink_consume, osPriorityAboveNormal);
   freertos::task_runtime_stats_init();
   xTaskCreate(micro_ros, "uros", 3000, NULL, osPriorityNormal, NULL);
 

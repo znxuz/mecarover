@@ -14,7 +14,7 @@ MICRO_ROS_LIB := -L$(MICRO_ROS_LIB_DIR) -lmicroros
 EIGEN_DIR := third_party/eigen
 ULOG_DIR := third_party/ulog/src
 PRINTF_DIR := third_party/printf
-CCB_DIR := third_party/freertos-threadsafe-sink
+TSINK_DIR := third_party/freertos-threadsafe-sink
 
 # ip on the host machine for the agent
 MICRO_ROS_AGENT_IP := 192.168.1.101
@@ -62,7 +62,7 @@ INCL_PATHS := \
 			  -I$(MICRO_ROS_LIB_DIR)/microros_include \
 			  -I$(ULOG_DIR) \
 			  -I$(PRINTF_DIR) \
-			  -I$(CCB_DIR)
+			  -I$(TSINK_DIR)
 
 DEFS = \
 	   -DMICRO_ROS_AGENT_IP=\"$(MICRO_ROS_AGENT_IP)\" \
@@ -150,7 +150,7 @@ SRCS_PATHS := \
 			  $(MICRO_ROS_DIR) \
 			  $(ULOG_DIR) \
 			  $(PRINTF_DIR) \
-			  $(CCB_DIR)
+			  $(TSINK_DIR)
 
 C_SRCS_EXCLS :=  \
 				 $(MICRO_ROS_DIR)/extra_sources/microros_transports/it_transport.c \

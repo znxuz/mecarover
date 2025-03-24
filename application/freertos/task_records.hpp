@@ -6,6 +6,7 @@
 
 #include <array>
 
+namespace freertos {
 struct TaskRecord {
   const char* name;
   uint32_t cycle;
@@ -36,3 +37,4 @@ struct cycle_stamp {
 
   const char* name;
 };
+}  // namespace freertos

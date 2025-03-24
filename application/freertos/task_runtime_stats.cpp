@@ -8,30 +8,30 @@
 #include <stdarg.h>
 
 #include <threadsafe_sink.hpp>
+#include <utility>
 
 #include "task_records.hpp"
 
 static TaskHandle_t button_task_hdl;
-static TaskHandle_t runtime_task_hdl;
+static TaskHandle_t profiling_task_hdl;
 
 static volatile size_t ctx_switch_cnt = 0;
+using namespace freertos;
 
 extern "C" {
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   static constexpr uint8_t DEBOUNCE_TIME_MS = 200;
   static volatile uint32_t last_interrupt_time = 0;
 
-  if (GPIO_Pin == USER_Btn_Pin) {
-    uint32_t current_time = HAL_GetTick();
+  if (GPIO_Pin != USER_Btn_Pin) return;
 
-    if (current_time - last_interrupt_time > DEBOUNCE_TIME_MS) {
-      static BaseType_t xHigherPriorityTaskWoken;
-      configASSERT(button_task_hdl != NULL);
-      vTaskNotifyGiveFromISR(button_task_hdl, &xHigherPriorityTaskWoken);
-      portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-
-      last_interrupt_time = current_time;
-    }
+  uint32_t current_time = HAL_GetTick();
+  if (current_time - std::exchange(last_interrupt_time, current_time) >
+      DEBOUNCE_TIME_MS) {
+    static BaseType_t xHigherPriorityTaskWoken;
+    configASSERT(button_task_hdl != NULL);
+    vTaskNotifyGiveFromISR(button_task_hdl, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
   }
 }
 
@@ -57,8 +57,8 @@ void task_switched_out_isr(const char* name) {
 }
 
 namespace {
-int uq_printf(const char* format, ...) {
-  static char buffer[1000];
+int prints(const char* format, ...) {
+  char buffer[500] = {0};
 
   va_list args;
   va_start(args, format);
@@ -66,7 +66,7 @@ int uq_printf(const char* format, ...) {
   va_end(args);
 
   configASSERT(size <= sizeof(buffer));
-  freertos::csink_write(buffer, size);
+  tsink_write(buffer, size);
 
   return size;
 }
@@ -82,65 +82,84 @@ void button_task_impl(void*) {
   while (true) {
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
+    // unblock the profiling task
     taskENTER_CRITICAL();
-    task_switch_profiling_enabled = true;
     record_idx = 0;
     ctx_switch_cnt = 0;
+    task_switch_profiling_enabled = true;
     taskEXIT_CRITICAL();
+    xTaskNotifyGive(profiling_task_hdl);
 
-    vTaskDelay(pdMS_TO_TICKS(1000));  // profile for 1s
-
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
     task_switch_profiling_enabled = false;
-    xTaskNotifyGive(runtime_task_hdl);
   }
 }
 
-void runtime_task_impl(void*) {
-  auto print_records = []() {
-    uq_printf("Task\t\tTime(ns)\tposition\n");
-    for (size_t i = 0; i < record_idx; ++i) {
-      const auto [name, cycle, is_begin] = records[i];
-      uq_printf("%s\t\t%lu\t%s\n", name,
-                static_cast<unsigned long>(static_cast<double>(cycle) /
-                                           SystemCoreClock * 1000 * 1000),
-                (is_begin ? "in" : "out"));
-    }
-    uq_printf("\n");
-  };
-  auto print_stats = []() {
+void profiling_task_impl(void*) {
+  auto print_stats = []() static {
     static constexpr uint8_t configNUM_TASKS = 10;
-    static char stat_buf[40 * configMAX_TASK_NAME_LEN * configNUM_TASKS];
+    static char stat_buf[50 * configNUM_TASKS];
 
     vTaskGetRunTimeStats(stat_buf);
-    uq_printf("=============================================\n");
-    uq_printf("free heap:\t\t%u\n", xPortGetFreeHeapSize());
-    uq_printf("ctx switches:\t\t%u\n", ctx_switch_cnt);
-    uq_printf("record idx:\t\t%u\n", record_idx);
-    uq_printf("Task\t\tTime\t\t%%\n");
-    uq_printf("%s", stat_buf);
+    prints("=============================================\n");
+    prints("free heap:\t\t%u\n", xPortGetFreeHeapSize());
+    prints("ctx switches:\t\t%u\n", ctx_switch_cnt);
+    prints("record idx:\t\t%u\n", record_idx);
+    prints("Task\t\tTime\t\t%%\n");
+    prints("%s", stat_buf);
 
-    uq_printf("---------------------------------------------\n");
+    prints("---------------------------------------------\n");
 
     vTaskList(stat_buf);
-    uq_printf("Task\t\tState\tPrio\tStack\tNum\n");
-    uq_printf("%s", stat_buf);
-    uq_printf("=============================================\n");
+    prints("Task\t\tState\tPrio\tStack\tNum\n");
+    prints("%s", stat_buf);
+    prints("=============================================\n");
   };
-  auto normalize = []() {
-    auto initial_value = records.front().cycle;
-    for (size_t i = 0; i < record_idx; ++i) records[i].cycle -= initial_value;
-  };
+  // auto print_records = []() static {
+  //   prints("Task\t\tTime(ns)\tposition\n");
+  //   for (size_t i = 0; i < record_idx; ++i) {
+  //     const auto [name, cycle, is_begin] = records[i];
+  //     prints("%s\t\t%lu\t%s\n", name,
+  //            static_cast<unsigned long>(static_cast<double>(cycle) /
+  //                                       SystemCoreClock * 1000 * 1000),
+  //            (is_begin ? "in" : "out"));
+  //   }
+  //   prints("\n");
+  // };
+  // auto normalize = []() static {
+  //   auto initial_value = records.front().cycle;
+  //   for (size_t i = 0; i < record_idx; ++i) records[i].cycle -=
+  //   initial_value;
+  // };
 
+  size_t prev_idx = 0;
+  size_t iteration_cycle = 0;
   while (true) {
-    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-    auto cycle = DWT->CYCCNT;
-    normalize();
-    print_records();
-    print_stats();
-    uq_printf(
-        "output took %u us\n",
-        static_cast<unsigned long>(static_cast<double>(DWT->CYCCNT - cycle) /
-                                   SystemCoreClock * 1000 * 1000));
+    if (!task_switch_profiling_enabled) {
+      if (iteration_cycle) {
+        print_stats();
+        prints("output took %u us\n",
+               static_cast<unsigned long>(
+                   static_cast<double>(DWT->CYCCNT - iteration_cycle) /
+                   SystemCoreClock * 1000 * 1000));
+        iteration_cycle = 0;
+      }
+
+      ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+      prev_idx = 0;
+      iteration_cycle = DWT->CYCCNT;
+    }
+
+    vTaskDelay(50);
+    while (prev_idx != record_idx) {
+      const auto& [name, cycle, is_begin] = records[prev_idx];
+      prints("%s\t%lu\t%s\n", name, cycle,
+             // static_cast<unsigned long>(static_cast<double>(cycle) /
+             //                            SystemCoreClock * 1000 * 1000),
+             (is_begin ? "in" : "out"));
+
+      prev_idx = (prev_idx + 1) % records.size();
+    }
   }
 }
 }  // namespace
@@ -151,8 +170,8 @@ void task_runtime_stats_init() {
 
   configASSERT((xTaskCreate(button_task_impl, "btn", configMINIMAL_STACK_SIZE,
                             NULL, osPriorityNormal, &button_task_hdl)));
-  configASSERT(
-      (xTaskCreate(runtime_task_impl, "rt_stats", configMINIMAL_STACK_SIZE * 4,
-                   NULL, osPriorityNormal, &runtime_task_hdl) == pdPASS));
+  configASSERT((xTaskCreate(profiling_task_impl, "rt_stats",
+                            configMINIMAL_STACK_SIZE * 4, NULL,
+                            osPriorityNormal, &profiling_task_hdl) == pdPASS));
 }
 }  // namespace freertos
