@@ -149,8 +149,7 @@ SRCS_PATHS := \
 			  $(ST_DIR_LWIP) \
 			  $(MICRO_ROS_DIR) \
 			  $(ULOG_DIR) \
-			  $(PRINTF_DIR) \
-			  $(TSINK_DIR)
+			  $(PRINTF_DIR)
 
 C_SRCS_EXCLS :=  \
 				 $(MICRO_ROS_DIR)/extra_sources/microros_transports/it_transport.c \

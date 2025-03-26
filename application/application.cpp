@@ -14,8 +14,9 @@
 #include <application/robot_params.hpp>
 #include <threadsafe_sink.hpp>
 
-extern "C" {
+using namespace freertos;
 
+extern "C" {
 volatile unsigned long ulHighFrequencyTimerTicks;
 
 void configureTimerForRunTimeStats(void) {
@@ -45,7 +46,7 @@ void my_console_logger(ulog_level_t severity, char* msg) {
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
   if (huart->Instance != huart3.Instance) return;
 
-  freertos::tsink_consume_complete<freertos::CALLSITE::ISR>();
+  tsink_consume_complete<TSINK_CALL_FROM::ISR>();
 }
 
 void application_start(void) {
@@ -68,8 +69,8 @@ void application_start(void) {
     HAL_UART_Transmit_DMA(&huart3, buf, size);
   };
 
-  freertos::tsink_init(tsink_consume, osPriorityAboveNormal);
-  freertos::task_runtime_stats_init();
+  tsink_init(tsink_consume, osPriorityAboveNormal);
+  task_runtime_stats_init();
   xTaskCreate(micro_ros, "uros", 3000, NULL, osPriorityNormal, NULL);
 
   osKernelStart();

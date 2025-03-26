@@ -38,27 +38,21 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 void task_switched_in_isr(const char* name) {
   if (!task_switch_profiling_enabled) return;
 
-  records[record_idx].is_begin = true;
-  records[record_idx].name = name;
-  records[record_idx].cycle = DWT->CYCCNT;
-  record_idx += 1;
+  record(name, true);
   ctx_switch_cnt += 1;
 }
 
 void task_switched_out_isr(const char* name) {
   if (!task_switch_profiling_enabled) return;
 
-  records[record_idx].is_begin = false;
-  records[record_idx].name = name;
-  records[record_idx].cycle = DWT->CYCCNT;
-  record_idx += 1;
+  record(name, false);
   ctx_switch_cnt += 1;
 }
 }
 
 namespace {
 int prints(const char* format, ...) {
-  char buffer[500] = {0};
+  char buffer[100] = {0};
 
   va_list args;
   va_start(args, format);
@@ -82,7 +76,6 @@ void button_task_impl(void*) {
   while (true) {
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
-    // unblock the profiling task
     taskENTER_CRITICAL();
     record_idx = 0;
     ctx_switch_cnt = 0;
@@ -101,62 +94,46 @@ void profiling_task_impl(void*) {
     static char stat_buf[50 * configNUM_TASKS];
 
     vTaskGetRunTimeStats(stat_buf);
-    prints("=============================================\n");
+    tsink_write_str("=============================================\n");
     prints("free heap:\t\t%u\n", xPortGetFreeHeapSize());
     prints("ctx switches:\t\t%u\n", ctx_switch_cnt);
-    prints("record idx:\t\t%u\n", record_idx);
     prints("Task\t\tTime\t\t%%\n");
-    prints("%s", stat_buf);
+    tsink_write_str(stat_buf);
 
-    prints("---------------------------------------------\n");
+    tsink_write_str("---------------------------------------------\n");
 
     vTaskList(stat_buf);
     prints("Task\t\tState\tPrio\tStack\tNum\n");
-    prints("%s", stat_buf);
-    prints("=============================================\n");
+    tsink_write_str(stat_buf);
+    tsink_write_str("=============================================\n");
   };
-  // auto print_records = []() static {
-  //   prints("Task\t\tTime(ns)\tposition\n");
-  //   for (size_t i = 0; i < record_idx; ++i) {
-  //     const auto [name, cycle, is_begin] = records[i];
-  //     prints("%s\t\t%lu\t%s\n", name,
-  //            static_cast<unsigned long>(static_cast<double>(cycle) /
-  //                                       SystemCoreClock * 1000 * 1000),
-  //            (is_begin ? "in" : "out"));
-  //   }
-  //   prints("\n");
-  // };
-  // auto normalize = []() static {
-  //   auto initial_value = records.front().cycle;
-  //   for (size_t i = 0; i < record_idx; ++i) records[i].cycle -=
-  //   initial_value;
-  // };
 
   size_t prev_idx = 0;
-  size_t iteration_cycle = 0;
+  size_t start_cycle = 0;
   while (true) {
     if (!task_switch_profiling_enabled) {
-      if (iteration_cycle) {
+      if (start_cycle) {
         print_stats();
         prints("output took %u us\n",
                static_cast<unsigned long>(
-                   static_cast<double>(DWT->CYCCNT - iteration_cycle) /
+                   static_cast<double>(DWT->CYCCNT - start_cycle) /
                    SystemCoreClock * 1000 * 1000));
-        iteration_cycle = 0;
+        start_cycle = 0;
       }
 
       ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
       prev_idx = 0;
-      iteration_cycle = DWT->CYCCNT;
+      start_cycle = records.front().cycle;
     }
 
-    vTaskDelay(50);
+    vTaskDelay(1);
     while (prev_idx != record_idx) {
       const auto& [name, cycle, is_begin] = records[prev_idx];
-      prints("%s\t%lu\t%s\n", name, cycle,
-             // static_cast<unsigned long>(static_cast<double>(cycle) /
-             //                            SystemCoreClock * 1000 * 1000),
-             (is_begin ? "in" : "out"));
+      prints(
+          "%s %lu %s\n", name,
+          static_cast<unsigned long>(static_cast<double>(cycle - start_cycle) /
+                                     SystemCoreClock * 1000 * 1000),
+          (is_begin ? "in" : "out"));
 
       prev_idx = (prev_idx + 1) % records.size();
     }
