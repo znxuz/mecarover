@@ -159,7 +159,8 @@ C_SRCS_EXCLS :=  \
 				 $(MICRO_ROS_DIR)/sample_main_embeddedrtps.c \
 				 $(MICRO_ROS_DIR)/sample_main_udp.c
 CPP_SRCS_EXCLS := \
-				  application/micro_ros/lidar.cpp $(PRINTF_DIR)/test/test_suite.cpp
+				  application/micro_ros/lidar.cpp \
+				  $(PRINTF_DIR)/test/test_suite.cpp
 C_SRCS := $(filter-out $(C_SRCS_EXCLS), \
 		  $(shell find $(SRCS_PATHS) -type f -name "*.c"))
 CPP_SRCS := $(filter-out $(CPP_SRCS_EXCLS), \
@@ -213,7 +214,7 @@ print_cflags:
 	@echo $(CFLAGS)
 
 clangdb: clean
-	mkdir -p $(BUILD_DIR)
+	@mkdir -p $(BUILD_DIR)
 	@bear --output $(BUILD_DIR)/compile_commands.json -- $(MAKE) -j
 
 # misc

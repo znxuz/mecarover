@@ -1,5 +1,3 @@
-#include "task_runtime_stats.hpp"
-
 #include <FreeRTOS.h>
 #include <cmsis_os2.h>
 #include <main.h>

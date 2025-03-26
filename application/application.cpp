@@ -8,11 +8,14 @@
 #include <ulog.h>
 #include <usart.h>
 
-#include <application/freertos/task_runtime_stats.hpp>
 #include <application/hal/hal.hpp>
 #include <application/micro_ros/micro_ros.hpp>
 #include <application/robot_params.hpp>
 #include <threadsafe_sink.hpp>
+
+namespace freertos {
+void task_runtime_stats_init();
+}
 
 using namespace freertos;
 
