@@ -61,8 +61,7 @@ static void task_impl(void*) {
     frame.vel.x *= 1000;  // m to mm
     frame.vel.y *= 1000;  // m to mm
 
-    ULOG_INFO("[recv vel] [%f %f %f]", frame.vel.x, frame.vel.y,
-              frame.vel.omega);
+    ULOG_INFO("[recv vel] [%f %f %f]", frame.vel.x, frame.vel.y, frame.vel.z);
 
     xQueueSend(freertos::vel_sp_queue, &frame.vel, NO_BLOCK);
   }

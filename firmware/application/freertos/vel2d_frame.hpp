@@ -5,7 +5,7 @@
 struct Vel2d {
   double x;
   double y;
-  double omega;
+  double z;
 };
 
 struct Vel2dFrame {
