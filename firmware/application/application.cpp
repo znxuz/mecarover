@@ -1,35 +1,14 @@
-#include "application.hpp"
-
 #include <cmsis_os2.h>
-#include <errno.h>
+#include <printf.h>
 #include <rtc.h>
-#include <stdio.h>
 #include <tim.h>
 #include <ulog.h>
-#include <unistd.h>
-#include <usart.h>
 
 #include <application/freertos/init.hpp>
+#include <threadsafe_sink.hpp>
 
 extern "C" {
-
 volatile unsigned long ulHighFrequencyTimerTicks;
-
-int _write(int file, char* ptr, int len) {
-  if (file == STDOUT_FILENO || file == STDERR_FILENO) {
-    taskENTER_CRITICAL();
-    HAL_StatusTypeDef status =
-        HAL_UART_Transmit_IT(&huart3, (uint8_t*)ptr, len);
-    taskEXIT_CRITICAL();
-
-    if (status == HAL_OK)
-      return len;
-    else
-      return EIO;
-  }
-  errno = EBADF;
-  return -1;
-}
 
 void configureTimerForRunTimeStats(void) {
   ulHighFrequencyTimerTicks = 0;
@@ -40,6 +19,10 @@ unsigned long getRunTimeCounterValue(void) { return ulHighFrequencyTimerTicks; }
 
 int _gettimeofday(struct timeval* tv, void* tzvp) {
   return 0;  // not used, thus unimplemented to satisfy the compiler
+}
+
+void _putchar(char c) {
+  freertos::tsink_write(&c, 1);
 }
 
 void my_console_logger(ulog_level_t severity, char* msg) {
@@ -54,7 +37,6 @@ void my_console_logger(ulog_level_t severity, char* msg) {
   printf("%02d:%02d:%02d [%s]: %s\n", sTime.Hours, sTime.Minutes, sTime.Seconds,
          ulog_level_name(severity), msg);
 }
-}
 
 void application_start(void) {
   ULOG_INIT();
@@ -62,7 +44,8 @@ void application_start(void) {
 
   freertos::init();
 
-  ULOG_INFO("kernel start");
+  // ULOG_INFO("kernel start");
   osKernelStart();
   Error_Handler();  // because osKernelStart should never return
+}
 }

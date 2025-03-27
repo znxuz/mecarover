@@ -9,13 +9,15 @@ ST_DRIVERS_DIR := Drivers
 ST_MW_DIR := Middlewares/Third_Party
 
 EIGEN_DIR := third_party/eigen
-ULOG_DIR := third_party/ulog
+ULOG_DIR := third_party/ulog/src
+PRINTF_DIR := third_party/printf
+TSINK_DIR := third_party/freertos-threadsafe-sink
 
-DEBUG := -DDEBUG -g3
-ULOG_ENABLED := -DULOG_ENABLED
+# ULOG_ENABLED := -DULOG_ENABLED
 FREERTOS_STATIC_INIT := -DFREERTOS_STATIC_INIT
 
 OPT := -Os
+# DEBUG := -DDEBUG -g3
 
 BIN := $(BUILD_DIR)/$(NAME).bin
 EXECUTABLE := $(BUILD_DIR)/$(NAME).elf
@@ -33,7 +35,9 @@ INCL_PATHS := \
 			  -I$(ST_MW_DIR)/FreeRTOS/Source/CMSIS_RTOS_V2 \
 			  -I$(ST_MW_DIR)/FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1 \
 			  -I$(EIGEN_DIR) \
-			  -I$(ULOG_DIR)/src
+			  -I$(ULOG_DIR) \
+			  -I$(PRINTF_DIR) \
+			  -I$(TSINK_DIR)
 
 FLAGS = \
 		-mcpu=cortex-m7 \
@@ -55,6 +59,7 @@ FLAGS = \
 		-MP \
 		-MF"$(@:%.o=%.d)" \
 		-MT"$@" \
+		-fno-builtin-printf \
 		$(INCL_PATHS) \
 		$(ULOG_ENABLED) \
 		$(FREERTOS_STATIC_INIT)
@@ -65,7 +70,7 @@ CFLAGS = \
 
 CPPFLAGS = \
 		   $(FLAGS) \
-		   -std=gnu++20 \
+		   -std=gnu++23 \
 		   -fno-rtti \
 		   -fno-use-cxa-atexit
 
@@ -81,7 +86,6 @@ LDFLAGS = \
 		  -Wl,-Map=$(MAP_FILES) \
 		  -Wl,--gc-sections \
 		  -static \
-		  -u_printf_float \
 		  -Wl,--start-group \
 		  -lc \
 		  -lm \
@@ -108,11 +112,13 @@ SRCS_PATHS := \
 			  $(ST_CORE_DIR) \
 			  $(ST_DRIVERS_DIR) \
 			  $(ST_MW_DIR) \
-			  $(ULOG_DIR)/src
+			  $(ULOG_DIR) \
+			  $(PRINTF_DIR)
 C_SRCS_EXCLS :=
+CPP_SRCS_EXCLS := \
+				  $(PRINTF_DIR)/test/test_suite.cpp
 C_SRCS := $(filter-out $(C_SRCS_EXCLS), \
 		  $(shell find $(SRCS_PATHS) -type f -name "*.c"))
-CPP_SRCS_EXCLS :=
 CPP_SRCS := $(filter-out $(CPP_SRCS_EXCLS), \
 			$(shell find $(SRCS_PATHS) -type f -name "*.cpp"))
 S_SRC := startup_stm32f767xx.s
@@ -160,7 +166,7 @@ clean:
 	$(RM) $(OBJDUMP_LIST)
 
 clangdb: clean
-	@mkdir -p build
+	@mkdir -p $(BUILD_DIR)
 	@bear --output $(BUILD_DIR)/compile_commands.json -- $(MAKE) -j
 
 # misc

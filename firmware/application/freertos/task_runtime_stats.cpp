@@ -1,77 +1,153 @@
 #include <FreeRTOS.h>
 #include <cmsis_os2.h>
-#include <task.h>
+#include <main.h>
+#include <printf.h>
+#include <semphr.h>
+#include <stdarg.h>
 
-#include "main.h"
+#include <threadsafe_sink.hpp>
+#include <utility>
 
-static TaskHandle_t task_handle;
+#include "task_records.hpp"
 
-static constexpr uint8_t configNUM_TASKS = 6;
-static char stat_buf[40 * configMAX_TASK_NAME_LEN * configNUM_TASKS];
+static TaskHandle_t button_task_hdl;
+static TaskHandle_t profiling_task_hdl;
 
-static TaskStatus_t task_status;
-static size_t switched_cnt;
-
-static volatile bool sample = false;
+static volatile size_t ctx_switch_cnt = 0;
+using namespace freertos;
 
 extern "C" {
-void task_switched_in_callback() {
-  vTaskGetInfo(xTaskGetCurrentTaskHandle(), &task_status, false, eRunning);
-  if (sample) ++switched_cnt;
-  // TODO maybe directly copy the needed name & timestamp into a container
-}
-
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-  static constexpr uint8_t DEBOUNCE_TIME_MS = 200;
+  static constexpr uint8_t DEBOUNCE_TIME_MS = 50;
   static volatile uint32_t last_interrupt_time = 0;
 
-  if (GPIO_Pin == USER_Btn_Pin) {
-    uint32_t current_time = HAL_GetTick();
+  if (GPIO_Pin != USER_Btn_Pin) return;
 
-    if (current_time - last_interrupt_time > DEBOUNCE_TIME_MS) {
-      sample = !sample;
+  uint32_t current_time = HAL_GetTick();
+  if (current_time - std::exchange(last_interrupt_time, current_time) >
+      DEBOUNCE_TIME_MS) {
+    static BaseType_t xHigherPriorityTaskWoken;
+    configASSERT(button_task_hdl != NULL);
+    vTaskNotifyGiveFromISR(button_task_hdl, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+  }
+}
 
-      last_interrupt_time = current_time;
+void task_switched_in_isr(const char* name) {
+  if (!task_switch_profiling_enabled) return;
+
+  record(name, true);
+  ctx_switch_cnt += 1;
+}
+
+void task_switched_out_isr(const char* name) {
+  if (!task_switch_profiling_enabled) return;
+
+  record(name, false);
+  ctx_switch_cnt += 1;
+}
+}
+
+namespace {
+int prints(const char* format, ...) {
+  char buffer[100]{};
+
+  va_list args;
+  va_start(args, format);
+  size_t size = vsnprintf(buffer, sizeof(buffer), format, args);
+  va_end(args);
+
+  configASSERT(size <= sizeof(buffer));
+  tsink_write(buffer, size);
+
+  return size;
+}
+
+void enable_dwt_cycle_count() {
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->LAR = 0xC5ACCE55;  // software unlock
+  DWT->CYCCNT = 1;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+}
+
+void button_task_impl(void*) {
+  while (true) {
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+    taskENTER_CRITICAL();
+    record_idx = 0;
+    ctx_switch_cnt = 0;
+    task_switch_profiling_enabled = true;
+    taskEXIT_CRITICAL();
+
+    vTaskDelay(pdMS_TO_TICKS(1000));
+
+    task_switch_profiling_enabled = false;
+    xTaskNotifyGive(profiling_task_hdl);
+  }
+}
+
+void profiling_task_impl(void*) {
+  auto print_stats = []() static {
+    static constexpr uint8_t configNUM_TASKS = 10;
+    static char stat_buf[50 * configNUM_TASKS];
+
+    vTaskGetRunTimeStats(stat_buf);
+    tsink_write_str("=============================================\n");
+    prints("free heap:\t\t%u\n", xPortGetFreeHeapSize());
+    prints("ctx switches:\t\t%u\n", ctx_switch_cnt);
+    tsink_write_str("Task\t\tTime\t\t%%\n");
+    tsink_write_str(stat_buf);
+
+    tsink_write_str("---------------------------------------------\n");
+
+    vTaskList(stat_buf);
+    tsink_write_str("Task\t\tState\tPrio\tStack\tNum\n");
+    tsink_write_str(stat_buf);
+    tsink_write_str("=============================================\n");
+  };
+
+  size_t prev_idx = 0;
+  size_t start_cycle = 0;
+  while (true) {
+    if (!task_switch_profiling_enabled) {
+      if (start_cycle) {
+        print_stats();
+        prints("output took %u us\n",
+               static_cast<unsigned long>(
+                   static_cast<double>(DWT->CYCCNT - start_cycle) /
+                   SystemCoreClock * 1000 * 1000));
+        start_cycle = 0;
+      }
+
+      ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+      prev_idx = 0;
+      start_cycle = records.front().cycle;
+    }
+
+    vTaskDelay(1);
+    while (prev_idx != record_idx) {
+      const auto& [name, cycle, is_begin] = records[prev_idx];
+      prints(
+          "%s %lu %s\n", name,
+          static_cast<unsigned long>(static_cast<double>(cycle - start_cycle) /
+                                     SystemCoreClock * 1000 * 1000),
+          (is_begin ? "in" : "out"));
+
+      prev_idx = (prev_idx + 1) % records.size();
     }
   }
 }
-
-static void print_stats(void) {
-  vTaskGetRunTimeStats(stat_buf);
-  printf("Task\t\tTime\t\t%%\n");
-  printf("%s\n", stat_buf);
-
-  vTaskList(stat_buf);
-  printf("Task\tState\tPrio\tStack\tNum\n");
-  printf("%s\n", stat_buf);
-}
-
-static void task_impl(void *) {
-  const TickType_t xFrequency = pdMS_TO_TICKS(1000);
-  TickType_t xLastWakeTime = xTaskGetTickCount();
-
-  while (true) {
-    // print_stats();
-
-    printf("switched_cnt: %u\n", switched_cnt);
-
-    vTaskDelayUntil(&xLastWakeTime, xFrequency);
-  }
-}
-}
+}  // namespace
 
 namespace freertos {
 void task_runtime_stats_init() {
-  constexpr size_t STACK_SIZE = configMINIMAL_STACK_SIZE * 4;
-#ifdef FREERTOS_STATIC_INIT
-  static StackType_t taskStack[STACK_SIZE];
-  static StaticTask_t taskBuffer;
-  configASSERT((task_handle = xTaskCreateStatic(
-                    task_impl, "runtime_stats", STACK_SIZE, NULL,
-                    osPriorityNormal, taskStack, &taskBuffer)) != NULL);
-#else
-  configASSERT(xTaskCreate(task_impl, "runtime_stats", STACK_SIZE, NULL,
-                           osPriorityNormal, &task_handle) == pdPASS);
-#endif
+  enable_dwt_cycle_count();
+
+  configASSERT((xTaskCreate(button_task_impl, "btn", configMINIMAL_STACK_SIZE,
+                            NULL, osPriorityNormal, &button_task_hdl)));
+  configASSERT((xTaskCreate(profiling_task_impl, "rt_stats",
+                            configMINIMAL_STACK_SIZE * 4, NULL,
+                            osPriorityNormal, &profiling_task_hdl) == pdPASS));
 }
 }  // namespace freertos

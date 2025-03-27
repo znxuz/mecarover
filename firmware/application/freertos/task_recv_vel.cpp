@@ -2,7 +2,6 @@
 #include <cmsis_os2.h>
 #include <crc.h>
 #include <queue.h>
-#include <stdio.h>
 #include <task.h>
 #include <ulog.h>
 #include <usart.h>

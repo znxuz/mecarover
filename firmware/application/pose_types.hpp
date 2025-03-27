@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cmath>
-#include <cstdio>
 #include <numbers>
 
 namespace imsl {
@@ -139,10 +138,8 @@ class Pose {
   }
 
   friend constexpr Pose operator/(const Pose& lhs, const double divisor) {
-    if (divisor == 0.0) {
-      std::perror("division by zero!");
-      return {};
-    }
+    if (divisor == 0.0)
+      for (;;);
     return {lhs.x / divisor, lhs.y / divisor, lhs.theta / divisor};
   }
 

@@ -25,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <application/application.hpp>
+void application_start(void);
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

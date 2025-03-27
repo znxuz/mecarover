@@ -10,3 +10,9 @@
 [submodule "host/vel2d_bridge/third_party/CRCpp"]
 	path = host/vel2d_bridge/third_party/CRCpp
 	url = https://github.com/d-bahr/CRCpp
+[submodule "firmware/third_party/printf"]
+	path = firmware/third_party/printf
+	url = https://github.com/mpaland/printf.git
+[submodule "firmware/third_party/freertos-threadsafe-sink"]
+	path = firmware/third_party/freertos-threadsafe-sink
+	url = https://github.com/znxuz/freertos-threadsafe-sink.git

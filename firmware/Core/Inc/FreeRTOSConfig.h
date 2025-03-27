@@ -45,7 +45,6 @@
 
 /* USER CODE BEGIN Includes */
 /* Section where include file can be added */
-#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Ensure definitions are only used by the compiler, and not by the assembler. */
@@ -148,11 +147,13 @@ See http://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html. */
 /* Normal assert() semantics without relying on the provision of an assert.h
 header file. */
 /* USER CODE BEGIN 1 */
-#define configASSERT(x)                                                \
-    if ((x) == 0) {                                                      \
-      printf("assertion failed on line %d in %s\n", __LINE__, __FILE__); \
-      taskDISABLE_INTERRUPTS();                                          \
-      for (;;);                                                          \
+#define configASSERT(x)                                                     \
+    if ((x) == 0) {                                                           \
+      /* set LD1 */                                                           \
+      *(volatile uint32_t*)(0x40000000UL + 0x00020000UL + 0x0400UL + 0x18U) = \
+          0x0001U;                                                            \
+      taskDISABLE_INTERRUPTS();                                               \
+      for (;;);                                                               \
     }
 /* USER CODE END 1 */
 
@@ -174,8 +175,11 @@ standard names. */
 
 /* USER CODE BEGIN Defines */
 /* Section where parameter definitions can be added (for instance, to override default ones in FreeRTOS.h) */
-void task_switched_in_callback();
-#define traceTASK_SWITCHED_IN task_switched_in_callback
+void task_switched_in_isr(const char* name);
+#define traceTASK_SWITCHED_IN() task_switched_in_isr(pxCurrentTCB->pcTaskName)
+void task_switched_out_isr(const char* name);
+#define traceTASK_SWITCHED_OUT() \
+    task_switched_out_isr(pxCurrentTCB->pcTaskName)
 /* USER CODE END Defines */
 
 #endif /* FREERTOS_CONFIG_H */
