@@ -3,7 +3,6 @@
 #include <application/real_t.h>
 
 #include <cmath>
-#include <cstdio>
 #include <numbers>
 
 namespace imsl {
@@ -155,10 +154,8 @@ class Pose {
 
   friend constexpr Pose<FltType> operator/(const Pose<FltType>& lhs,
                                            const FltType divisor) {
-    if (divisor == 0.0) {
-      std::perror("division by zero!");
-      return {};
-    }
+    if (divisor == 0.0)
+      for (;;);
     return {lhs.x / divisor, lhs.y / divisor, lhs.theta / divisor};
   }
 
