@@ -2,7 +2,7 @@
 
 import sys
 
-def is_valid_timestamps(file_path):
+def is_valid(file_path):
     with open(file_path, 'r') as file:
         for line_num, line in enumerate(file, 1):
             parts = line.split()
@@ -19,7 +19,7 @@ def is_valid_timestamps(file_path):
 
     return True
 
-def is_strictly_ascending_timestamps(file_path):
+def is_ascending(file_path):
     previous_timestamp = None
 
     with open(file_path, 'r') as file:
@@ -53,12 +53,12 @@ if __name__ == "__main__":
     file_path = sys.argv[2]
 
     if mode == 'ascending':
-        if is_strictly_ascending_timestamps(file_path):
+        if is_ascending(file_path):
             print("\033[92mPASSED\033[0m: timestamps are ascending.")
         else:
             print("\033[91mERROR\033[0m: timestamps are not ascending.")
     elif mode == 'valid':
-        if is_valid_timestamps(file_path):
+        if is_valid(file_path):
             print("\033[92mPASSED\033[0m: timestamps are valid.")
         else:
             print("\033[91mERROR\033[0m: timestamps are not valid.")

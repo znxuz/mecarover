@@ -244,3 +244,7 @@ agent_ip:
 reflash:
 	$(MAKE) clean
 	$(MAKE) flash
+
+rebuild:
+	$(MAKE) clean
+	$(MAKE)

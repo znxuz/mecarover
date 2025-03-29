@@ -18,7 +18,7 @@ using namespace freertos;
 
 extern "C" {
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-  static constexpr uint8_t DEBOUNCE_TIME_MS = 200;
+  static constexpr uint8_t DEBOUNCE_TIME_MS = 50;
   static volatile uint32_t last_interrupt_time = 0;
 
   if (GPIO_Pin != USER_Btn_Pin) return;
@@ -34,16 +34,16 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 }
 
 void task_switched_in_isr(const char* name) {
-  if (!task_switch_profiling_enabled) return;
+  if (!task_profiling_enabled) return;
 
-  record(name, true);
+  record<true>(name, true);
   ctx_switch_cnt += 1;
 }
 
 void task_switched_out_isr(const char* name) {
-  if (!task_switch_profiling_enabled) return;
+  if (!task_profiling_enabled) return;
 
-  record(name, false);
+  record<true>(name, false);
   ctx_switch_cnt += 1;
 }
 }
@@ -77,12 +77,12 @@ void button_task_impl(void*) {
     taskENTER_CRITICAL();
     record_idx = 0;
     ctx_switch_cnt = 0;
-    task_switch_profiling_enabled = true;
+    task_profiling_enabled = true;
     taskEXIT_CRITICAL();
     xTaskNotifyGive(profiling_task_hdl);
 
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-    task_switch_profiling_enabled = false;
+    task_profiling_enabled = false;
   }
 }
 
@@ -109,7 +109,7 @@ void profiling_task_impl(void*) {
   size_t prev_idx = 0;
   size_t start_cycle = 0;
   while (true) {
-    if (!task_switch_profiling_enabled) {
+    if (!task_profiling_enabled) {
       if (start_cycle) {
         print_stats();
         prints("output took %u us\n",

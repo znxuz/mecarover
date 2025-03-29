@@ -15,27 +15,27 @@ struct TaskRecord {
 
 inline std::array<TaskRecord, 512> records{};
 volatile inline size_t record_idx = 0;
-volatile inline bool task_switch_profiling_enabled = 0;
+volatile inline bool task_profiling_enabled = 0;
 
+template <bool from_isr>
 inline void record(const char* name, bool is_begin) {
+  struct disable_isr_guard {
+    disable_isr_guard() { taskENTER_CRITICAL(); }
+    ~disable_isr_guard() { taskEXIT_CRITICAL(); }
+  };
+
+  if constexpr (!from_isr) volatile auto _ = disable_isr_guard();
+
   records[record_idx] = {name, DWT->CYCCNT, is_begin};
   record_idx = (record_idx + 1) % records.size();
 }
 
 struct cycle_stamp {
   cycle_stamp(const char* name) : name{name} {
-    if (task_switch_profiling_enabled) {
-      taskENTER_CRITICAL();
-      record(name, true);
-      taskEXIT_CRITICAL();
-    };
+    if (task_profiling_enabled) record<false>(name, true);
   }
   ~cycle_stamp() {
-    if (task_switch_profiling_enabled) {
-      taskENTER_CRITICAL();
-      record(name, false);
-      taskEXIT_CRITICAL();
-    }
+    if (task_profiling_enabled) record<false>(name, false);
   }
 
   const char* name;
