@@ -178,8 +178,7 @@ standard names. */
 void task_switched_in_isr(const char* name);
 #define traceTASK_SWITCHED_IN() task_switched_in_isr(pxCurrentTCB->pcTaskName)
 void task_switched_out_isr(const char* name);
-#define traceTASK_SWITCHED_OUT() \
-    task_switched_out_isr(pxCurrentTCB->pcTaskName)
+#define traceTASK_SWITCHED_OUT() task_switched_out_isr(pxCurrentTCB->pcTaskName)
 /* USER CODE END Defines */
 
 #endif /* FREERTOS_CONFIG_H */

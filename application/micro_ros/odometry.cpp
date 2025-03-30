@@ -7,7 +7,7 @@
 #include <rclc/types.h>
 #include <ulog.h>
 
-#include <application/freertos/task_records.hpp>
+#include <application/freertos/cycle_stamp.hpp>
 #include <application/hal/hal.hpp>
 #include <application/jacobi_transformation.hpp>
 #include <application/pose_types.hpp>
@@ -34,7 +34,7 @@ static rcl_publisher_t pub_odometry;
 real_t epsilon;
 
 static void odometry_cb(const void* arg) {
-  volatile freertos::cycle_stamp t{"odom"};
+  volatile freertos::cycle_stamp_raii t{"odom"};
   const auto* enc_delta_rad = reinterpret_cast<const DriveState*>(arg);
   /*
    * odometry: encoder delta gets fed directly into the inverted jacobian

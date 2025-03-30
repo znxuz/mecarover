@@ -8,7 +8,7 @@
 #include <threadsafe_sink.hpp>
 #include <utility>
 
-#include "task_records.hpp"
+#include "cycle_stamp.hpp"
 
 static TaskHandle_t button_task_hdl;
 static TaskHandle_t profiling_task_hdl;
@@ -34,16 +34,16 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 }
 
 void task_switched_in_isr(const char* name) {
-  if (!task_profiling_enabled) return;
+  if (!stamping_enabled) return;
 
-  record<true>(name, true);
+  stamp<true>(name, true);
   ctx_switch_cnt += 1;
 }
 
 void task_switched_out_isr(const char* name) {
-  if (!task_profiling_enabled) return;
+  if (!stamping_enabled) return;
 
-  record<true>(name, false);
+  stamp<true>(name, false);
   ctx_switch_cnt += 1;
 }
 }
@@ -63,26 +63,19 @@ int prints(const char* format, ...) {
   return size;
 }
 
-void enable_dwt_cycle_count() {
-  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-  DWT->LAR = 0xC5ACCE55;  // software unlock
-  DWT->CYCCNT = 1;
-  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-}
-
 void button_task_impl(void*) {
   while (true) {
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
     taskENTER_CRITICAL();
-    record_idx = 0;
+    stamp_idx = 0;
     ctx_switch_cnt = 0;
-    task_profiling_enabled = true;
+    stamping_enabled = true;
     taskEXIT_CRITICAL();
     xTaskNotifyGive(profiling_task_hdl);
 
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-    task_profiling_enabled = false;
+    stamping_enabled = false;
   }
 }
 
@@ -109,7 +102,7 @@ void profiling_task_impl(void*) {
   size_t prev_idx = 0;
   size_t start_cycle = 0;
   while (true) {
-    if (!task_profiling_enabled) {
+    if (!stamping_enabled) {
       if (start_cycle) {
         print_stats();
         prints("output took %u us\n",
@@ -121,19 +114,19 @@ void profiling_task_impl(void*) {
 
       ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
       prev_idx = 0;
-      start_cycle = records.front().cycle;
+      start_cycle = stamps.front().cycle;
     }
 
-    vTaskDelay(1);
-    while (prev_idx != record_idx) {
-      const auto& [name, cycle, is_begin] = records[prev_idx];
+    vTaskDelay(RT_STAT_TRANSMIT_FREQ);
+    while (prev_idx != stamp_idx) {
+      const auto& [name, cycle, is_begin] = stamps[prev_idx];
       prints(
           "%s %lu %s\n", name,
           static_cast<unsigned long>(static_cast<double>(cycle - start_cycle) /
                                      SystemCoreClock * 1000 * 1000),
           (is_begin ? "in" : "out"));
 
-      prev_idx = (prev_idx + 1) % records.size();
+      prev_idx = (prev_idx + 1) % stamps.size();
     }
   }
 }
@@ -141,8 +134,14 @@ void profiling_task_impl(void*) {
 
 namespace freertos {
 void task_runtime_stats_init() {
-  enable_dwt_cycle_count();
+  auto enable_dwt_cycle_count = []() static {
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->LAR = 0xC5ACCE55;  // software unlock
+    DWT->CYCCNT = 1;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+  };
 
+  enable_dwt_cycle_count();
   configASSERT((xTaskCreate(button_task_impl, "btn", configMINIMAL_STACK_SIZE,
                             NULL, osPriorityNormal, &button_task_hdl)));
   configASSERT((xTaskCreate(profiling_task_impl, "rt_stats",

@@ -9,7 +9,7 @@
 #include <ulog.h>
 
 #include <algorithm>
-#include <application/freertos/task_records.hpp>
+#include <application/freertos/cycle_stamp.hpp>
 #include <application/hal/hal.hpp>
 #include <application/robot_params.hpp>
 #include <utility>
@@ -81,7 +81,7 @@ static VelWheel pid_ctrl(const real_t dt) {
 }
 
 static void wheel_ctrl_cb(rcl_timer_t* timer, int64_t last_call_time) {
-  volatile freertos::cycle_stamp t{"w_ctrl"};
+  volatile freertos::cycle_stamp_raii t{"w_ctrl"};
   const auto dt = RCL_NS_TO_S(static_cast<real_t>(last_call_time));
   const auto enc_delta_rad = hal_encoder_delta_rad();
 
