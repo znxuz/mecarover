@@ -33,17 +33,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   }
 }
 
-void task_switched_in_isr(const char* name) {
+void task_switched_isr(const char* name, uint8_t start) {
   if (!stamping_enabled) return;
 
-  stamp<true>(name, true);
-  ctx_switch_cnt += 1;
-}
-
-void task_switched_out_isr(const char* name) {
-  if (!stamping_enabled) return;
-
-  stamp<true>(name, false);
+  stamp<true>(name, start);
   ctx_switch_cnt += 1;
 }
 }

@@ -175,10 +175,11 @@ standard names. */
 
 /* USER CODE BEGIN Defines */
 /* Section where parameter definitions can be added (for instance, to override default ones in FreeRTOS.h) */
-void task_switched_in_isr(const char* name);
-#define traceTASK_SWITCHED_IN() task_switched_in_isr(pxCurrentTCB->pcTaskName)
-void task_switched_out_isr(const char* name);
-#define traceTASK_SWITCHED_OUT() task_switched_out_isr(pxCurrentTCB->pcTaskName)
-/* USER CODE END Defines */
+void task_switched_isr(const char* name, uint8_t start);
+#define traceTASK_SWITCHED_IN() \
+    task_switched_isr(pxCurrentTCB->pcTaskName, 1)
+#define traceTASK_SWITCHED_OUT() \
+    task_switched_isr(pxCurrentTCB->pcTaskName, 0)
+  /* USER CODE END Defines */
 
 #endif /* FREERTOS_CONFIG_H */
