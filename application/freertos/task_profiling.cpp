@@ -36,32 +36,18 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 void task_switched_isr(const char* name, uint8_t start) {
   if (!stamping_enabled) return;
 
-  stamp<true>(name, start);
+  stamp<TSINK_CALL_FROM::ISR>(name, start);
   ctx_switch_cnt += 1;
 }
 }
 
 namespace {
-int prints(const char* format, ...) {
-  char buffer[100] = {0};
-
-  va_list args;
-  va_start(args, format);
-  size_t size = vsnprintf(buffer, sizeof(buffer), format, args);
-  va_end(args);
-
-  configASSERT(size <= sizeof(buffer));
-  tsink_write(buffer, size);
-
-  return size;
-}
-
 void button_task_impl(void*) {
   while (true) {
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
     taskENTER_CRITICAL();
-    stamp_idx = 0;
+    isr_stamp_idx = 0;
     ctx_switch_cnt = 0;
     stamping_enabled = true;
     taskEXIT_CRITICAL();
@@ -73,68 +59,67 @@ void button_task_impl(void*) {
 }
 
 void profiling_task_impl(void*) {
+  static constexpr uint8_t configNUM_TASKS = 10;
+  static char buf[50 * configNUM_TASKS];
   auto print_stats = []() static {
-    static constexpr uint8_t configNUM_TASKS = 10;
-    static char stat_buf[50 * configNUM_TASKS];
-
-    vTaskGetRunTimeStats(stat_buf);
     tsink_write_str("=============================================\n");
-    prints("free heap:\t\t%u\n", xPortGetFreeHeapSize());
-    prints("ctx switches:\t\t%u\n", ctx_switch_cnt);
-    prints("Task\t\tTime\t\t%%\n");
-    tsink_write_str(stat_buf);
-
+    tsink_write_blocking(buf, snprintf(buf, sizeof(buf), "free heap:\t\t%u\n",
+                                       xPortGetFreeHeapSize()));
+    tsink_write_blocking(
+        buf,
+        snprintf(buf, sizeof(buf), "ctx switches:\t\t%u\n", ctx_switch_cnt));
+    tsink_write_str("Task\t\tTime\t\t%%\n");
+    vTaskGetRunTimeStats(buf);
+    tsink_write_str(buf);
     tsink_write_str("---------------------------------------------\n");
-
-    vTaskList(stat_buf);
-    prints("Task\t\tState\tPrio\tStack\tNum\n");
-    tsink_write_str(stat_buf);
+    vTaskList(buf);
+    tsink_write_str("Task\t\tState\tPrio\tStack\tNum\n");
+    tsink_write_str(buf);
     tsink_write_str("=============================================\n");
   };
 
   size_t prev_idx = 0;
-  size_t start_cycle = 0;
   while (true) {
     if (!stamping_enabled) {
-      if (start_cycle) {
+      if (cycle_stamp::initial_cycle) {
         print_stats();
-        prints("output took %u us\n",
-               static_cast<unsigned long>(
-                   static_cast<double>(DWT->CYCCNT - start_cycle) /
-                   SystemCoreClock * 1000 * 1000));
-        start_cycle = 0;
+        tsink_write_blocking(
+            buf, snprintf(buf, sizeof(buf), "output took %u us\n",
+                          static_cast<unsigned long>(
+                              static_cast<double>(DWT->CYCCNT -
+                                                  cycle_stamp::initial_cycle) /
+                              SystemCoreClock * 1000 * 1000)));
+        cycle_stamp::initial_cycle = 0;
       }
 
       ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
       prev_idx = 0;
-      start_cycle = stamps.front().cycle;
+      cycle_stamp::initial_cycle = isr_stamps[0].cycle;
     }
 
+    // TODO refactor into named lambda
     vTaskDelay(RT_STAT_TRANSMIT_FREQ);
-    while (prev_idx != stamp_idx) {
-      const auto& [name, cycle, is_begin] = stamps[prev_idx];
-      prints(
-          "%s %lu %s\n", name,
-          static_cast<unsigned long>(static_cast<double>(cycle - start_cycle) /
-                                     SystemCoreClock * 1000 * 1000),
-          (is_begin ? "in" : "out"));
+    // TODO print the size and see how big the buffer should be
+    // FIXME not working upon first start after flash
+    while (prev_idx != isr_stamp_idx) {
+      const auto& [name, cycle, ticket, is_begin] = isr_stamps[prev_idx];
+      tsink_write_ordered(
+          buf,
+          snprintf(buf, sizeof(buf), "%s %lu %s\n", name,
+                   static_cast<unsigned long>(
+                       static_cast<double>(cycle - cycle_stamp::initial_cycle) /
+                       SystemCoreClock * 1000 * 1000),
+                   (is_begin ? "in" : "out")),
+          ticket);
 
-      prev_idx = (prev_idx + 1) % stamps.size();
+      prev_idx = (prev_idx + 1) % STAMP_BUF_SIZE;
     }
   }
 }
 }  // namespace
 
 namespace freertos {
-void task_runtime_stats_init() {
-  auto enable_dwt_cycle_count = []() static {
-    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-    DWT->LAR = 0xC5ACCE55;  // software unlock
-    DWT->CYCCNT = 1;
-    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-  };
-
-  enable_dwt_cycle_count();
+void task_profiling_init() {
   configASSERT((xTaskCreate(button_task_impl, "btn", configMINIMAL_STACK_SIZE,
                             NULL, osPriorityNormal, &button_task_hdl)));
   configASSERT((xTaskCreate(profiling_task_impl, "rt_stats",

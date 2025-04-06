@@ -14,7 +14,7 @@
 #include <threadsafe_sink.hpp>
 
 namespace freertos {
-void task_runtime_stats_init();
+void task_profiling_init();
 }
 
 using namespace freertos;
@@ -53,9 +53,17 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
 }
 
 void application_start(void) {
+  auto enable_dwt_cycle_count = []() static {
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->LAR = 0xC5ACCE55;  // software unlock
+    DWT->CYCCNT = 1;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+  };
+
   // ulog not enabled via macro for profiling
   ULOG_INIT();
   ULOG_SUBSCRIBE(my_console_logger, ULOG_DEBUG_LEVEL);
+  enable_dwt_cycle_count();
 
   auto tsink_consume = [](const uint8_t* buf, size_t size) static {
     auto flush_cache_aligned = [](uintptr_t addr, size_t size) static {
@@ -73,7 +81,7 @@ void application_start(void) {
   };
 
   tsink_init(tsink_consume, osPriorityAboveNormal);
-  task_runtime_stats_init();
+  task_profiling_init();
   xTaskCreate(micro_ros, "uros", 3000, NULL, osPriorityNormal, NULL);
 
   osKernelStart();
