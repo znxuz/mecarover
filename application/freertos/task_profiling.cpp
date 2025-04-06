@@ -13,12 +13,12 @@
 static TaskHandle_t button_task_hdl;
 static TaskHandle_t profiling_task_hdl;
 
-static volatile size_t ctx_switch_cnt = 0;
+static volatile size_t ctx_switch_cnt;
 using namespace freertos;
 
 extern "C" {
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-  static constexpr uint8_t DEBOUNCE_TIME_MS = 50;
+  static constexpr uint8_t DEBOUNCE_TIME_MS = 100;
   static volatile uint32_t last_interrupt_time = 0;
 
   if (GPIO_Pin != USER_Btn_Pin) return;
@@ -35,8 +35,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 
 void task_switched_isr(const char* name, uint8_t start) {
   if (!stamping_enabled) return;
-
-  stamp<TSINK_CALL_FROM::ISR>(name, start);
+  stamp_isr(name, start);
   ctx_switch_cnt += 1;
 }
 }
@@ -50,6 +49,7 @@ void button_task_impl(void*) {
     isr_stamp_idx = 0;
     ctx_switch_cnt = 0;
     stamping_enabled = true;
+    cycle_stamp::initial_cycle = DWT->CYCCNT;
     taskEXIT_CRITICAL();
     xTaskNotifyGive(profiling_task_hdl);
 
@@ -81,28 +81,27 @@ void profiling_task_impl(void*) {
   size_t prev_idx = 0;
   while (true) {
     if (!stamping_enabled) {
-      if (cycle_stamp::initial_cycle) {
+      if (std::exchange(prev_idx, 0)) {
         print_stats();
         tsink_write_blocking(
-            buf, snprintf(buf, sizeof(buf), "output took %u us\n",
-                          static_cast<unsigned long>(
-                              static_cast<double>(DWT->CYCCNT -
-                                                  cycle_stamp::initial_cycle) /
-                              SystemCoreClock * 1000 * 1000)));
-        cycle_stamp::initial_cycle = 0;
+            buf,
+            snprintf(buf, sizeof(buf), "output took %u us\n",
+                     static_cast<unsigned long>(
+                         static_cast<double>(
+                             DWT->CYCCNT -
+                             std::exchange(cycle_stamp::initial_cycle, 0)) /
+                         SystemCoreClock * 1000 * 1000)));
       }
 
       ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-      prev_idx = 0;
-      cycle_stamp::initial_cycle = isr_stamps[0].cycle;
     }
 
+    vTaskDelay(pdMS_TO_TICKS(ISR_STAMP_WRITE_FREQ));
+
     // TODO refactor into named lambda
-    vTaskDelay(RT_STAT_TRANSMIT_FREQ);
-    // TODO print the size and see how big the buffer should be
-    // FIXME not working upon first start after flash
     while (prev_idx != isr_stamp_idx) {
-      const auto& [name, cycle, ticket, is_begin] = isr_stamps[prev_idx];
+      const auto& [name, cycle, ticket, is_begin] =
+          isr_stamps[prev_idx++ % ISR_STAMP_BUF_SIZE];
       tsink_write_ordered(
           buf,
           snprintf(buf, sizeof(buf), "%s %lu %s\n", name,
@@ -111,8 +110,6 @@ void profiling_task_impl(void*) {
                        SystemCoreClock * 1000 * 1000),
                    (is_begin ? "in" : "out")),
           ticket);
-
-      prev_idx = (prev_idx + 1) % STAMP_BUF_SIZE;
     }
   }
 }
@@ -122,8 +119,8 @@ namespace freertos {
 void task_profiling_init() {
   configASSERT((xTaskCreate(button_task_impl, "btn", configMINIMAL_STACK_SIZE,
                             NULL, osPriorityNormal, &button_task_hdl)));
-  configASSERT((xTaskCreate(profiling_task_impl, "rt_stats",
-                            configMINIMAL_STACK_SIZE * 4, NULL,
-                            osPriorityNormal, &profiling_task_hdl) == pdPASS));
+  configASSERT(
+      (xTaskCreate(profiling_task_impl, "profile", configMINIMAL_STACK_SIZE * 8,
+                   NULL, osPriorityNormal, &profiling_task_hdl) == pdPASS));
 }
 }  // namespace freertos
