@@ -20,12 +20,12 @@ static TaskHandle_t task_handle;
 static FourWheelData vel_wheel_buf;
 static FourWheelData enc_delta_buf;
 
-static std::array<double, N_WHEEL> vel_to_duty_cycle(const VelWheel& vel) {
-  static constexpr double PERCENT = 100.0;
-  auto ret = std::array<double, N_WHEEL>{};
+static std::array<float, N_WHEEL> vel_to_duty_cycle(const VelWheel& vel) {
+  static constexpr float PERCENT = 100.0;
+  auto ret = std::array<float, N_WHEEL>{};
 
   std::transform(vel.data(), vel.data() + vel.size(), begin(ret),
-                 [](double val) {
+                 [](float val) {
                    return std::clamp(val / MAX_VELOCITY_WHEEL_ANGULAR * PERCENT,
                                      -PERCENT, PERCENT);
                  });
@@ -33,10 +33,10 @@ static std::array<double, N_WHEEL> vel_to_duty_cycle(const VelWheel& vel) {
 }
 
 static VelWheel pid_ctrl(const VelWheel& vel_wheel_sp,
-                         const VelWheel& vel_wheel_pv, const double dt) {
+                         const VelWheel& vel_wheel_pv, const float dt) {
   return vel_wheel_sp;
 
-  static constexpr double K_P = 0.025, K_I = 0.015, K_D = 0, MAX_INTEGRAL = 10;
+  static constexpr float K_P = 0.025, K_I = 0.015, K_D = 0, MAX_INTEGRAL = 10;
   static VelWheel integral = VelWheel::Zero(), prev_err = VelWheel::Zero();
 
   auto err = vel_wheel_sp - vel_wheel_pv;
@@ -45,9 +45,9 @@ static VelWheel pid_ctrl(const VelWheel& vel_wheel_sp,
 
   integral += err * dt;
   integral = integral.unaryExpr(
-      [&](double val) { return std::clamp(val, -MAX_INTEGRAL, MAX_INTEGRAL); });
+      [&](float val) { return std::clamp(val, -MAX_INTEGRAL, MAX_INTEGRAL); });
   // if (std::any_of(std::begin(integral), std::end(integral),
-  //                 [](double val) { return val >= 0.8 * MAX_INTEGRAL; }))
+  //                 [](float val) { return val >= 0.8 * MAX_INTEGRAL; }))
   //   ULOG_WARNING("[wheel_ctrl]: PID integral: [%0.2f, %.02f, %.02f, %.02f]",
   //                integral(0), integral(1), integral(2), integral(3));
 

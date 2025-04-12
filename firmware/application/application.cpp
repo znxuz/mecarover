@@ -21,9 +21,7 @@ int _gettimeofday(struct timeval* tv, void* tzvp) {
   return 0;  // not used, thus unimplemented to satisfy the compiler
 }
 
-void _putchar(char c) {
-  freertos::tsink_write(&c, 1);
-}
+void _putchar(char c) { freertos::tsink_write(&c, 1); }
 
 void my_console_logger(ulog_level_t severity, char* msg) {
   static RTC_TimeTypeDef sTime;
@@ -44,7 +42,7 @@ void application_start(void) {
 
   freertos::init();
 
-  // ULOG_INFO("kernel start");
+  ULOG_INFO("kernel start");
   osKernelStart();
   Error_Handler();  // because osKernelStart should never return
 }

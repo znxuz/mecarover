@@ -115,7 +115,7 @@ void profiling_task_impl(void*) {
         print_stats();
         prints("output took %u us\n",
                static_cast<unsigned long>(
-                   static_cast<double>(DWT->CYCCNT - start_cycle) /
+                   static_cast<float>(DWT->CYCCNT - start_cycle) /
                    SystemCoreClock * 1000 * 1000));
         start_cycle = 0;
       }
@@ -130,7 +130,7 @@ void profiling_task_impl(void*) {
       const auto& [name, cycle, is_begin] = records[prev_idx];
       prints(
           "%s %lu %s\n", name,
-          static_cast<unsigned long>(static_cast<double>(cycle - start_cycle) /
+          static_cast<unsigned long>(static_cast<float>(cycle - start_cycle) /
                                      SystemCoreClock * 1000 * 1000),
           (is_begin ? "in" : "out"));
 

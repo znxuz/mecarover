@@ -8,20 +8,19 @@ class Motor {
  public:
   Motor() = default;
   void init(TIM_HandleTypeDef* htim, uint32_t pwm_channel_a,
-            uint32_t pwm_channel_b, int direction)
-  {
+            uint32_t pwm_channel_b, int direction) {
     this->htim = htim;
     this->pwm_channel_a = pwm_channel_a;
     this->pwm_channel_b = pwm_channel_b;
     this->direction = direction;
-    this->ARR_VALUE = static_cast<double>(htim->Instance->ARR);
+    this->ARR_VALUE = static_cast<float>(htim->Instance->ARR);
 
     HAL_TIM_PWM_Start(this->htim, this->pwm_channel_a);
     HAL_TIM_PWM_Start(this->htim, this->pwm_channel_b);
     this->set_pwm(0);
   }
 
-  void set_pwm(double duty_cycle) {
+  void set_pwm(float duty_cycle) {
     duty_cycle = std::clamp(duty_cycle, -this->ARR_VALUE, this->ARR_VALUE) *
                  this->direction;
     __HAL_TIM_SET_COMPARE(htim, this->pwm_channel_a,
@@ -35,5 +34,5 @@ class Motor {
   uint32_t pwm_channel_a;
   uint32_t pwm_channel_b;
   int direction;
-  double ARR_VALUE;
+  float ARR_VALUE;
 };

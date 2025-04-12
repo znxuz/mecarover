@@ -17,8 +17,9 @@ class Vel2dBridge : public rclcpp::Node {
   Vel2dBridge() : Node{"vel2d_bridge"} {
     twist_sub_ = create_subscription<Twist>(
         "cmd_vel", 10, [this](Twist::UniquePtr twist) {
-          auto frame =
-              Vel2dFrame{{twist->linear.x, twist->linear.y, twist->angular.z}};
+          auto frame = Vel2dFrame{{static_cast<float>(twist->linear.x),
+                                   static_cast<float>(twist->linear.y),
+                                   static_cast<float>(twist->angular.z)}};
 
           if (!uart.send(frame.data())) {
             RCLCPP_ERROR(this->get_logger(), "write failed");
@@ -32,7 +33,7 @@ class Vel2dBridge : public rclcpp::Node {
  private:
   rclcpp::Subscription<Twist>::SharedPtr twist_sub_;
   SerialPort<VEL2D_FRAME_LEN> uart =
-      SerialPort<VEL2D_FRAME_LEN>(DEFAULT_PORT, B115200);
+      SerialPort<VEL2D_FRAME_LEN>(DEFAULT_PORT, B2000000);
 };
 
 int main(int argc, char** argv) {

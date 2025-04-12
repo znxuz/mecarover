@@ -13,7 +13,7 @@ ULOG_DIR := third_party/ulog/src
 PRINTF_DIR := third_party/printf
 TSINK_DIR := third_party/freertos-threadsafe-sink
 
-# ULOG_ENABLED := -DULOG_ENABLED
+ULOG_ENABLED := -DULOG_ENABLED
 FREERTOS_STATIC_INIT := -DFREERTOS_STATIC_INIT
 
 OPT := -Os
@@ -59,10 +59,10 @@ FLAGS = \
 		-MP \
 		-MF"$(@:%.o=%.d)" \
 		-MT"$@" \
-		-fno-builtin-printf \
 		$(INCL_PATHS) \
 		$(ULOG_ENABLED) \
 		$(FREERTOS_STATIC_INIT)
+		# -fno-builtin-printf # FreeRTOS stats uses <stdio.h>
 
 CFLAGS = \
 		 $(FLAGS) \
@@ -79,6 +79,7 @@ LDFLAGS = \
 		  -mcpu=cortex-m7 \
 		  -mfpu=fpv5-d16 \
 		  -mfloat-abi=hard \
+		  -u_printf_float \
 		  --specs=nano.specs \
 		  --specs=nosys.specs \
 		  -mthumb \

@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <cstdio>
 #include <random>
 
 #include "../application/pose_types.hpp"

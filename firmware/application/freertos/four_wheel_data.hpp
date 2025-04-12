@@ -5,14 +5,14 @@
 namespace freertos {
 
 struct FourWheelData {
-  double front_right;
-  double front_left;
-  double back_left;
-  double back_right;
+  float front_right;
+  float front_left;
+  float back_left;
+  float back_right;
 
   FourWheelData() = default;
 
-  FourWheelData(const std::array<double, robot_params::N_WHEEL>& data)
+  FourWheelData(const std::array<float, robot_params::N_WHEEL>& data)
       : front_right{data[0]},
         front_left{data[1]},
         back_left{data[2]},

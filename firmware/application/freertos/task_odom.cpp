@@ -34,7 +34,7 @@ static void task_impl(void*) {
         Pose{dpose_rf_mtx(0), dpose_rf_mtx(1), dpose_rf_mtx(2)};
 
     odom += pRF2pWF(dpose_rf,
-                    (static_cast<double>(odom.theta) * 2 + dpose_rf.theta) / 2);
+                    (static_cast<float>(odom.theta) * 2 + dpose_rf.theta) / 2);
     // TODO do epsilon
 
     xQueueSend(freertos::odom_queue, &odom, 0);

@@ -79,12 +79,13 @@ class SerialPort {
     tty.c_lflag &= ~ECHOE;   // disable erasure
     tty.c_lflag &= ~ECHONL;  // disable new-line echo
     tty.c_lflag &= ~ISIG;    // disable interpretation of INTR, QUIT and SUSP
+    tty.c_lflag &= ~IEXTEN;  // disable extended input processing
 
-    tty.c_oflag &= ~OPOST;  // prevent special interpretation of output bytes
-    tty.c_oflag &= ~ONLCR;  // prevent conversion of newline to crlf feed
+    // tty.c_oflag &= ~OPOST;  // prevent special interpretation of output bytes
+    // tty.c_oflag &= ~ONLCR;  // prevent conversion of newline to crlf feed
+    tty.c_oflag = 0;
 
-    cfsetspeed(&tty, baud_rate_);
-    if (tcsetattr(fd_, TCSANOW, &tty))
+    if (cfsetospeed(&tty, baud_rate_) || tcsetattr(fd_, TCSANOW, &tty))
       throw std::system_error(errno, std::generic_category(),
                               "Failed to set port attributes");
   }
