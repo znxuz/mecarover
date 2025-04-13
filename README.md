@@ -44,3 +44,10 @@ sudo ip link set <eth interface> up
 
 This IP address will be the micro-ROS agent IP address, which the client on the
 MCU uses for establishing the connection with the agent
+
+# patch file for `ethernetif.c`
+
+`LWIP/Target/ethernetif.c` needs to be patched each time it is regenerated via
+CubeMX with the patch file `ethernetif.c.patch`, because the data cache, if
+enabled, needs to be flushed before every packet transmission in
+`low_level_output()`.

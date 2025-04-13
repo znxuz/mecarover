@@ -180,6 +180,6 @@ void task_switched_isr(const char* name, uint8_t start);
     task_switched_isr(pxCurrentTCB->pcTaskName, 1)
 #define traceTASK_SWITCHED_OUT() \
     task_switched_isr(pxCurrentTCB->pcTaskName, 0)
-  /* USER CODE END Defines */
+/* USER CODE END Defines */
 
 #endif /* FREERTOS_CONFIG_H */

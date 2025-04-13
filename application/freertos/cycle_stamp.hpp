@@ -17,17 +17,16 @@ struct cycle_stamp {
   static inline uint32_t initial_cycle = 0;
 };
 
-volatile inline bool stamping_enabled{};
-
-inline constexpr size_t ISR_STAMP_WRITE_FREQ = 5;
+inline constexpr size_t ISR_STAMP_WRITE_FREQ = 10;
 inline constexpr size_t ISR_STAMP_BUF_SIZE = 512;
 inline cycle_stamp isr_stamps[ISR_STAMP_BUF_SIZE]{};
 volatile inline size_t isr_stamp_idx = 0;
+volatile inline bool stamping_enabled = false;
 
 volatile inline std::atomic<size_t> ticket_machine;
 
 inline void stamp_isr(const char* name, bool is_begin) {
-  auto cycle = DWT->CYCCNT;
+  volatile auto cycle = DWT->CYCCNT;
   auto ticket = ticket_machine.fetch_add(1, std::memory_order_acquire);
   isr_stamps[isr_stamp_idx % ISR_STAMP_BUF_SIZE] = {name, cycle, ticket,
                                                     is_begin};
@@ -35,10 +34,10 @@ inline void stamp_isr(const char* name, bool is_begin) {
 }
 
 inline void stamp(const char* name, bool is_begin) {
-  char buf[50];  // local because multithreaded, otherwise race condition baby
-  auto cycle = DWT->CYCCNT;
-  // THE MEMORY ORDER MUST BE ACQUIRE
+  volatile auto cycle = DWT->CYCCNT;
   auto ticket = ticket_machine.fetch_add(1, std::memory_order_acquire);
+
+  char buf[50];  // must be local because multithreaded
   tsink_write_ordered(
       buf,
       snprintf(buf, sizeof(buf), "%s %lu %s\n", name,
