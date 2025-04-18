@@ -49,7 +49,7 @@ void my_console_logger(ulog_level_t severity, char* msg) {
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
   if (huart->Instance != huart3.Instance) return;
 
-  tsink_consume_complete<TSINK_CALL_FROM::ISR>();
+  tsink::consume_complete<tsink::CALL_FROM::ISR>();
 }
 
 void application_start(void) {
@@ -80,7 +80,7 @@ void application_start(void) {
     HAL_UART_Transmit_DMA(&huart3, buf, size);
   };
 
-  tsink_init(tsink_consume, osPriorityAboveNormal);
+  tsink::init(tsink_consume, osPriorityAboveNormal);
   task_profiling_init();
   xTaskCreate(micro_ros, "uros", 3000, NULL, osPriorityNormal, NULL);
 

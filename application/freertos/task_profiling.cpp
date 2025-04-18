@@ -5,6 +5,8 @@
 #include <semphr.h>
 #include <stdarg.h>
 
+#include <cstring>
+#include <string_view>
 #include <threadsafe_sink.hpp>
 #include <utility>
 
@@ -45,6 +47,9 @@ void task_switched_isr(const char* name, uint8_t start) {
 }
 
 namespace {
+using namespace tsink;
+using namespace std::literals::string_view_literals;
+
 static uint32_t cycle_to_us(uint32_t cycle) {
   return static_cast<uint32_t>(static_cast<float>(cycle) / SystemCoreClock *
                                1000 * 1000);
@@ -58,30 +63,29 @@ void profiling_task_impl(void*) {
   auto output_task_stats = []() static {
     auto cycle = DWT->CYCCNT;
     __sync_synchronize();
-    tsink_write_str("=============================================\n");
-    tsink_write_blocking(buf, snprintf(buf, sizeof(buf), "free heap:\t\t%u\n",
-                                       xPortGetFreeHeapSize()));
-    tsink_write_blocking(buf,
-                         snprintf(buf, sizeof(buf), "ctx switches:\t\t%u\n",
-                                  std::exchange(ctx_switch_cnt, 0)));
-    tsink_write_str("Task\t\tTime\t\t%%\n");
+    write_blocking("=============================================\n"sv);
+    write_blocking(buf, snprintf(buf, sizeof(buf), "free heap:\t\t%u\n",
+                                 xPortGetFreeHeapSize()));
+    write_blocking(buf, snprintf(buf, sizeof(buf), "ctx switches:\t\t%u\n",
+                                 std::exchange(ctx_switch_cnt, 0)));
+    write_blocking("Task\t\tTime\t\t%%\n"sv);
     vTaskGetRunTimeStats(buf);
-    tsink_write_str(buf);
-    tsink_write_str("---------------------------------------------\n");
+    write_blocking(buf, std::strlen(buf));
+    write_blocking("---------------------------------------------\n"sv);
     vTaskList(buf);
-    tsink_write_str("Task\t\tState\tPrio\tStack\tNum\n");
-    tsink_write_str(buf);
-    tsink_write_str("=============================================\n");
-    tsink_write_blocking(
-        buf, snprintf(buf, sizeof(buf), "output took %u us\n",
-                      cycle_to_us(cycle - cycle_stamp::initial_cycle)));
+    write_blocking("Task\t\tState\tPrio\tStack\tNum\n"sv);
+    write_blocking(buf, std::strlen(buf));
+    write_blocking("=============================================\n"sv);
+    write_blocking(buf,
+                   snprintf(buf, sizeof(buf), "output took %u us\n",
+                            cycle_to_us(cycle - cycle_stamp::initial_cycle)));
   };
   auto output_stamps = []() static {
     auto end = stamp_idx;
     // auto diff = end - prev_idx;
     while (prev_idx != end) {
       const auto& [name, cycle, is_begin] = stamps[prev_idx++ % STAMP_BUF_SIZE];
-      tsink_write_blocking(
+      write_blocking(
           buf,
           snprintf(buf, sizeof(buf), "%s %u %u\n", name,
                    cycle_to_us(cycle - cycle_stamp::initial_cycle), is_begin));
