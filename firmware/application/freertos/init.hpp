@@ -4,7 +4,5 @@
 #include <queue.h>
 
 namespace freertos {
-
 void init();
-
 }

@@ -168,7 +168,7 @@ clean:
 
 clangdb: clean
 	@mkdir -p $(BUILD_DIR)
-	@bear --output $(BUILD_DIR)/compile_commands.json -- $(MAKE) -j
+	@compiledb --output $(BUILD_DIR)/compile_commands.json -- $(MAKE) -j
 
 # misc
 
