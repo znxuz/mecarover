@@ -27,9 +27,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
       DEBOUNCE_TIME_MS) {
     stamping_enabled ^= 1;
     if (stamping_enabled) {
-      isr_stamp_idx = 0;
-      tsink_reset_ticket();
-      ticket_machine.store(0);
+      stamp_idx = 0;
       cycle_stamp::initial_cycle = DWT->CYCCNT;
 
       static BaseType_t xHigherPriorityTaskWoken;
@@ -41,17 +39,25 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 
 void task_switched_isr(const char* name, uint8_t start) {
   if (!stamping_enabled) return;
-  stamp_isr(name, start);
+  stamp(name, start);
   ctx_switch_cnt += 1;
 }
 }
 
 namespace {
+static uint32_t cycle_to_us(uint32_t cycle) {
+  return static_cast<uint32_t>(static_cast<float>(cycle) / SystemCoreClock *
+                               1000 * 1000);
+}
+
 void profiling_task_impl(void*) {
   static constexpr uint8_t configNUM_TASKS = 10;
   static char buf[50 * configNUM_TASKS];
   static size_t prev_idx = 0;
+
   auto output_task_stats = []() static {
+    auto cycle = DWT->CYCCNT;
+    __sync_synchronize();
     tsink_write_str("=============================================\n");
     tsink_write_blocking(buf, snprintf(buf, sizeof(buf), "free heap:\t\t%u\n",
                                        xPortGetFreeHeapSize()));
@@ -68,24 +74,17 @@ void profiling_task_impl(void*) {
     tsink_write_str("=============================================\n");
     tsink_write_blocking(
         buf, snprintf(buf, sizeof(buf), "output took %u us\n",
-                      static_cast<unsigned long>(
-                          static_cast<double>(DWT->CYCCNT -
-                                              cycle_stamp::initial_cycle) /
-                          SystemCoreClock * 1000 * 1000)));
+                      cycle_to_us(cycle - cycle_stamp::initial_cycle)));
   };
-  auto output_irq_stamps = []() static {
-    auto end = isr_stamp_idx;
+  auto output_stamps = []() static {
+    auto end = stamp_idx;
+    // auto diff = end - prev_idx;
     while (prev_idx != end) {
-      const auto& [name, cycle, ticket, is_begin] =
-          isr_stamps[prev_idx++ % ISR_STAMP_BUF_SIZE];
-      tsink_write_ordered(
+      const auto& [name, cycle, is_begin] = stamps[prev_idx++ % STAMP_BUF_SIZE];
+      tsink_write_blocking(
           buf,
-          snprintf(buf, sizeof(buf), "%s %lu %s\n", name,
-                   static_cast<unsigned long>(
-                       static_cast<double>(cycle - cycle_stamp::initial_cycle) /
-                       SystemCoreClock * 1000 * 1000),
-                   (is_begin ? "in" : "out")),
-          ticket);
+          snprintf(buf, sizeof(buf), "%s %u %u\n", name,
+                   cycle_to_us(cycle - cycle_stamp::initial_cycle), is_begin));
     }
   };
 
@@ -95,8 +94,8 @@ void profiling_task_impl(void*) {
       ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
     }
 
-    output_irq_stamps();
-    vTaskDelay(pdMS_TO_TICKS(ISR_STAMP_WRITE_FREQ));
+    output_stamps();
+    vTaskDelay(pdMS_TO_TICKS(STAMP_OUTPUT_FREQ));
   }
 }
 }  // namespace
