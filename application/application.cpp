@@ -67,8 +67,10 @@ void application_start(void) {
 
   auto tsink_consume = [](const uint8_t* buf, size_t size) static {
     auto flush_cache_aligned = [](uintptr_t addr, size_t size) static {
-      constexpr auto align_addr = [](uintptr_t addr) { return addr & ~0x1F; };
-      constexpr auto align_size = [](uintptr_t addr, size_t size) {
+      constexpr auto align_addr = [](uintptr_t addr) static {
+        return addr & ~0x1F;
+      };
+      constexpr auto align_size = [](uintptr_t addr, size_t size) static {
         return size + ((addr) & 0x1F);
       };
 

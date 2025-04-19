@@ -50,11 +50,6 @@ namespace {
 using namespace tsink;
 using namespace std::literals::string_view_literals;
 
-static uint32_t cycle_to_us(uint32_t cycle) {
-  return static_cast<uint32_t>(static_cast<float>(cycle) / SystemCoreClock *
-                               1000 * 1000);
-}
-
 void profiling_task_impl(void*) {
   static constexpr uint8_t configNUM_TASKS = 10;
   static char buf[50 * configNUM_TASKS];
