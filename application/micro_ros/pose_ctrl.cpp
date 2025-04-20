@@ -111,7 +111,9 @@ static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
 }
 
 static void pose_ctrl_cb(rcl_timer_t*, int64_t last_call_time) {
-  volatile freertos::cycle_stamp_raii t{"p_ctrl"};
+  freertos::cycle_stamp_raii _{"p_ctrl"};
+  std::atomic_thread_fence(std::memory_order_acquire);
+
   static auto vel_prev = vPose<real_t>{};
   static auto pose_sp = Pose<real_t>{};
   const auto dt = RCL_NS_TO_S(static_cast<real_t>(last_call_time));

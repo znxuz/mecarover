@@ -79,7 +79,8 @@ void profiling_task_impl(void*) {
     auto end = stamp_idx;
     // auto diff = end - prev_idx;
     while (prev_idx != end) {
-      const auto& [name, cycle, is_begin] = stamps[prev_idx++ % STAMP_BUF_SIZE];
+      const auto& [name, cycle, is_begin] =
+          stamps[normalized_index(prev_idx++)];
       write_blocking(
           buf,
           snprintf(buf, sizeof(buf), "%s %u %u\n", name,

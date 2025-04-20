@@ -22,6 +22,10 @@ inline cycle_stamp stamps[STAMP_BUF_SIZE]{};
 volatile inline std::atomic<size_t> stamp_idx = 0;
 volatile inline bool stamping_enabled = false;
 
+inline uint32_t normalized_index(size_t idx) {
+  return idx % STAMP_BUF_SIZE;
+}
+
 inline uint32_t cycle_to_us(uint32_t cycle) {
   return static_cast<uint32_t>(static_cast<float>(cycle) / SystemCoreClock *
                                1000 * 1000);
@@ -30,7 +34,7 @@ inline uint32_t cycle_to_us(uint32_t cycle) {
 inline void stamp(const char* name, bool is_begin) {
   volatile auto cycle = DWT->CYCCNT;
   volatile auto idx = stamp_idx.fetch_add(1);
-  stamps[idx % STAMP_BUF_SIZE] = {name, cycle, is_begin};
+  stamps[normalized_index(idx)] = {name, cycle, is_begin};
 }
 
 inline void stamp_direct(const char* name, bool is_begin) {

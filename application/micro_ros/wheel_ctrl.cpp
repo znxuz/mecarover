@@ -81,7 +81,9 @@ static VelWheel pid_ctrl(const real_t dt) {
 }
 
 static void wheel_ctrl_cb(rcl_timer_t* timer, int64_t last_call_time) {
-  volatile freertos::cycle_stamp_raii t{"w_ctrl"};
+  freertos::cycle_stamp_raii _{"w_ctrl"};
+  std::atomic_thread_fence(std::memory_order_acquire);
+
   const auto dt = RCL_NS_TO_S(static_cast<real_t>(last_call_time));
   const auto enc_delta_rad = hal_encoder_delta_rad();
 
