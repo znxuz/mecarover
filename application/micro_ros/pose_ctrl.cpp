@@ -124,9 +124,7 @@ static void pose_ctrl_cb(rcl_timer_t*, int64_t last_call_time) {
   pose_sp += Pose<real_t>(vRF2vWF(vel_rf_sp, pose_sp.theta) * dt);
 
   constexpr real_t K_eps = -0.2;
-  taskENTER_CRITICAL();
   const auto eps = epsilon;
-  taskEXIT_CRITICAL();
 
   const auto d_vel_wf = vPose<real_t>(pose_ctrl(pose_sp, pose_actual, dt) / dt);
   const auto vel_rf_corrected =

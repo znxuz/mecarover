@@ -119,9 +119,7 @@ static void timer_cb(rcl_timer_t*, int64_t) {
   bool process_packet = false;
   size_t packet_idx = 0;
 
-  taskENTER_CRITICAL();
   size_t write_idx = target_idx;
-  taskEXIT_CRITICAL();
 
   /*
    * DMA in circular mode: the write_idx will be $sizeof(dma_buf)$ instead of 0,

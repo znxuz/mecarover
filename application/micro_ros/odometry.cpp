@@ -51,9 +51,7 @@ static void odometry_cb(const void* arg) {
                                  enc_delta_rad->back_right_wheel_velocity));
   Pose<real_t> dpose_rf{dpose_rf_mtx(0), dpose_rf_mtx(1), dpose_rf_mtx(2)};
 
-  taskENTER_CRITICAL();
   epsilon += dpose_rf_mtx(3);
-  taskEXIT_CRITICAL();
 
   // aggregate into the pose sum and use the theta average for more precise
   // angle calculation
