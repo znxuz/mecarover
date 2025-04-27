@@ -77,7 +77,7 @@ void profiling_task_impl(void*) {
     write_blocking(buf, std::strlen(buf));
     write_blocking("=============================================\n"sv);
     write_blocking(buf,
-                   snprintf(buf, sizeof(buf), "output took %u us\n",
+                   snprintf(buf, sizeof(buf), "profiled for %u us\n",
                             cycle_to_us(cycle - cycle_stamp::initial_cycle)));
   };
   auto output_stamps = []() static {

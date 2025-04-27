@@ -34,8 +34,6 @@ static std::array<float, N_WHEEL> vel_to_duty_cycle(const VelWheel& vel) {
 
 static VelWheel pid_ctrl(const VelWheel& vel_wheel_sp,
                          const VelWheel& vel_wheel_pv, const float dt) {
-  return vel_wheel_sp;
-
   static constexpr float K_P = 0.025, K_I = 0.015, K_D = 0, MAX_INTEGRAL = 10;
   static VelWheel integral = VelWheel::Zero(), prev_err = VelWheel::Zero();
 
@@ -53,6 +51,7 @@ static VelWheel pid_ctrl(const VelWheel& vel_wheel_sp,
 
   VelWheel derivative = (err - std::exchange(prev_err, err)) / dt;  // unused
 
+  return vel_wheel_sp;
   return vel_wheel_sp + K_P * err + K_I * integral + K_D * derivative;
 }
 

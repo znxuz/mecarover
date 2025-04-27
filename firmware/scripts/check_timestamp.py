@@ -2,7 +2,8 @@
 
 import sys
 
-def is_valid_timestamps(file_path):
+def is_valid(file_path):
+    ret = True
     with open(file_path, 'r') as file:
         for line_num, line in enumerate(file, 1):
             parts = line.split()
@@ -15,13 +16,14 @@ def is_valid_timestamps(file_path):
                 int(parts[1])
             except ValueError:
                 print(f"\033[91mERROR\033[0m: Line {line_num} - failed to parse timestamp.")
-                return False
+                ret = False
 
-    return True
+    return ret
 
-def is_strictly_ascending_timestamps(file_path):
+def is_ascending(file_path):
     previous_timestamp = None
 
+    ret = True
     with open(file_path, 'r') as file:
         for line_num, line in enumerate(file, 1):
             parts = line.split()
@@ -34,15 +36,15 @@ def is_strictly_ascending_timestamps(file_path):
                 timestamp = int(parts[1])
             except ValueError:
                 print(f"\033[91mERROR\033[0m: Line {line_num} - failed to parse timestamp.")
-                return False
+                ret = False
 
             if previous_timestamp is not None and timestamp < previous_timestamp:
                 print(f"\033[91mERROR\033[0m: Line {line_num} - timestamp {timestamp} is not ascending.")
-                return False
+                ret = False
 
             previous_timestamp = timestamp
 
-    return True
+    return ret
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
@@ -53,12 +55,12 @@ if __name__ == "__main__":
     file_path = sys.argv[2]
 
     if mode == 'ascending':
-        if is_strictly_ascending_timestamps(file_path):
+        if is_ascending(file_path):
             print("\033[92mPASSED\033[0m: timestamps are ascending.")
         else:
             print("\033[91mERROR\033[0m: timestamps are not ascending.")
     elif mode == 'valid':
-        if is_valid_timestamps(file_path):
+        if is_valid(file_path):
             print("\033[92mPASSED\033[0m: timestamps are valid.")
         else:
             print("\033[91mERROR\033[0m: timestamps are not valid.")

@@ -31,7 +31,6 @@ static constexpr vPose velocity_smoothen(const vPose& vel_target,
 }
 
 static Pose pose_ctrl(const Pose& pose_sp, const Pose& pose_cur, float dt) {
-  return {};
   static constexpr float MAX_INTEGRAL_LINEAR = 200;
   static constexpr float MAX_INTEGRAL_ANGULAR = M_PI;
   static constexpr float MAX_POSE_DEVIATION_LINEAR = 300;
@@ -60,6 +59,7 @@ static Pose pose_ctrl(const Pose& pose_sp, const Pose& pose_cur, float dt) {
 
   const auto derivative = err - std::exchange(prev_err, err);
 
+  return {};
   return err * K_P + integral * K_I + derivative / dt * K_D;
 }
 
