@@ -23,8 +23,12 @@ volatile inline std::atomic<size_t> stamp_idx = 0;
 volatile inline bool stamping_enabled = false;
 
 inline void stamp(const char* name, bool is_begin) {
-  volatile auto cycle = DWT->CYCCNT;
-  volatile auto idx = stamp_idx.fetch_add(1);
+  size_t idx, cycle;
+  do {
+    idx = stamp_idx;
+    cycle = DWT->CYCCNT;
+  } while (!stamp_idx.compare_exchange_strong(idx, idx + 1));
+
   stamps[idx % STAMP_BUF_SIZE] = {name, cycle, is_begin};
 }
 
