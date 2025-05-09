@@ -7,8 +7,6 @@
 #include <application/freertos/init.hpp>
 #include <threadsafe_sink.hpp>
 
-using namespace freertos;
-
 extern "C" {
 volatile unsigned long ulHighFrequencyTimerTicks;
 
@@ -37,17 +35,24 @@ void my_console_logger(ulog_level_t severity, char* msg) {
    * otherwise GetTime() won't work */
   HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
 
-  tsink::write_blocking(
+  freertos::tsink::write_blocking(
       buf,
       snprintf(buf, sizeof(buf), "%02d:%02d:%02d [%s]: %s\n", sTime.Hours,
                sTime.Minutes, sTime.Seconds, ulog_level_name(severity), msg));
 }
 
 void application_start(void) {
+  auto enable_dwt_cycle_count = []() static {
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->LAR = 0xC5ACCE55;  // software unlock
+    DWT->CYCCNT = 1;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+  };
+
   ULOG_INIT();
   ULOG_SUBSCRIBE(my_console_logger, ULOG_DEBUG_LEVEL);
-
-  init();
+  enable_dwt_cycle_count();
+  freertos::init();
 
   ULOG_INFO("kernel start");
   osKernelStart();
