@@ -27,7 +27,7 @@ inline void stamp(const char* name, bool is_begin) {
   do {
     idx = stamp_idx;
     cycle = DWT->CYCCNT;
-  } while (!stamp_idx.compare_exchange_strong(idx, idx + 1));
+  } while (!stamp_idx.compare_exchange_weak(idx, idx + 1));
 
   stamps[idx % STAMP_BUF_SIZE] = {name, cycle, is_begin};
 }
