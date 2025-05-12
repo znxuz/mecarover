@@ -1,3 +1,9 @@
+# Project Structure
+
+All control logic code (my code) live in `application` directory.
+`Core`/`Drivers`/`LWIP`/`Middlewares` are generated config files for the micro
+controller via stm32cubemx.
+
 # Prerequisites
 
 - `docker`
