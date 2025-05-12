@@ -29,6 +29,12 @@ through a USB-CDC port defaulted to `/dev/ttyACM0`
 
 # Firmware
 
+## Project Structure
+
+All control logic code (my code) live in `application` directory.
+`Core`/`Drivers`/`LWIP`/`Middlewares` are generated config files for the micro
+controller via stm32cubemx.
+
 # License
 
 This project uses the CRC++ library (by Daniel Bahr), which is licensed under
