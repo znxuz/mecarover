@@ -112,7 +112,7 @@ static Pose<real_t> pose_ctrl(const Pose<real_t>& pose_sp,
 
 static void pose_ctrl_cb(rcl_timer_t*, int64_t last_call_time) {
   freertos::cycle_stamp_raii _{"p_ctrl"};
-  std::atomic_thread_fence(std::memory_order_acquire);
+  std::atomic_thread_fence(std::memory_order_seq_cst);
 
   static auto vel_prev = vPose<real_t>{};
   static auto pose_sp = Pose<real_t>{};

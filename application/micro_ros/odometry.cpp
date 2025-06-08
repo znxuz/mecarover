@@ -35,7 +35,7 @@ real_t epsilon;
 
 static void odometry_cb(const void* arg) {
   freertos::cycle_stamp_raii _{"odom"};
-  std::atomic_thread_fence(std::memory_order_acquire);
+  std::atomic_thread_fence(std::memory_order_seq_cst);
 
   const auto* enc_delta_rad = reinterpret_cast<const DriveState*>(arg);
   /*
