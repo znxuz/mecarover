@@ -10,10 +10,10 @@ namespace imsl {
 using std::numbers::pi;
 
 template <typename T>
-concept FltType = std::is_same_v<T, float> || std::is_same_v<T, double>;
+concept IsFloat = std::is_same_v<T, float> || std::is_same_v<T, double>;
 
 /* Heading of a mobile robot in the range of -pi ... +pi */
-template <typename FltType>
+template <IsFloat FltType>
 class Heading {
  private:
   FltType theta{};
@@ -55,10 +55,10 @@ class Heading {
   operator FltType() const { return this->theta; }
 };
 
-template <typename FltType>
+template <IsFloat FltType>
 class Pose;
 
-template <typename FltType>
+template <IsFloat FltType>
 class vPose {
  public:
   FltType vx{};
@@ -111,7 +111,7 @@ class vPose {
   }
 };
 
-template <typename FltType>
+template <IsFloat FltType>
 class Pose {
  public:
   FltType x{};
