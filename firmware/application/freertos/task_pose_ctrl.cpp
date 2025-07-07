@@ -44,8 +44,9 @@ static Pose pose_ctrl(const Pose& pose_sp, const Pose& pose_cur, float dt) {
   using std::abs;
   if (abs(err.x) > MAX_POSE_DEVIATION_LINEAR ||
       abs(err.y) > MAX_POSE_DEVIATION_LINEAR ||
-      abs(err.theta) > MAX_POSE_DEVIATION_ANGULAR) [[unlikely]]
-    ULOG_WARNING("[pose_ctrl] sanity check: pose deviation too large");
+      abs(err.theta) > MAX_POSE_DEVIATION_ANGULAR) [[unlikely]] {
+  }
+    // ULOG_WARNING("[pose_ctrl] sanity check: pose deviation too large");
   // ULOG_DEBUG("[pose_ctrl] delta: [x: %.2f, y: %.2f, theta: %.2f]", err.x, err.y,
   //            static_cast<float>(err.theta));
 
