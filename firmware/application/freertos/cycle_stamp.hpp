@@ -17,7 +17,7 @@ struct cycle_stamp {
 };
 
 inline constexpr size_t STAMP_OUTPUT_FREQ = 10;
-inline constexpr size_t STAMP_BUF_SIZE = 512;
+inline constexpr size_t STAMP_BUF_SIZE = 16384;
 inline cycle_stamp stamps[STAMP_BUF_SIZE]{};
 volatile inline std::atomic<size_t> stamp_idx = 0;
 volatile inline bool stamping_enabled = false;

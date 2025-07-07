@@ -67,7 +67,7 @@ static Pose pose_ctrl(const Pose& pose_sp, const Pose& pose_cur, float dt) {
 extern "C" {
 
 static void task_impl(void*) {
-  const TickType_t xFrequency = pdMS_TO_TICKS(POSE_CTRL_PERIOD_MS.count());
+  const TickType_t xFrequency = 2;
   constexpr auto dt = POSE_CTRL_PERIOD_MS.count() / 1000.0;
   TickType_t xLastWakeTime = xTaskGetTickCount();
 

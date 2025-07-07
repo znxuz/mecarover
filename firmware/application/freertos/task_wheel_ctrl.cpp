@@ -58,7 +58,7 @@ static VelWheel pid_ctrl(const VelWheel& vel_wheel_sp,
 extern "C" {
 static void task_impl(void*) {
   TickType_t xLastWakeTime = xTaskGetTickCount();
-  const TickType_t xFrequency = pdMS_TO_TICKS(WHEEL_CTRL_PERIOD_MS.count());
+  const TickType_t xFrequency = 1;
   constexpr auto dt = WHEEL_CTRL_PERIOD_MS.count() / 1000.0;
 
   while (true) {

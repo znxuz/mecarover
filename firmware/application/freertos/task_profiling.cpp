@@ -99,15 +99,15 @@ void profiling_task_impl(void*) {
     }
 
     output_stamps();
-    vTaskDelay(pdMS_TO_TICKS(STAMP_OUTPUT_FREQ));
+    vTaskDelay(10);
   }
 }
 }  // namespace
 
 namespace freertos {
 void task_profiling_init() {
-  configASSERT(
-      (xTaskCreate(profiling_task_impl, "profile", configMINIMAL_STACK_SIZE * 8,
-                   NULL, osPriorityNormal, &profiling_task_hdl) == pdPASS));
+  configASSERT((
+      xTaskCreate(profiling_task_impl, "profile", configMINIMAL_STACK_SIZE * 8,
+                  NULL, osPriorityBelowNormal, &profiling_task_hdl) == pdPASS));
 }
 }  // namespace freertos
